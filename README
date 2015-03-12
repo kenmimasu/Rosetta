@@ -1,8 +1,7 @@
 ################################################################################
 Rosetta: A Higgs Effective Field Theory basis translator
 
-Benjamin Fuks, Fabio Maltoni, Kentarou Mawatari, Ken Mimasu, 
-Veronica Sanz 
+Benjamin Fuks, Fabio Maltoni, Kentarou Mawatari, Ken Mimasu, Veronica Sanz 
 
 Version 0, March 2015
 ################################################################################
@@ -11,12 +10,14 @@ Higgs Effective Field Theory. The idea is to provide a simple way to map
 different parametrisations of the deviations of Higgs couplings from SM 
 expectations to a single 'basis' of Wilson coefficients corresponding to 
 operators up to dimension 6.
+
 Given an LHA style input parameter card in the users basis of choice, Rosetta 
 has the capability to read in the parameters, calculate any dependent 
 parameters, perform a number of consistency checks with respect to required and 
 derived inputs and finally write out a new parameter card in the target basis 
 which can be used as input to the associated UFO model in e.g. 
 MadGraph5_aMC@NLO. 
+
 The tool consists of a Python package containing implementations of 
 Higgs Effective Theory bases and a command line tool 'translate' that performs 
 the task of mapping a given basis to a target output basis. The core of the 
@@ -56,16 +57,19 @@ Rosetta/    # Python package containing implementation of the basis
                             # for output parameter cards, corresponds to the 
                             # redundant set of operators defined in  
                             # HiggsBasis.py without imposing any dependency 
-                            # conditions.
+                            # conditions. There are 169 coefficients.
                             
     --> HiggsBasis.py       # Basis class corresponding to the Higgs Basis as 
                             # defined in the HXSWG draft. Using this basis as 
                             # input calculates the dependent coefficients.
+                            # There are 95 independent coefficients and 74 
+                            # dependent coefficients.
                             
     --> WarsawBasis.py      # Basis class corresponding to the Warsaw Basis
                             # defined arXiv:1008.4884. Using this basis
                             # input calculates the Mass Basis coefficients 
-                            # as per the formulae in the HXSWG draft.
+                            # as per the formulae in the HXSWG draft. There are 
+                            # 95 independent coefficients.
     
     --> TemplateBasis.py    # Template for a user-defined Basis class 
                             # implemented in the Rosetta package. Toy versions 
@@ -96,6 +100,7 @@ The translate command line tool takes an LHA-style param card (see sample
 cards provided in Cards/ directory) in a particular basis and outputs a new 
 card in the specified basis (default is Mass Basis). So far, only the Mass 
 Basis can be takes as the target basis. 
+
 The options BLOCKIN and BLOCKOUT allow the user to specify the name of the LHA 
 block that contains the new couplings. The names of these couplings, specified 
 as the first non-whitespace characters following a hash ("#") character after 
