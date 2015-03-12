@@ -1,22 +1,45 @@
-############################################################
+################################################################################
 Rosetta: A Higgs Effective Field Theory basis translator
-Benjamin Fuks, Fabio Maltoni, Kentarou Mawatari, Ken Mimasu, 
-Veronica Sanz 2015
-############################################################
 
+Benjamin Fuks, Fabio Maltoni, Kentarou Mawatari, Ken Mimasu, 
+Veronica Sanz 
+
+Version 0, March 2015
+################################################################################
+Rosetta is a translation tool to aid in the Monte Carlo generation of events for
+Higgs Effective Field Theory. The idea is to provide a simple way to map 
+different parametrisations of the deviations of Higgs couplings from SM 
+expectations to a single 'basis' of Wilson coefficients corresponding to 
+operators up to dimension 6.
+Given an LHA style input parameter card in the users basis of choice, Rosetta 
+has the capability to read in the parameters, calculate any dependent 
+parameters, perform a number of consistency checks with respect to required and 
+derived inputs and finally write out a new parameter card in the target basis 
+which can be used as input to the associated UFO model in e.g. 
+MadGraph5_aMC@NLO. 
+The tool consists of a Python package containing implementations of 
+Higgs Effective Theory bases and a command line tool 'translate' that performs 
+the task of mapping a given basis to a target output basis. The core of the 
+package is based on the contents of the LHCHiggs Cross Section Working Group 
+(HXSWG) draft. The slides at
+https://indico.cern.ch/event/375176/contribution/5/material/slides/0.pdf 
+provide a more detailed description of the tool as well as some examples of 
+usage and the code structure (see backup slides).
+
+################################################################################
 Contact
-##########
+################################################################################
 Feel free to contact the authors with requests for features, bugs 
 etc.through k.mimasu@sussex.ac.uk.
 
-
+################################################################################
 Prerequisites
-##########
+################################################################################
 Python 2.7 or above
 
-
+################################################################################
 Package Contents
-##########
+################################################################################
 Rosetta/    # Python package containing implementation of the basis 
             # translation machinery.
             
@@ -31,8 +54,9 @@ Rosetta/    # Python package containing implementation of the basis
                                 
     --> MassBasis.py        # Basis class corresponding to the target basis 
                             # for output parameter cards, corresponds to the 
-                            # redundant set of operators defined in HiggsBasis.py 
-                            # without imposing any dependency conditions.
+                            # redundant set of operators defined in  
+                            # HiggsBasis.py without imposing any dependency 
+                            # conditions.
                             
     --> HiggsBasis.py       # Basis class corresponding to the Higgs Basis as 
                             # defined in the HXSWG draft. Using this basis as 
@@ -41,50 +65,49 @@ Rosetta/    # Python package containing implementation of the basis
     --> WarsawBasis.py      # Basis class corresponding to the Warsaw Basis
                             # defined arXiv:1008.4884. Using this basis
                             # input calculates the Mass Basis coefficients 
-                            # as per the formular in the HXSWG draft.
+                            # as per the formulae in the HXSWG draft.
     
-    --> TemplateBasis.py    # Template for a user-defined Basis class implemented 
-                            # in the Rosetta package. Toy versions of the 
-                            # calculate_dependent() and translate() methods are 
-                            # implemeted.
+    --> TemplateBasis.py    # Template for a user-defined Basis class 
+                            # implemented in the Rosetta package. Toy versions 
+                            # of the calculate_dependent() and translate() 
+                            # methods are implemented.
                             
-    implemeted.py   # A file defining a dictionary that logs the set of implemented 
-                    # bases for the translate tool.
+    implemeted.py   # A file defining a dictionary that logs the set of 
+                    # implemented bases for the translate tool.
     
-    query.py        # Yes/no query function borrowed from http://code.activestate.com/recipes/577058/
+    query.py        # Yes/no query function borrowed from 
+                    # http://code.activestate.com/recipes/577058/
     
 Cards/    # Sample MG5-style parameter cards to be used as input.
 
     param_card_HiggsBasis.dat       # Sample HiggsBasis input parameter card
-    param_card_MassBasis.dat        # Sample MassBasis parameter card, needn't be used as input
+    param_card_MassBasis.dat        # Sample MassBasis parameter card, needn't 
+                                    # be used as input
     param_card_TemplateBasis.dat    # Sample TemplateBasis input parameter card
     param_card_WarsawBasis.dat      # Sample WarsawBasis input parameter card
     
 translate   # Command line tool to perform basis translation based on the
             # implementations in Rosetta.py
 
-
+################################################################################
 Usage
-##########
-The translate command line tool takes an LHA-style param card 
-(see template cards provided in Cards/) in a particular basis 
-and outputs a new card in the specified basis (default is Mass 
-Basis). So far, only the Mass Basis can be takes as the target 
-basis. 
-The options BLOCKIN and BLOCKOUT allow the user to specify 
-the name of the LHA block that contains the new couplings. 
-The names of these couplings, specified as the first 
-non-whitespace characters following a hash ("#") character 
-after the numerical value of the parameter, should match 
-those defined in the 'independent' list of the specified 
-input basis.
+################################################################################
+The translate command line tool takes an LHA-style param card (see sample 
+cards provided in Cards/ directory) in a particular basis and outputs a new 
+card in the specified basis (default is Mass Basis). So far, only the Mass 
+Basis can be takes as the target basis. 
+The options BLOCKIN and BLOCKOUT allow the user to specify the name of the LHA 
+block that contains the new couplings. The names of these couplings, specified 
+as the first non-whitespace characters following a hash ("#") character after 
+the numerical value of the parameter, should match those defined in the 
+'independent' list of the specified input basis.
 
     Command line documentation:
     
     >> ./translate --help
     
-    usage: translate [-h] [-o OUTPUT] [-b BLOCKIN] [-B BLOCKOUT] [-t TARGETBASIS]
-                     [-w]
+    usage: translate [-h] [-o OUTPUT] [-b BLOCKIN] [-B BLOCKOUT] 
+                     [-t TARGETBASIS] [-w]
                      PARAMCARD BASIS
 
     Read in an LHA format parameter card in a particular basis and write a new
@@ -102,28 +125,78 @@ input basis.
       -b BLOCKIN, --blockin BLOCKIN
                             New coupling block to be read in. Default: newcoup
       -B BLOCKOUT, --blockout BLOCKOUT
-                            New coupling block to be written out. Default: newcoup
+                            New coupling block to be written out. Default: 
+                            newcoup
       -t TARGETBASIS, --target TARGETBASIS
                             Basis into which to translate (one of: higgs, mass,
                             template, warsaw). Default: mass
       -w, --overwrite       Overwrite any pre-existing output file.
+      
+################################################################################
+Input cards
+################################################################################
+Rosetta is designed to read input cards in a format similar to the SUSY Les 
+Houches Accord (SLHA) detailed in http://arxiv.org/abs/hep-ph/0311123. It 
+coincides with the input format read in by Madgraph5_aMC@NLO. Sample cards can 
+be found in the Cards/ directory. 
 
+The reader looks for block structures in a case insensitive way i.e.
 
+>>BLOCK MYBLOCK
+
+Specifically it will search for blocks MASS, SMINPUTS and BASIS. For the 
+Higgs Effective Theory couplings, it will also search for a block 'newcoup' or 
+any other string BLOCKIN specified by the '-b BLOCKIN' option of translate.
+
+The main difference between the input format of Rosetta and SLHA is that names 
+of parameters are required as this is what the translator uses to identify them 
+in applying the translation formulae. This was deemed to be clearer than the 
+usual numerical ordering that would be more suitable for automatically 
+generated input cards. Therefore each parameter in blocks SMINPUTS and BLOCKIN 
+should be accompanied by a name following a '#' character (usually reserved for 
+comments describing the parameter).
+
+>>BLOCK MYBLOCK
+>>  0 3.14159E+00 # pi
+>>  1 1.97327E-01 # hbarc_GeVfm
+>>  Block sminputs 
+>>      1   1.325070e+02       #    aEWM1  (white space doesn't matter)
+ETC.
+
+The reader reads all lines until the next occurrence of 'BLOCK' or 'DECAY', 
+ignoring leading and trailing white space and all lines beginning with a '#' as 
+well as lines that do not match the expected pattern detailed above. For blocks 
+BLOCKIN and SMINPUTS, the reader stores a name:value pair in the ordered 
+dictionaries self.par_dict and self.input respectively. For block MASS, a 
+PID:mass pair is stored in self.mass
+
+>> block mass 
+>>     5 4.700000e+00 # MB 
+>>     6 1.730000e+02 # MT 
+>>    15 1.730000e+02 # MTAU
+>>    23 9.118800e+01 # MZ 
+>>    25 1.250000e+02 # MH 
+
+Block basis should have one element and is simply a label for the users input 
+basis, it is not essential but is used when writing out the new to remind the 
+user from which basis they translated.
+
+>> block BASIS
+>> 0 MyBasis # name of basis
+
+################################################################################
 Implementing your own basis
-##########
-Users who wish to implement their own basis should have a 
-minimal understanding of implementing formulae and assigning 
-variables in python dictionaries. The TemplateBasis.py class 
-illustrates a toy implementation of a nonsense basis with 
-the main ingredients of a custom basis.
+################################################################################
+Users who wish to implement their own basis should have a minimal understanding 
+of implementing formulae and assigning variables in python dictionaries. The 
+TemplateBasis.py class illustrates a toy implementation of a basis containing 
+the main ingredients necessary.
 
-The base class Basis.py implements a number of reading 
-and writing functions designed to remain 'under the hood'.
-These inlcude reading and writing parameter cards, cross 
-checking inputs read in against required inputs, storing 
-the old parameter card and writing out a new one with 
-the coefficients of the target basis. In general, the 
-only variables needed in a derived class will be the 
+The base class Basis.py implements a number of reading and writing functions 
+designed to remain 'under the hood'.These include reading and writing parameter 
+cards, cross checking inputs read in against required inputs, storing the old 
+parameter card and writing out a new one with the coefficients of the target 
+basis. In general, the only variables needed in a derived class will be the 
 following useful data members:
 
     self.independent        # A list of coefficients required to be defined 
@@ -131,102 +204,119 @@ following useful data members:
 
     self.dependent          # A list of dependent coefficients to be assigned 
                             # by the calculate_dependent() function. These 
-                            # should not be declared in the input parameter card.
+                            # should not be declared in the input parameter
+                            # card.
 
-    self.required_inputs    # A set of required input parameters in block SMINPUTS
+    self.required_inputs    # A set of required input parameters in block 
+                            # SMINPUTS
 
     self.required_masses    # A set of required article masses in block MASS
 
     self.par_dict           # dictionary with keys defined by self.independent 
-                            # and self.dependent. The parameters in self.independent 
-                            # will be read in from the input parameter card while 
-                            # those in self.dependent should be calculated and 
-                            # assigned by the user in calculate_dependent().
+                            # and self.dependent. The parameters in  
+                            # self.independent will be read in from the 
+                            # input parameter card while those in self.dependent
+                            # should be calculated and assigned by the user in 
+                            # calculate_dependent().
                             
-    self.input              # dictionary with names and values of parameters defined 
-                            # in block SMINPUT. Cross checked with self.required_inputs
+    self.input              # dictionary with names and values of parameters 
+                            # defined in block SMINPUTS. Cross checked with 
+                            # self.required_inputs
                             
     self.mass               # dictionary with PIDs and particle masses defined 
-                            # in block MASS. Cross checked with self.required_masses
+                            # in block MASS. Cross checked with elements of
+                            # self.required_masses
 
-    self.newpar             # dictionary of coefficients to be filled in translate() 
-                            # function. The contents of this dictionary are written 
-                            # out to the output parameter card in place of the old 
-                            # basis coefficients of the input parameter card.
+    self.newpar             # dictionary of coefficients to be filled in  
+                            # translate() function. The contents of this 
+                            # dictionary are written out to the output parameter
+                            # card in place of the old basis coefficients of the
+                            #  input parameter card.
 
-    self.newmass            # dictionary of parameters to be filled in translate() 
-                            # function
+    self.newmass            # dictionary of parameters to be filled in
+                            # translate() function
 
 The basic steps are as follows:
 
-1)  Create a new file MyBasis.py declaring a class MyBasis 
-    inheriting from the Basis class (these names need not 
-    coincide). The target basis class can also be imported 
-    in order to initialise an empty container to fill 
-    in the translate function.
+1)  Create a new file MyBasis.py declaring a class MyBasis inheriting from the 
+    Basis class (these names need not coincide). The target basis class can 
+    also be imported in order to initialise an empty container to fill in the 
+    translate function.
     
     >>from Basis import Basis # base class
     >>from MassBasis import MassBasis # target basis
     >>
     >>class TemplateBasis(Basis):
 
-2)  Minimally, a list of strings called 'independent' should 
-    be declared conatining the names of the coefficients to 
-    be read in the input parameter card and used to calculate 
-    the coefficients in the target basis. 
-    Additionally, a list named 'dependent' can also (optionally) 
-    be defined containing the names of coefficients to calculate 
-    internally before translating to the target basis.
-    For more consistency, the sets 'required_inputs' and 
-    'required_masses' can also be declared. These tell the basis 
-    class to check that the masses of particles with certain 
-    PIDs and certain SM input parameters are defined in the 
-    blocks MASS and SMINPUTS respectively. If default values 
-    exist for these parameters in __init__.py, the user 
-    is asked if they wish to continue using those when calling 
-    ./translate.
+2)  Minimally, a list of strings called 'independent' should be declared 
+    containing the names of the coefficients to be read in the input parameter 
+    card and used to calculate the coefficients in the target basis. 
+    Additionally, a list named 'dependent' can also (optionally) be defined 
+    containing the names of coefficients to calculate internally before 
+    translating to the target basis.
+    For more consistency, the sets 'required_inputs' and 'required_masses' 
+    can also be declared. These tell the basis class to check that the masses 
+    of particles with certain PIDs and certain SM input parameters are defined 
+    in the blocks MASS and SMINPUTS respectively. If default values exist for 
+    these parameters in __init__.py, the user is asked if they wish to continue 
+    using those when calling ./translate.
     
-    >>class TemplateBasis(Basis):
-    >>    independent = ['a','b','c',...] # list of required independent coefficients
-    >>    dependent = ['d','e','f',...] # list of dependent coefficients to be calculated
-    >>    required_masses = {1,2,3,4,5,6}
-    >>    required_inputs = {'aEWM1','MZ'}
+    >>class MyBasis(Basis):
+    >>    independent = ['a','b','c',...] # list of required parameters
+    >>    dependent = ['d','e','f',...]   # list of derived parameters
+    >>    required_masses = {1,2,3,4,5,6,...} # PIDs of required particle masses
+    >>    required_inputs = {'aEWM1','MZ',...} # required SMINPUT parameters
     
-3)  At least the function translate() should be defined that 
-    applies the map from the input coefficients to those in 
-    the output basis. This can be done by creating and instance 
-    of the target basis class and filling its par_dict data member. 
-    The function should ultimately assign the dictionary to 
+3)  At least the function translate() should be defined that applies the map 
+    from the input coefficients to those in the output basis. This can be done 
+    by creating and instance of the target basis class and filling its par_dict 
+    data member. The function should ultimately assign the dictionary to 
     self.newpar. self.newname can also be assigned.
-    The function calculate_dependent() can also be defined which 
-    to calculate values of the coefficients declared in 'dependent' 
-    and assign them in self.par_dict.
-    The dictionary self.newmass can also be modified at any stage 
-    if modifications to particle masses occur. This should be a 
-    dictionary of PID:mass pairs that will replace the entries 
-    in self.mass.
+    The function calculate_dependent() can also be defined which to calculate 
+    values of the coefficients declared in 'dependent' and assign them in 
+    self.par_dict.The dictionary self.newmass can also be modified at any 
+    stage if modifications to particle masses occur. This should be a 
+    dictionary of PID:mass pairs that will replace the entries in self.mass.
     
     >>    def calculate_dependent(self):
     >>        '''
-    >>        Calculate dependent parameters here by assigning values to self.par_dict 
-    >>        corresponding to the keys in self.dependent.
+    >>        Calculate dependent parameters here by assigning values 
+    >>        to self.par_dict corresponding to the keys in self.dependent.
     >>        '''
     >>        p = self.par_dict
     >>        p['d'] = p['a']+ p['b']*p['c'] # set a value for 'd' coefficient
     >>
     >>    def translate(self):
     >>        '''
-    >>        Translate to the mass basis by creating an empty MassBasis and modifying its par_dict or coeffs._asdict()
-    >>        set self.newpar with resulting par_dict
+    >>        Translate to the mass basis by creating an empty MassBasis 
+    >>        and modifying its par_dict or coeffs._asdict().
+    >>        Set self.newpar with resulting dictionary
     >>        '''
     >>        A = self.coeffs._asdict()
-    >>        B = MassBasis().coeffs._asdict() # initialise empty par_dict of the target basis instance
-    >>        for k in B.keys(): # set all values of coeffs according to nonsense formula coeff_a*m_top/a_EW
+    >>        # initialise empty par_dict of the target basis instance
+    >>        B = MassBasis().coeffs._asdict() 
+    >>        # set all values of coeffs according to nonsense formula: 
+    >>        # C = coeff_d * m_top / a_EW
+    >>        for k in B.keys(): 
     >>            B[k]=A['d']*self.mass[6]/self.input['aEWM1']
     >>        self.newpar = B
     >>        self.newname = 'Mass'
 
-
-
-
+4)  Once the translate() function has been defined, the implementation is 
+    complete and can be tested with the translate tool. The new basis should be 
+    added to the dictionary 'bases' in implemented.py in order to make the tool 
+    aware of its existence. This is done by importing the new module and 
+    appending it to the dictionary.
+    
+    In implemented.py:
+    
+    >>import WarsawBasis, HiggsBasis, MassBasis, TemplateBasis
+    >>import MyBasis
+    
+    >> bases['mybasis'] = MyBasis.MyBasis
+    
+    The options for ./translate -h should now include "mybasis" as a possible
+    BASIS argument.
+    
+################################################################################
 
