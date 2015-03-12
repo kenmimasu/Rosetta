@@ -189,6 +189,8 @@ user from which basis they translated.
 >> block BASIS
 >> 0 MyBasis # name of basis
 
+If the reader can't find block basis, it will print a warning and ask to 
+continue with the default value which is the input basis class name.
 ################################################################################
 Implementing your own basis
 ################################################################################

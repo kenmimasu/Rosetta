@@ -161,7 +161,16 @@ class Basis(object):
                     
                 if not block or (block not in relevant_blocks): print >> self.card, line.strip('\n')
             if relevant_blocks:
-                raise IOError("Block(s) ({}) not found in {}".format(', '.join(relevant_blocks), self.param_card))
+                if relevant_blocks==['basis']: # only optional basis block unread
+                    print 'Warning: block basis not found.'
+                    carry_on = Y_or_N('Continue assuming default value "{}"?'.format(self.__class__.__name__))
+                    if carry_on:
+                        self.name=self.__class__.__name__
+                    else:
+                        print 'Exit'
+                        sys.exit()
+                else:
+                    raise IOError("Required block(s) ({}) not found in {}".format(', '.join(relevant_blocks), self.param_card))
             
         if self.mass.has_key(23): self.input['MZ']=self.mass[23] # MZ counts as SM input
         if self.mass.has_key(25): self.input['MH']=self.mass[25] # MH counts as SM input
