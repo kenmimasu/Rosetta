@@ -34,13 +34,11 @@ class HiggsBasis(Basis):
                    'CLzd11','CLzd12','CLzd13','CLzd22','CLzd23','CLzd33',
                    'CRzu11','CRzu12','CRzu13','CRzu22','CRzu23','CRzu33',
                    'CRzd11','CRzd12','CRzd13','CRzd22','CRzd23','CRzd33']
+                   
     required_masses = {1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16}
-    required_inputs = {'aEWM1','Gf','MZ'}
     
-    # def __init__(self,*args,**kwargs):
-    #     super(HiggsBasis, self).__init__(*args,**kwargs)
-    #     self.set_newcard(keep_old=False)
-        
+    required_inputs = {1, 2, 4} # aEWM1, Gf, MZ
+
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
         self.input['ee2'] = 4.*math.pi/self.input['aEWM1'] # EM coupling squared
         self.input['s2w'] = (1.- math.sqrt(1. - self.input['ee2']/(math.sqrt(2.)*self.input['Gf']*self.input['MZ']**2)))/2. #sin^2(theta_W)

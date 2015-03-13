@@ -23,7 +23,8 @@ class WarsawBasis(Basis):
               'ce11Re','ce12Re','ce13Re','ce22Re','ce23Re','ce33Re',
               'ce11Im','ce12Im','ce13Im','ce22Im','ce23Im','ce33Im']
     required_masses = set([y for x in PID.values() for y in x.values()])
-    required_inputs = {'aEWM1','Gf','MZ','MH'}
+    required_inputs = {1, 2, 4, 8} # aEWM1, Gf, MZ, MH
+    
     translate_to={'mass'}
         
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ

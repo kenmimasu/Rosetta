@@ -2,7 +2,7 @@ import StringIO
 import re, sys, os, math, datetime
 from collections import namedtuple,OrderedDict
 from query import query_yes_no as Y_or_N
-from Rosetta import PID, default_inputs, default_masses
+from Rosetta import PID, default_inputs, default_masses, input_names, particle_names
 
 ####################################################################################################
 # Base Basis class
@@ -57,9 +57,11 @@ class Basis(object):
     
     Derived classes can be used by the command line script "translate"
     '''
+    
     independent, dependent=[], []
     required_inputs, required_masses = set(),set()
     translate_to = {'mass'}
+    
     def __init__(self, param_card=None, block_in='newcoup', block_out='newcoup', output_basis='mass', keep_old=True):
         # Check that target basis has a translation implemented
         if output_basis in self.translate_to:
@@ -73,7 +75,9 @@ class Basis(object):
         self.param_card = param_card
         self.block_in, self.block_out, self.keep_old = block_in, block_out, keep_old # other options
         self.card, self.newcard = StringIO.StringIO(), StringIO.StringIO()
-        self.input, self.mass, self.par_dict, self.newpar, self.newmass = OrderedDict(),OrderedDict(),OrderedDict(),OrderedDict(),OrderedDict()
+        self.SLHA_sminputs = OrderedDict()
+        self.input, self.mass, self.par_dict = OrderedDict(), OrderedDict(), OrderedDict()
+        self.newinput, self.newmass, self.newpar = OrderedDict(), OrderedDict(), OrderedDict()
         self.newname = 'Basis'
         self.all_coeffs = self.independent + self.dependent
         
@@ -101,16 +105,15 @@ class Basis(object):
         and self.input (name, value) respectively. 
         The whole param_card are also stored in self.card for later use.
         '''
+        
         def read_pattern(plines, patt, pdict, ikey=2, ival=1, convert_key=str, convert_val=float):
             '''Takes a list of lines and looks for regexp pattern "patt" assuming the pattern captures 2 groups.
                "key" and "val" refer to the index of the resulting group (1 or 2).
                "convert_val" and "convert_key" specify a functions with which to treat the resulting string match e.g. convert to float.
                If pdict is None, function returns convert_val( match.group(val) ) (used to assign one variable).
                Otherwise, pdict is appended with a key value pair ( convert_key(match.group(key)), convert_val(match.group(val)) ).
-               Also prints each line to self.card'''
+            '''
             for pline in plines[:-1]:
-                comment_or_block = (pline and not pline.startswith('#') and not 'block' in pline.lower())
-                print >> self.card, '    ' + pline.strip('\n') if comment_or_block else pline.strip('\n')
                 try:
                     match = re.match(patt,pline)
                     if pdict is not None:
@@ -135,32 +138,42 @@ class Basis(object):
                         print >> self.card, line.strip('\n')
                         param_lines = self.read_until(lines,'Block','DECAY') # lines in block mass
                         read_pattern(param_lines, r'\s*(\d+)\s+(\S+)\s+.*', self.mass, ikey=1, ival=2, convert_key=int) # by PDG number
-                        relevant_blocks.remove('mass')
+                        
+                        for pline in param_lines[:-1]: print >> self.card, pline.strip('\n')
                         line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
+                        relevant_blocks.remove('mass')
                     
                     elif block=='basis': # Get basis name
                         print >> self.card, line.strip('\n')
                         param_lines = self.read_until(lines,'Block','DECAY') # lines in block basis
                         self.name = read_pattern(param_lines,r'\s*0\s+(\S+).*', None, convert_val=str).strip()
-                        relevant_blocks.remove('basis')
+                        
+                        for pline in param_lines[:-1]: print >> self.card, pline.strip('\n')
                         line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
+                        relevant_blocks.remove('basis')
                     
                     elif block==self.block_in: # Get basis coefficients
                         print >> self.card, line.strip('\n')
                         param_lines = self.read_until(lines,'Block', 'DECAY') # lines in block newcoup
                         read_pattern(param_lines, r'\s*\d+\s+(\S+)\s+#+\s+(\S+)', self.par_dict)
-                        relevant_blocks.remove(self.block_in)
+                        
+                        for pline in param_lines[:-1]: print >> self.card, pline.strip('\n')
                         line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
+                        relevant_blocks.remove(self.block_in)
 
                     elif block=='sminputs': # Get SM inputs
                         print >> self.card, line.strip('\n')
                         param_lines = self.read_until(lines,'Block', 'DECAY') # lines in block sminputs
+                        read_pattern(param_lines, r'\s*(\d+)\s+(\S+)\s+#+\s+\S+', self.SLHA_sminputs, ikey=1, ival=2, convert_key = int)
                         read_pattern(param_lines, r'\s*\d+\s+(\S+)\s+#+\s+(\S+)', self.input)
-                        relevant_blocks.remove('sminputs')
+                        
+                        for pline in param_lines[:-1]: print >> self.card, pline.strip('\n')
                         line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
+                        relevant_blocks.remove('sminputs')
                     
                 if not block or (block not in relevant_blocks): print >> self.card, line.strip('\n')
-            if relevant_blocks:
+                
+            if relevant_blocks: # checks if all relevant block were found
                 if relevant_blocks==['basis']: # only optional basis block unread
                     print 'Warning: block basis not found.'
                     carry_on = Y_or_N('Continue assuming default value "{}"?'.format(self.__class__.__name__))
@@ -171,9 +184,17 @@ class Basis(object):
                         sys.exit()
                 else:
                     raise IOError("Required block(s) ({}) not found in {}".format(', '.join(relevant_blocks), self.param_card))
-            
-        if self.mass.has_key(23): self.input['MZ']=self.mass[23] # MZ counts as SM input
-        if self.mass.has_key(25): self.input['MH']=self.mass[25] # MH counts as SM input
+
+        if self.mass.has_key(23):
+            self.input['MZ'] = self.mass[23] # MZ counts as SM input
+            self.SLHA_sminputs[4] = self.mass[23] 
+        if self.mass.has_key(24):
+            self.input['MW'] = self.mass[24] # MH counts as SM input
+            self.SLHA_sminputs[7] = self.mass[24]
+        if self.mass.has_key(25):
+            self.input['MH'] = self.mass[25] # MH counts as SM input
+            self.SLHA_sminputs[8] = self.mass[25] 
+
         
     def check_param_data(self):
         '''
@@ -220,27 +241,34 @@ class Basis(object):
                 sys.exit()
                 
         missing_masses = set(self.required_masses).difference(self.mass.keys())
-        repr_default_masses = ['{}={:.5e}'.format(k,default_masses[k]) for k in missing_masses]
+        repr_default_masses = ['{}={:.5e}'.format(k,default_masses.get(k,0.)) for k in missing_masses]
         if missing_masses: # Deal with unassigned fermion masses
             print 'Warning: Not all required fermion masses are defined in {}.'.format(self.param_card)
             print 'Required PIDs: {}'.format(', '.join([str(x) for x in self.required_masses]))
             print 'Missing PIDs: {}'.format(', '.join([str(x) for x in missing_masses]))
             carry_on = Y_or_N('Continue assuming default values for unspecified masses? ({})'.format(', '.join(repr_default_masses)))
-            if carry_on:
-                for m in missing_masses: self.mass[m]=0.
+            if carry_on: # assigns a data member for unspecified inputs for writing to self.newcard
+                self.missing_masses=dict()
+                for m in missing_masses: 
+                    self.mass[m]=default_masses[m]
+                    self.missing_masses[m]=default_masses[m]
             else:
                 print 'Exit'
                 sys.exit()
                 
-        missing_inputs = set(self.required_inputs).difference(self.input.keys())
-        repr_default_inputs = ['{}={:.5e}'.format(k,default_inputs[k]) for k in missing_inputs]
+        missing_inputs = set(self.required_inputs).difference(self.SLHA_sminputs.keys())
+        repr_default_inputs = ['{}={:.5e}'.format(input_names[k],default_inputs.get(k,0.)) for k in missing_inputs]
         if missing_inputs: # Deal with unassigned SM inputs
-            print 'Warning: Not all requires SM inputs are defined in {}.'.format(self.param_card)
-            print 'Required inputs: {}'.format(', '.join([str(x) for x in self.required_inputs]))
+            print 'Warning: Not all required SM inputs are defined in {}.'.format(self.param_card)
+            print 'Required inputs: {}'.format(', '.join(['{} ({})'.format(input_names[x],x) for x in self.required_inputs]))
             print 'Missing inputs: {}'.format(', '.join([str(x) for x in missing_inputs]))
             carry_on = Y_or_N('Continue with default values for unspecified inputs? ({})'.format(', '.join(repr_default_inputs)))
-            if carry_on:
-                for m in missing_inputs: self.input[m]=default_inputs[m]
+            if carry_on:# assigns a data member for unspecified inputs for writing to self.newcard
+                self.missing_inputs=dict()
+                for m in missing_inputs: 
+                    self.SLHA_sminputs[m]=default_inputs[m]
+                    self.input[input_names[m]]=default_inputs[m]
+                    self.missing_inputs[m]=default_inputs[m]
             else:
                 print 'Exit'
                 sys.exit()
@@ -249,7 +277,7 @@ class Basis(object):
     def check_calculated_data(self):
         missing_dependents = set(self.dependent).difference(self.par_dict.keys())
         if missing_dependents and self.dependent:
-            print 'Warning: Set of dependent coefficients calulcated by {0}.calculate_dependent() does not match those specified in {0}.'.format(self.__class__)
+            print 'Warning: Set of dependent coefficients calculated by {0}.calculate_dependent() does not match those specified in {0}.'.format(self.__class__)
             print 'Undefined: {}'.format(', '.join(missing_dependents))
             carry_on = Y_or_N('Continue assuming coefficients are Zero?')
             if carry_on:
@@ -258,7 +286,22 @@ class Basis(object):
                 print 'Exit'
                 sys.exit()   
             print 'Calculated coefficients match those defined in {}.dependent.'.format(self.__class__.__name__)         
-    
+    def check_new():
+        for ID_input,ID_mass in [(4,23), (7,24), (8,25)]:
+            try:
+                ipar,mpar = self.newinput[ID_input],self.newmass[ID_mass]
+                if not ipar==mpar:
+                    print 'Warning: modified mass {} in self.newinput ({}) does not match value in self.newmass ({})'.format(input_name[ID_input],ipar,mpar)
+                carry_on = Y_or_N('Continue?')
+                if carry_on:
+                    pass
+                else:
+                    print 'Exit'
+                    sys.exit()             
+            except AttributeError:
+                pass
+            
+            
     def set_newcard(self):
         '''
         Generates a new param card in self.newcard from self.card, adding the new set of coefficients in self.newpar after "Block newcoup".
@@ -268,23 +311,26 @@ class Basis(object):
         print >> self.newcard, '############# COEFFICIENTS TRANSLATED BY ROSETTA MODULE  #############'
         print >> self.newcard, '########### PARAM_CARD GENERATED {}  ###########'.format(datetime.datetime.now().ctime().upper())
         print >> self.newcard, '######################################################################'
-        blocks_to_modify =('basis',self.block_in, 'mass')
+        
+        blocks_to_modify =('basis',self.block_in, 'mass', 'sminputs')
         lines = iter(self.card.getvalue().splitlines()) # Lines of old param card
         for line in lines:
+            
             line, block = self.line_is_block(line)
-            if block==self.block_in:
-                print >> self.newcard, line.strip('\n').replace(self.block_in,self.block_out) # Add line to self.newcard, modify block name
-            else:
-                print >> self.newcard, line.strip('\n') # Add line to self.newcard
-            while block in blocks_to_modify:
+            if block==self.block_in: # Add line to self.newcard, modify block name
+                print >> self.newcard, line.strip('\n').replace(self.block_in,self.block_out)
+            else: # Add line to self.newcard
+                print >> self.newcard, line.strip('\n') 
+                
+            while block in blocks_to_modify: # Slightly different actions for each block
                 
                 if block=='basis': # When Block basis is reached
                     print >> self.newcard, '    0 {} # translated basis'.format(self.newname)
-                    param_lines = self.read_until(lines,'Block') 
+                    param_lines = self.read_until(lines, 'Block', 'DECAY') 
                     for pline in param_lines[:-1]:
                         if self.keep_old:
                             comment_out = (pline and not pline.startswith('#'))
-                            print >> self.newcard, '#    ' + pline.strip('\n') if comment_out else pline.strip('\n')
+                            print >> self.newcard, '#' + pline.strip('\n') if comment_out else pline.strip('\n')
                         else:
                             if not pline.strip() or pline.startswith('#'): print >> self.newcard, pline.strip('\n')
                     line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
@@ -292,8 +338,8 @@ class Basis(object):
                 elif block==self.block_in: # When Block self.block_in is reached,
                     for i,(par,val) in enumerate(self.newpar.items()):  # write out new couplings
                         print >> self.newcard, '    {} {:.5e} # {}'.format(i,val,par)
-                    param_lines = self.read_until(lines,'Block') 
-                    if self.keep_old:
+                    param_lines = self.read_until(lines,'Block', 'DECAY') 
+                    if self.keep_old: # write old parameters
                         print >> self.newcard, ''
                         print >> self.newcard, '###################################'
                         print >> self.newcard, '## COEFFICIENTS IN {} BASIS'.format(self.name.upper())
@@ -305,22 +351,86 @@ class Basis(object):
                         for pline in param_lines[:-1]:
                             if not pline.strip() or pline.startswith('#'): print >> self.newcard, pline.strip('\n')
                     line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
+                    
+                elif block=='sminputs':# When block sminputs is reached
                 
+                    try: # add missing inputs
+                        for i,(ID, inpt) in enumerate(self.missing_inputs.items()): 
+                            if i==0: print >> self.newcard, '# missing inputs'
+                            if self.newinput.has_key(ID):
+                                print >> self.newcard, '    {} {:.5e} # {} '.format(ID, self.newinput[ID], input_names[ID])
+                                print >> self.newcard, '#    {} {:.5e} # {} old value'.format(ID, inpt, input_names[ID])
+                            else:
+                                print >> self.newcard, '    {} {:.5e} # {} '.format(ID, inpt, input_names[ID])
+                    except AttributeError as e:
+                        pass
+                    
+                    # add additional new inputs
+                    input_names_reversed={v:k for k,v in input_names.iteritems()}
+                    for i,(ID, inpt) in enumerate(self.newinput.items()): 
+                        if i==0: print >> self.newcard, '# additional inputs'
+                        if not self.SLHA_sminput.has_key(ID):
+                            if type(ID)==int:
+                                print >> self.newcard, '    {} {:.5e} # {} '.format(ID, inpt, input_names.get(ID,''))
+                            elif type(ID)==str:
+                                print >> self.newcard, '    {} {:.5e} # {} '.format(input_names_reversed.get(ID,99), inpt,ID )
+                                
+                    print >> self.newcard, '# original inputs'
+
+                    param_lines = self.read_until(lines,'Block', 'DECAY') 
+                    for pline in param_lines[:-1]:
+                        match = re.match(r'\s*(\d+)\s+(\S+)\s+.*',pline.strip()) # read old inputs
+                        try: # do if match
+                            ID, inpt = int(match.group(1)), match.group(2)
+                            try:  # if a new value exists
+                                print >> self.newcard, pline.replace(inpt, '{:.5e}'.format(self.newinput[ID])).strip('\n')
+                                if self.keep_old: print >> self.newcard, '# '+pline.strip('\n')+' # old value'
+                            except KeyError as e:
+                                print >> self.newcard, pline.strip('\n')
+                        except AttributeError as e:
+                            print >> self.newcard, pline.strip('\n')
+
+                    line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
+
                 elif block=='mass': # When block mass is reached
-                    param_lines = self.read_until(lines,'Block') 
+                
+                    try: # add missing masses
+                        for i,(ID, mass) in enumerate(self.missing_masses.items()): 
+                            if i==0: print >> self.newcard, '# missing masses'
+                            if self.newmass.has_key(ID):
+                                print >> self.newcard, '    {} {:.5e} # M{} '.format(ID, self.newmass[ID], particle_names[ID])
+                                print >> self.newcard, '#    {} {:.5e} # M{} old value'.format(ID, mass, particle_names[ID])
+                            else:
+                                print >> self.newcard, '    {} {:.5e} # M{} '.format(ID, mass, particle_names[ID])
+                    except AttributeError as e: 
+                        pass
+                    try:
+                        if self.missing_inputs.has_key(4):
+                            print >> self.newcard, '    23 {:.5e} # MZ '.format(self.missing_inputs[4])
+                        if self.missing_inputs.has_key(7):
+                            print >> self.newcard, '    24 {:.5e} # MW '.format(self.missing_inputs[7])
+                        if self.missing_inputs.has_key(8):
+                            print >> self.newcard, '    25 {:.5e} # MH '.format(self.missing_inputs[8])
+                    except AttributeError:
+                        pass
+                    
+                    print >> self.newcard, '# original masses'
+                    
+                    param_lines = self.read_until(lines,'Block', 'DECAY') 
                     for pline in param_lines[:-1]:
                         match = re.match(r'\s*(\d+)\s+(\S+)\s+.*',pline.strip()) # read old mass
-                        try:
+                        try: # do if match
                             ID, mass = int(match.group(1)), match.group(2)
-                            if self.newmass.has_key(ID):  # if a new value exists
+                            try:  # if a new value exists
                                 print >> self.newcard, pline.replace(mass, '{:.5e}'.format(self.newmass[ID])).strip('\n')
                                 if self.keep_old: print >> self.newcard, '# '+pline.strip('\n')+' # old value'
-                            else:
+                            except KeyError:
                                 print >> self.newcard, pline.strip('\n')
                         except AttributeError:
                             print >> self.newcard, pline.strip('\n')
+                            
                     line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
-                     
+
                 if block==self.block_in:
                     print >> self.newcard, line.strip('\n').replace(self.block_in,self.block_out) # Add line to self.newcard, modify block name
                 else:
@@ -360,9 +470,9 @@ class Basis(object):
         end_strings = [here.lower()]+[a.lower() for a in args]
         lines_read = []
         line = ''
-        while not any([line.lower().startswith(x) for x in end_strings]): 
-            line = lines.next().strip()
-            lines_read.append(line.strip())
+        while not any([line.strip().lower().startswith(x) for x in end_strings]): 
+            line = lines.next()
+            lines_read.append(line.strip('\n'))
         return lines_read
         
     @staticmethod

@@ -6,7 +6,8 @@ class TemplateBasis(Basis):
     independent = ['a','b','c']
     dependent=['d']
     required_masses = {1,2,3,4,5,6}
-    required_inputs = {'aEWM1','MZ'}
+    required_inputs = {1, 4} # aEWM1, MZ
+    
     def __init__(self,*args,**kwargs): # This can be overridden if you want
         super(TemplateBasis, self).__init__(*args,**kwargs) # ensure a call to the base class constructor is made as so
         # additional instructions can live here
