@@ -36,7 +36,6 @@ class HiggsBasis(Basis):
                    'CRzd11','CRzd12','CRzd13','CRzd22','CRzd23','CRzd33']
                    
     required_masses = {1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16}
-    
     required_inputs = {1, 2, 4} # aEWM1, Gf, MZ
 
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ

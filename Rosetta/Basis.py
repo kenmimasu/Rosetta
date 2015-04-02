@@ -2,7 +2,7 @@ import StringIO
 import re, sys, os, math, datetime
 from collections import namedtuple,OrderedDict
 from query import query_yes_no as Y_or_N
-from Rosetta import PID, default_inputs, default_masses, input_names, particle_names
+from Rosetta import PID, default_inputs, default_masses, input_names, particle_names, input_to_PID
 
 ####################################################################################################
 # Base Basis class
@@ -77,33 +77,38 @@ class Basis(object):
         self.card, self.newcard = StringIO.StringIO(), StringIO.StringIO()
         self.SLHA_sminputs = OrderedDict()
         self.input, self.mass, self.par_dict = OrderedDict(), OrderedDict(), OrderedDict()
-        self.newinput, self.newmass, self.newpar = OrderedDict(), OrderedDict(), OrderedDict()
+        self.newinput, self.newmass, self.newpar = dict(), dict(), dict()
         self.newname = 'Basis'
         self.all_coeffs = self.independent + self.dependent
         
         if param_card is not None: # read param card (sets self.par_dict, self.input, self.mass, self.name, self.card)
             assert os.path.exists(self.param_card), '{} does not exist!'.format(self.param_card)
-            self.read_param_card()
-            self.check_param_data()
-            self.calculate_dependent()
-            self.check_calculated_data()
-            coeffclass = namedtuple(self.name, self.all_coeffs)
-            self.coeffs = coeffclass(**self.par_dict)
-        else: # if param_card option not given, instatiate with class name and all coeffs set to 0 (used for creating an empty MassBasis instance for use in translate() method)
+            
+            self.read_param_card() # read
+            self.check_param_data() # consistency check on inputs
+            self.calculate_dependent() # calculate dependent parameters (User defined)
+            self.check_calculated_data() # consistency check on dependent parameters
+            coeffclass = namedtuple(self.name, self.all_coeffs) # declare coefficient namedtuple
+            self.coeffs = coeffclass(**self.par_dict) # store coefficients
+            self.translate() # translate to new basis (User defined)
+            self.check_new() # consistency check between self.newinput and self.newmass
+            self.set_new_masses() # set new masses in self.newinput
+            self.set_newcard() # set new param_card
+            
+        else: # if param_card option not given, instatiate with class name and all coeffs set
+              # to 0 (used for creating an empty basis instance for use in translate() method)
             self.name=self.__class__.__name__
             coeffclass = namedtuple(self.name, self.all_coeffs)
             self.coeffs = coeffclass(**{k:0. for k in self.all_coeffs})
             
-        self.translate()
-        self.set_newcard()
-        
+
     def read_param_card(self):
         '''
         Reads SLHA style param card and stores values of parameters.
         Looks for Blocks "basis", "mass", "newcoup" and "sminput" and 
         updates self.name, self.mass (by PDG number), self.par_dict (name, value) 
-        and self.input (name, value) respectively. 
-        The whole param_card are also stored in self.card for later use.
+        and self.input (name, value)/self.SLHA_sminputs (SLHA ID, value) respectively. 
+        The whole param_card is also stored in self.card for later use.
         '''
         
         def read_pattern(plines, patt, pdict, ikey=2, ival=1, convert_key=str, convert_val=float):
@@ -118,7 +123,7 @@ class Basis(object):
                     match = re.match(patt,pline)
                     if pdict is not None:
                         key, val = convert_key(match.group(ikey)), convert_val(match.group(ival))
-                        if pdict.has_key(key): # check if variable has already been assigned
+                        if key in pdict: # check if variable has already been assigned
                             label = 'PDG mass' if type(key)==int else 'variable'
                             print 'Warning: {} "{}" assigned more than once, kept value {}'.format( label,key,val )
                         pdict[key]= val
@@ -184,17 +189,16 @@ class Basis(object):
                         sys.exit()
                 else:
                     raise IOError("Required block(s) ({}) not found in {}".format(', '.join(relevant_blocks), self.param_card))
-
-        if self.mass.has_key(23):
-            self.input['MZ'] = self.mass[23] # MZ counts as SM input
-            self.SLHA_sminputs[4] = self.mass[23] 
-        if self.mass.has_key(24):
-            self.input['MW'] = self.mass[24] # MH counts as SM input
-            self.SLHA_sminputs[7] = self.mass[24]
-        if self.mass.has_key(25):
-            self.input['MH'] = self.mass[25] # MH counts as SM input
-            self.SLHA_sminputs[8] = self.mass[25] 
-
+        
+        # Add MH,MW,MZ,mt,mb,mtau,aEWM1 to SLHA_sminputs
+        for inID,PID in input_to_PID.iteritems():
+            if inID in self.required_inputs:
+                try:
+                    input_mass = self.mass[PID]
+                    self.input[input_names[inID]] = input_mass
+                    self.SLHA_sminputs[inID] =input_mass
+                except KeyError:
+                    pass
         
     def check_param_data(self):
         '''
@@ -208,7 +212,7 @@ class Basis(object):
               If not, the user is given the option to continue with them set to 0.
            5) Ensures all sm imputs declared in self.required_inputs are defined.
               If not, the user is given the option to continue with them set to default 
-              values defined in HEFTrosetta.default_inputs.
+              values defined in Rosetta.default_inputs.
         '''
 
         unknown_coeffs = set(self.par_dict.keys()).difference( self.all_coeffs )
@@ -275,6 +279,10 @@ class Basis(object):
         print 'Param card data are OK.'
     
     def check_calculated_data(self):
+        '''
+        Compares self.dependent and self.par_dict keys to see if all dependent coefficients have been calculated.
+        If not, asks whether the user wants to continue assuming they are zero.
+        '''
         missing_dependents = set(self.dependent).difference(self.par_dict.keys())
         if missing_dependents and self.dependent:
             print 'Warning: Set of dependent coefficients calculated by {0}.calculate_dependent() does not match those specified in {0}.'.format(self.__class__)
@@ -285,23 +293,37 @@ class Basis(object):
             else:
                 print 'Exit'
                 sys.exit()   
-            print 'Calculated coefficients match those defined in {}.dependent.'.format(self.__class__.__name__)         
-    def check_new():
-        for ID_input,ID_mass in [(4,23), (7,24), (8,25)]:
+            print 'Calculated coefficients match those defined in {}.dependent.'.format(self.__class__.__name__) 
+                    
+    def check_new(self):
+        '''
+        Check consistency of modifications to mass parameters defined as possible SHLA inputs:
+        MZ (PID = 23, SLHA key = 4)
+        MW (PID = 24, SLHA key = 7)
+        MH (PID = 25, SLHA key = 8)
+        Compares self.newinput to self.newmass and makes sure user hasn't specified different new values
+        '''
+        for ID_input, ID_mass in input_to_PID.iteritems():
             try:
-                ipar,mpar = self.newinput[ID_input],self.newmass[ID_mass]
+                ipar, mpar = self.newinput[ID_input],self.newmass[ID_mass]
                 if not ipar==mpar:
                     print 'Warning: modified mass {} in self.newinput ({}) does not match value in self.newmass ({})'.format(input_name[ID_input],ipar,mpar)
-                carry_on = Y_or_N('Continue?')
+                carry_on = Y_or_N('Continue using values in self.newmass?')
                 if carry_on:
                     pass
                 else:
                     print 'Exit'
                     sys.exit()             
-            except AttributeError:
+            except KeyError as e:
                 pass
-            
-            
+    
+    def set_new_masses(self):
+        '''
+        If the user modifies a mass input parameter, appends the change to self.mass
+        '''
+        for inID, PID in input_to_PID.iteritems():
+            if inID in self.newinput and PID not in self.newmass: self.newmass[PID] = self.newinput[inID]
+        
     def set_newcard(self):
         '''
         Generates a new param card in self.newcard from self.card, adding the new set of coefficients in self.newpar after "Block newcoup".
@@ -346,7 +368,7 @@ class Basis(object):
                         print >> self.newcard, '###################################'
                         for pline in param_lines[:-1]:
                             comment_out = (pline and not pline.startswith('#'))
-                            print >> self.newcard, '#    ' + pline.strip('\n') if comment_out else pline.strip('\n')
+                            print >> self.newcard, '#' + pline.strip('\n') if comment_out else pline.strip('\n')
                     else:
                         for pline in param_lines[:-1]:
                             if not pline.strip() or pline.startswith('#'): print >> self.newcard, pline.strip('\n')
@@ -357,7 +379,7 @@ class Basis(object):
                     try: # add missing inputs
                         for i,(ID, inpt) in enumerate(self.missing_inputs.items()): 
                             if i==0: print >> self.newcard, '# missing inputs'
-                            if self.newinput.has_key(ID):
+                            if ID in self.newinput:
                                 print >> self.newcard, '    {} {:.5e} # {} '.format(ID, self.newinput[ID], input_names[ID])
                                 print >> self.newcard, '#    {} {:.5e} # {} old value'.format(ID, inpt, input_names[ID])
                             else:
@@ -369,7 +391,7 @@ class Basis(object):
                     input_names_reversed={v:k for k,v in input_names.iteritems()}
                     for i,(ID, inpt) in enumerate(self.newinput.items()): 
                         if i==0: print >> self.newcard, '# additional inputs'
-                        if not self.SLHA_sminput.has_key(ID):
+                        if not ID in self.SLHA_sminputs:
                             if type(ID)==int:
                                 print >> self.newcard, '    {} {:.5e} # {} '.format(ID, inpt, input_names.get(ID,''))
                             elif type(ID)==str:
@@ -397,23 +419,23 @@ class Basis(object):
                     try: # add missing masses
                         for i,(ID, mass) in enumerate(self.missing_masses.items()): 
                             if i==0: print >> self.newcard, '# missing masses'
-                            if self.newmass.has_key(ID):
+                            if ID in self.newmass:
                                 print >> self.newcard, '    {} {:.5e} # M{} '.format(ID, self.newmass[ID], particle_names[ID])
                                 print >> self.newcard, '#    {} {:.5e} # M{} old value'.format(ID, mass, particle_names[ID])
                             else:
                                 print >> self.newcard, '    {} {:.5e} # M{} '.format(ID, mass, particle_names[ID])
-                    except AttributeError as e: 
-                        pass
-                    try:
-                        if self.missing_inputs.has_key(4):
-                            print >> self.newcard, '    23 {:.5e} # MZ '.format(self.missing_inputs[4])
-                        if self.missing_inputs.has_key(7):
-                            print >> self.newcard, '    24 {:.5e} # MW '.format(self.missing_inputs[7])
-                        if self.missing_inputs.has_key(8):
-                            print >> self.newcard, '    25 {:.5e} # MH '.format(self.missing_inputs[8])
-                    except AttributeError:
+                    except AttributeError as e: # self.missing_masses may not exist
                         pass
                     
+                    try: # add missing inputs that are masses
+                        for inID, PID in input_to_PID.iteritems():
+                            try:
+                                print >> self.newcard, '    {} {:.5e} # {} '.format(PID,self.missing_inputs[inID],input_names[inID])
+                            except KeyError:
+                                pass
+                    except AttributeError as e: # self.missing_inputs may not exist
+                        pass
+                        
                     print >> self.newcard, '# original masses'
                     
                     param_lines = self.read_until(lines,'Block', 'DECAY') 
