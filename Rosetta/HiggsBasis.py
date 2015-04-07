@@ -2,7 +2,7 @@ from Basis import Basis
 import math, re
 from itertools import combinations_with_replacement as comb
 from itertools import product
-from Rosetta import PID
+from __init__ import PID
 ####################################################################################################
 # Higgs basis class
 class HiggsBasis(Basis):

@@ -2,8 +2,8 @@ import StringIO
 import re, sys, os, math, datetime
 from collections import namedtuple,OrderedDict
 from query import query_yes_no as Y_or_N
-from Rosetta import PID, default_inputs, default_masses, input_names, particle_names, input_to_PID
-
+from __init__ import PID, default_inputs, default_masses, input_names, particle_names, input_to_PID
+from eHDECAY import eHDECAY
 ####################################################################################################
 # Base Basis class
 class Basis(object):
@@ -93,6 +93,13 @@ class Basis(object):
             self.translate() # translate to new basis (User defined)
             self.check_new() # consistency check between self.newinput and self.newmass
             self.set_new_masses() # set new masses in self.newinput
+            
+            try: # run eHDECAY if eHDECAY_input() is implemented
+                self.BRs = eHDECAY(self)
+                print self.BRs
+            except NotImplementedError:
+                pass
+            
             self.set_newcard() # set new param_card
             
         else: # if param_card option not given, instatiate with class name and all coeffs set
@@ -515,4 +522,6 @@ class Basis(object):
     def translate(self): # default behaviour for translate()
         self.keep_old=False
         self.newpar = self.coeffs._asdict()
+    def eHDECAY_inputs(self):
+        raise NotImplementedError
 ####################################################################################################
