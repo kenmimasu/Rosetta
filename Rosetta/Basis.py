@@ -53,7 +53,8 @@ class Basis(object):
     set_newcard() uses the contents of self.newpar to write a modified parameter card 
     in the mass basis and write_param_card() saves it to file.
     
-    Users should call translate() and set_newcard() in the __init__ of their derived class.
+    Users should call translate() and set_newcard() in the __init__ of their derived class
+    should they choose to overload the constructor.
     
     Derived classes can be used by the command line script "translate"
     '''
@@ -341,16 +342,44 @@ class Basis(object):
         print >> self.newcard, '########### PARAM_CARD GENERATED {}  ###########'.format(datetime.datetime.now().ctime().upper())
         print >> self.newcard, '######################################################################'
         
-        blocks_to_modify =('basis',self.block_in, 'mass', 'sminputs')
+        blocks_to_modify =('basis', self.block_in, 'mass', 'sminputs')
         lines = iter(self.card.getvalue().splitlines()) # Lines of old param card
         for line in lines:
+
+
             
             line, block = self.line_is_block(line)
             if block==self.block_in: # Add line to self.newcard, modify block name
                 print >> self.newcard, line.strip('\n').replace(self.block_in,self.block_out)
+            elif self.line_is_decay(line)=='25': # special case for modified higgs width and BRs
+                try:
+                    totalwidth = float(self.BRs['WTOT'])
+                    print >> self.newcard, 'DECAY  25  {} # New Higgs total width'.format(totalwidth)
+                    print >> self.newcard, '#   BR             NDA  ID1    ID2'.format(totalwidth)
+                    particle_IDs = {v:k for k,v in particle_names.iteritems()}
+                    for channel,BR in self.BRs.iteritems():
+                        if channel!='WTOT':
+                            p1, p2 = channel[:len(channel)/2], channel[len(channel)/2:] 
+                            id1, id2 = particle_IDs[p1], particle_IDs[p2]
+                            print >> self.newcard, '    {:.5e}    2    {: <2}    {: <2} # BR(H -> {} {})'.format(BR, id1, id2, p1, p2)
+                    param_lines = self.read_until(lines, 'Block', 'DECAY')[:-1] # read old BR values
+                    for i,pline in enumerate(param_lines):
+                        if i==0: 
+                            print >> self.newcard, '# Old BR info' 
+                            print >> self.newcard, '#'+line.strip('\n') 
+                        if self.keep_old:
+                            comment_out = (pline and not pline.startswith('#'))
+                            print >> self.newcard, '#' + pline.strip('\n') if comment_out else pline.strip('\n')
+                        else:
+                            if not pline.strip() or pline.startswith('#'): print >> self.newcard, pline.strip('\n')
+                    line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
+                except AttributeError:
+                    print >> self.newcard, line.strip('\n') 
+                    
             else: # Add line to self.newcard
                 print >> self.newcard, line.strip('\n') 
                 
+            
             while block in blocks_to_modify: # Slightly different actions for each block
                 
                 if block=='basis': # When Block basis is reached
@@ -463,7 +492,8 @@ class Basis(object):
                 if block==self.block_in:
                     print >> self.newcard, line.strip('\n').replace(self.block_in,self.block_out) # Add line to self.newcard, modify block name
                 else:
-                    print >> self.newcard, line.strip('\n') # Add line to self.newcard     
+                    print >> self.newcard, line.strip('\n') # Add line to self.newcard
+        
         return None
         
     def write_param_card(self,filename,overwrite=False):
@@ -515,6 +545,19 @@ class Basis(object):
             return line, re.match(r'block\s+(\S+).*',line.strip().lower()).group(1)
         except AttributeError:
             return line, False
+    
+    @staticmethod
+    def line_is_decay(line):
+        '''
+        Looks for "DECAY XXXX YYYY" pattern in line.
+        returns XXXX if line matches.
+        returns None if line doesn't match
+        '''
+        match = re.match(r'decay\s+(\S+)\s+.*',line.strip().lower())
+        try:
+            return match.group(1)
+        except AttributeError:
+            return None
             
     def calculate_dependent(self):
         print 'Nothing done for {}.calculate_dependent()'.format(self.__class__.__name__)
