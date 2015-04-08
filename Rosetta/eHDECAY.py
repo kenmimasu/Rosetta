@@ -3,7 +3,7 @@ import os
 from tempfile import mkdtemp
 import subprocess as sub
 from collections import namedtuple
-
+####################################################################################################
 SM_inputs   = ['MH','aSMZ','MC','MB','MT','MTAU',
                'MMU','aEWM1','Gf','MZ','MW','IELW']
                
@@ -14,10 +14,26 @@ SILH_inputs = ['CHbar','CTbar','Ctaubar','Cmubar',
 executable = '{}/run'.format(eHDECAY_dir) # eHDECAY executable
 
 SILH = namedtuple('SILH', SM_inputs+SILH_inputs) # Required inputs for eHDECAY    
-    
+####################################################################################################
+__doc__='''
+Interface with eHDECAY program (arXiv:1403.3381) to calculate new Higgs width and branching ratio
+to SM particles. Currently takes inputs via a dictionary of parameter:value pairs to be returned by
+the eHDECAY_inputs() function of a basis class.
+These should contain the following SM inputs:
+{}
+They should also contain the values of the following coefficients of the SILH basis:
+{}
+This module will create a temporary directory to write out the input and output files, call the 
+eHDECAY exectuable and store the output so that it may be written to the new parameter card. 
+'''.format(', '.join(SM_inputs),', '.join(SILH_inputs))
+####################################################################################################
+
+
+   
 def eHDECAY(basis):
     print 'Running eHDECAY'
     input_dict = basis.eHDECAY_inputs()
+    print input_dict
     inp = SILH(**input_dict)
     # create temporary directory
     tmpdir = mkdtemp(prefix='eHDECAY_',dir = os.getcwd())
@@ -32,7 +48,7 @@ def eHDECAY(basis):
     # read BRs and total width
     result = read_output(tmpdir)
     # clean up temp directory
-    sub.call(['rm','-r',tmpdir])
+    # sub.call(['rm','-r',tmpdir])
     return result
 
 def read_output(workdir):

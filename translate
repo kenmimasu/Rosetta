@@ -13,6 +13,7 @@ parser.add_argument("-b","--blockin", metavar="BLOCKIN", type=str, default='newc
 parser.add_argument("-B","--blockout", metavar="BLOCKOUT", type=str, default='newcoup', help="New coupling block to be written out. Default: newcoup")
 parser.add_argument("-t","--target", metavar="TARGETBASIS", type=str, default='mass', help="Basis into which to translate (one of: {}). Default: mass".format(', '.join(bases.keys())))
 parser.add_argument("-w","--overwrite", action='store_true', help="Overwrite any pre-existing output file.")
+parser.add_argument("-e","--ehdecay", action='store_true', help="Interface with eHDECAY")
 ################################################################################
 args = parser.parse_args()
 mybasis = bases[args.basis.lower()] # Set basis class, must be defined in Rosetta.implemented.bases
@@ -29,7 +30,11 @@ else:
 print ''
 print '########## Rosetta ##########'
 print 'Basis class used to read in param card: {}'.format(mybasis)
-basis_instance = mybasis(param_card=args.param_card, block_in=args.blockin, block_out=args.blockout, output_basis=args.target) # create instance of mybasis
+basis_instance = mybasis(param_card=args.param_card, 
+                         block_in=args.blockin,
+                         block_out=args.blockout,
+                         output_basis=args.target,
+                         ehdecay=args.ehdecay) # create instance of mybasis
 print 'Basis name: {}'.format(basis_instance.name)
 if basis_instance.write_param_card(new_param_card, overwrite=args.overwrite): # write out new param card
     print 'Wrote new param card to {}.'.format(new_param_card)

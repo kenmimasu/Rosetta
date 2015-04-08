@@ -20,7 +20,7 @@ Block loop
 Block mass 
     5 4.700000e+00 # MB 
     6 1.730000e+02 # MT 
-   15 1.730000e+02 # MTAU
+   15 1.770000e+00 # MTAU
    23 9.118800e+01 # MZ 
    25 1.250000e+02 # MH 
 ## Dependent parameters, given by model restrictions.
@@ -70,12 +70,12 @@ Block yukawa
 DECAY   6 1.491500e+00 # WT 
 DECAY  23 2.441404e+00 # WZ 
 DECAY  24 2.047600e+00 # WW 
-DECAY  25 6.382339e-03 # WH 
+DECAY  25 6.382339e-03 # WH
 #   BR             NDA  ID1    ID2
-    0.e+01    2    13    13	# BR(H -> mu mu)
-    0.e+01    2    21    21	# BR(H -> a a)
-    0.e+01    2    5     5 	# BR(H -> b b)
-    0.e+01    2    4     4 	# BR(H -> c c)
+    0.e+01    2    13    13    # BR(H -> mu mu)
+    0.e+01    2    21    21    # BR(H -> a a)
+    0.e+01    2    5     5     # BR(H -> b b)
+    0.e+01    2    4     4     # BR(H -> c c)
 ## Dependent parameters, given by model restrictions.
 ## Those values should be edited following the 
 ## analytical expression. MG5 ignores those values 

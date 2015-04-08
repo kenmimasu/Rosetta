@@ -1,7 +1,7 @@
 from Basis import Basis
 from MassBasis import MassBasis
 from eHDECAY import eHDECAY
-from __init__ import default_masses as dm, default_inputs as di
+from __init__ import default_masses, default_inputs
 import os
 ####################################################################################################
 # Template basis class
@@ -32,16 +32,48 @@ class TemplateBasis(Basis):
         B = MassBasis().coeffs._asdict()
         for k in B.keys(): # set all values of mass basis coeffs according to nonsense formula coeff_a*m_top/a_EW
             B[k] = self.myfunc( A['d'], self.mass[6], self.input['aEWM1'] )
-        self.newmass[23]=91.19 # MZ in newmass
+        self.newmass[24]=91.19 # MZ in newmass
         self.newinput[8]=126. # MH in newinput
         self.newpar = B
         self.newname = 'Mass'
     
     def eHDECAY_inputs(self):
-        inputs = {'MH':dm[25],'aSMZ':di[3],'MC':dm[4],'MB':dm[5],
-                  'MT':dm[6],'MTAU':dm[15],'MMU':dm[13],'aEWM1':di[1],
-                  'Gf':di[2],'MZ':dm[24],'MW':dm[23]} # inputs set to default values defined in __init__.py
+        
+        def try_default_mass(PID):
+            try:
+                if self.newmass[PID] > 0.:
+                    return self.newmass[PID]
+                elif self.mass[PID] > 0.:
+                    return self.mass[PID]
+                else:
+                    raise KeyError
+            except KeyError:
+                return default_masses[PID]
+                
+        def try_default_inpt(ID):
+            try:
+                return self.newinput[ID]
+            except KeyError:
+                try: 
+                    return self.SLHA_sminputs[ID]
+                except KeyError:
+                    return default_inputs[ID]
+                
+        inputs = dict()
+        inputs['MH']    = try_default_mass(25)
+        inputs['MZ']    = try_default_mass(24)
+        inputs['MW']    = try_default_mass(23)
+        inputs['MC']    = try_default_mass(4)
+        inputs['MB']    = try_default_mass(5)
+        inputs['MT']    = try_default_mass(6)
+        inputs['MMU']   = try_default_mass(13)
+        inputs['MTAU']  = try_default_mass(15)
+        inputs['aEWM1'] = try_default_inpt(1)
+        inputs['Gf']    = try_default_inpt(2)
+        inputs['aSMZ']  = try_default_inpt(3)
+
         inputs['IELW'] = 1 # electroweak corrections on
+        
         SILH_coeffs = ['CHbar','CTbar','Ctaubar','Cmubar',
                        'Ctbar','Cbbar','Ccbar','Csbar','CWbar',
                        'CBbar','CHWbar','CHBbar','Cgambar','Cgbar']

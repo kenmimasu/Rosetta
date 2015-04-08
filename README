@@ -28,18 +28,28 @@ provide a more detailed description of the tool as well as some examples of
 usage and the code structure (see backup slides).
 
 ################################################################################
-Contact
+README Contents
+################################################################################
+1) Contact
+2) Prerequisites
+3) Usage
+4) Input cards
+5) Implementing your own basis
+6) eHDECAY interface
+
+################################################################################
+1) Contact
 ################################################################################
 Feel free to contact the authors with requests for features, bugs 
 etc.through k.mimasu@sussex.ac.uk.
 
 ################################################################################
-Prerequisites
+2) Prerequisites
 ################################################################################
 Python 2.7 or above
 
 ################################################################################
-Package Contents
+3) Package Contents
 ################################################################################
 Rosetta/    # Python package containing implementation of the basis 
             # translation machinery.
@@ -79,6 +89,9 @@ Rosetta/    # Python package containing implementation of the basis
     implemeted.py   # A file defining a dictionary that logs the set of 
                     # implemented bases for the translate tool.
     
+    eHDECAY.py      # Interface with eHDECAY program (arXiv:1403.3381),
+                    # discussed later.
+    
     query.py        # Yes/no query function borrowed from 
                     # http://code.activestate.com/recipes/577058/
     
@@ -94,7 +107,7 @@ translate   # Command line tool to perform basis translation based on the
             # implementations in Rosetta.py
 
 ################################################################################
-Usage
+3) Usage
 ################################################################################
 The translate command line tool takes an LHA-style param card (see sample 
 cards provided in Cards/ directory) in a particular basis and outputs a new 
@@ -110,35 +123,37 @@ the numerical value of the parameter, should match those defined in the
     Command line documentation:
     
     >> ./translate --help
-    
-    usage: translate [-h] [-o OUTPUT] [-b BLOCKIN] [-B BLOCKOUT] 
-                     [-t TARGETBASIS] [-w]
-                     PARAMCARD BASIS
-
-    Read in an LHA format parameter card in a particular basis and write a new
-    param card in the mass basis.
-
-    positional arguments:
-      PARAMCARD             Input parameter card.
-      BASIS                 Basis of coefficients in parameter card (one of:
-                            higgs, mass, template, warsaw).
-
-    optional arguments:
-      -h, --help            show this help message and exit
-      -o OUTPUT, --output OUTPUT
-                            Output file name. Default: [PARAMCARD]_new
-      -b BLOCKIN, --blockin BLOCKIN
-                            New coupling block to be read in. Default: newcoup
-      -B BLOCKOUT, --blockout BLOCKOUT
-                            New coupling block to be written out. Default: 
-                            newcoup
-      -t TARGETBASIS, --target TARGETBASIS
-                            Basis into which to translate (one of: higgs, mass,
-                            template, warsaw). Default: mass
-      -w, --overwrite       Overwrite any pre-existing output file.
+    >> 
+    >> usage: translate [-h] [-o OUTPUT] [-b BLOCKIN] [-B BLOCKOUT] 
+    >>                  [-t TARGETBASIS] [-w] [-e]
+    >>                  PARAMCARD BASIS
+    >> 
+    >> Read in an LHA format parameter card in a particular basis and write a
+    >> new param card in the mass basis.
+    >> 
+    >> positional arguments:
+    >>   PARAMCARD             Input parameter card.
+    >>   BASIS                 Basis of coefficients in parameter card (one of:
+    >>                         higgs, mass, template, warsaw).
+    >> 
+    >> optional arguments:
+    >>   -h, --help            show this help message and exit
+    >>   -o OUTPUT, --output OUTPUT
+    >>                         Output file name. Default: [PARAMCARD]_new
+    >>   -b BLOCKIN, --blockin BLOCKIN
+    >>                         New coupling block to be read in. Default: 
+    >>                         newcoup
+    >>   -B BLOCKOUT, --blockout BLOCKOUT
+    >>                         New coupling block to be written out. Default: 
+    >>                         newcoup
+    >>   -t TARGETBASIS, --target TARGETBASIS
+    >>                         Basis into which to translate (one of: higgs,
+    >>                         mass, template, warsaw). Default: mass
+    >>   -w, --overwrite       Overwrite any pre-existing output file.
+    >>   -e, --ehdecay         Interface with eHDECAY
       
 ################################################################################
-Input cards
+4) Input cards
 ################################################################################
 Rosetta is designed to read input cards in a format similar to the SUSY Les 
 Houches Accord (SLHA) detailed in http://arxiv.org/abs/hep-ph/0311123. It 
@@ -191,8 +206,9 @@ user from which basis they translated.
 
 If the reader can't find block basis, it will print a warning and ask to 
 continue with the default value which is the input basis class name.
+
 ################################################################################
-Implementing your own basis
+5) Implementing your own basis
 ################################################################################
 Users who wish to implement their own basis should have a minimal understanding 
 of implementing formulae and assigning variables in python dictionaries. The 
@@ -258,9 +274,12 @@ The basic steps are as follows:
 2)  Minimally, a list of strings called 'independent' should be declared 
     containing the names of the coefficients to be read in the input parameter 
     card and used to calculate the coefficients in the target basis. 
-    Additionally, a list named 'dependent' can also (optionally) be defined 
+    Additionally, a list named 'dependent' can also optionally be defined 
     containing the names of coefficients to calculate internally before 
     translating to the target basis.
+    The set, 'transalte_to' can also be declared to list the existing bases to
+    which the implementation provides a translation. The default is {'mass'},
+    assuming that the translation is implemented to the mass basis.
     For more consistency, the sets 'required_inputs' and 'required_masses' 
     can also be declared. These tell the basis class to check that the masses 
     of particles with certain PIDs and certain SM input parameters are defined 
@@ -273,6 +292,7 @@ The basic steps are as follows:
     >>    dependent = ['d','e','f',...]   # list of derived parameters
     >>    required_masses = {1,2,3,4,5,6,...} # PIDs of required particle masses
     >>    required_inputs = {'aEWM1','MZ',...} # required SMINPUT parameters
+    >>    translate_to = {'mass','my_other_basis'} # available translations
     
 3)  At least the function translate() should be defined that applies the map 
     from the input coefficients to those in the output basis. This can be done 
@@ -317,8 +337,8 @@ The basic steps are as follows:
     
     In implemented.py:
     
-    >>import WarsawBasis, HiggsBasis, MassBasis, TemplateBasis
-    >>import MyBasis
+    >> import WarsawBasis, HiggsBasis, MassBasis, TemplateBasis
+    >> import MyBasis
     
     >> bases['mybasis'] = MyBasis.MyBasis
     
@@ -326,4 +346,64 @@ The basic steps are as follows:
     BASIS argument.
     
 ################################################################################
+6) eHDECAY interface
+################################################################################
+A useful program based on HDECAY (arXiv:hep-ph/9704448) for calculating the 
+Higgs total width was developed in 2014 and is described in arXiv:1403.3381. 
+The program takes as input a number of parameters in the SILH basis to calculate
+the width and branching ratios to SM particles optionally including Electroweak 
+corrections. In order to have this working correctly the user must:
+
+1)  Modify the variable eHDECAY_dir in __init__.py to have it pointing to the 
+    location of your installation of eHDECAY
+    
+    In __init__.py:
+    
+    >> eHDECAY_dir = '/PATH/TO/eHDECAY'
+
+2)  Define the member function eHDECAY_inputs() in their basis implementation.
+
+    In MyBasis.py:
+    
+    >> def eHDECAY_inputs(self):
+    >>     inputs = dict() # populate with values for inputs defined below
+    >>     ..
+    >>     ..
+    >>     return inputs
+
+    Currently, the translations to and from SILH basis have not yet been implemented
+    and so the user will be required to provide the necessary inputs via the 
+    definition of the eHDECAY_inputs() function. The required SM and SILH basis 
+    inputs are listed in eHDECAY.py and are as follows:
+
+    SM inputs: # ALL masses must be nonzero for eHDECAY to give a finite result
+    'MC', 'MB', 'MT', 'MMU', 'MTAU, # SM fermion masses
+    'MH', 'MZ', 'MW', 'aEWM1' 'Gf', # EW input masses, (alpha_EW)^-1, G_Fermi
+    'aSMZ'                          # alpha_S(MZ)
+
+    SILH coefficients:
+    'CHbar' , 'CTbar' , 'Ctaubar', 'Cmubar', 'Ctbar',
+    'Cbbar' , 'Ccbar' , 'Csbar'  , 'CWbar' , 'CBbar',
+    'CHWbar', 'CHBbar', 'Cgambar', 'Cgbar'
+
+    eHDECAY option:
+    'IELW' # Electroweak corrections switch (1:on, 0:off)
+
+An example of a toy implementation is given in TemplateBasis.py which uses the 
+default values for the SM inputs and sets the SILH coefficients. 
+eHDECAY_inputs() should return a dictionary of name:value pairs for the 
+parameters listed above.
+
+Rosetta will take the inputs and run eHDECAY in a temporary directory and read
+the relevant branching ratios, updating or creating the DECAY block in the 
+output card. 
+
+################################################################################
+Rosetta: A Higgs Effective Field Theory basis translator
+################################################################################
+
+
+
+
+
 

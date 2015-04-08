@@ -63,7 +63,7 @@ class Basis(object):
     required_inputs, required_masses = set(),set()
     translate_to = {'mass'}
     
-    def __init__(self, param_card=None, block_in='newcoup', block_out='newcoup', output_basis='mass', keep_old=True):
+    def __init__(self, param_card=None, block_in='newcoup', block_out='newcoup', output_basis='mass', keep_old=True, ehdecay=False):
         # Check that target basis has a translation implemented
         if output_basis in self.translate_to:
             self.target_basis = output_basis
@@ -96,8 +96,7 @@ class Basis(object):
             self.set_new_masses() # set new masses in self.newinput
             
             try: # run eHDECAY if eHDECAY_input() is implemented
-                self.BRs = eHDECAY(self)
-                print self.BRs
+                if ehdecay: self.BRs = eHDECAY(self) # Call to eHDECAY will raise NotImplementedError if eHDECAY_inputs() is not defined
             except NotImplementedError:
                 pass
             
@@ -337,6 +336,35 @@ class Basis(object):
         Generates a new param card in self.newcard from self.card, adding the new set of coefficients in self.newpar after "Block newcoup".
         If self.keep_old is True, the original names and values of newcoup variables are included, commented out.
         '''
+        def new_higgs_width(lines):
+            totalwidth = float(self.BRs['WTOT'])
+            if lines is None: 
+                print >> self.newcard, '###################################'
+                print >> self.newcard, '## Higgs decay info from eHDECAY'
+                print >> self.newcard, '###################################'
+            print >> self.newcard, 'DECAY  25  {} # New Higgs total width'.format(totalwidth)
+            print >> self.newcard, '#   BR             NDA  ID1    ID2'.format(totalwidth)
+            particle_IDs = {v:k for k,v in particle_names.iteritems()}
+            for channel,BR in self.BRs.iteritems():
+                if channel!='WTOT':
+                    p1, p2 = channel[:len(channel)/2], channel[len(channel)/2:] 
+                    id1, id2 = particle_IDs[p1], particle_IDs[p2]
+                    print >> self.newcard, '    {:.5e}    2    {: <2}    {: <2} # BR(H -> {} {})'.format(BR, id1, id2, p1, p2)
+            if lines is None: 
+                print >> self.newcard, '###################################'
+                return
+            param_lines = self.read_until(lines, 'Block', 'DECAY')[:-1] # read old BR values
+            for i,pline in enumerate(param_lines):
+                if i==0: 
+                    print >> self.newcard, '# Old BR info' 
+                    print >> self.newcard, '# '+line.strip('\n') 
+                if self.keep_old:
+                    comment_out = (pline and not pline.startswith('#'))
+                    print >> self.newcard, '# ' + pline.strip('\n') if comment_out else pline.strip('\n')
+                else:
+                    if not pline.strip() or pline.startswith('#'): print >> self.newcard, pline.strip('\n')
+            return self.line_is_block(param_lines[-1]) # return last line read and whether it is a BLOCK line
+        
         print >> self.newcard, '######################################################################'
         print >> self.newcard, '############# COEFFICIENTS TRANSLATED BY ROSETTA MODULE  #############'
         print >> self.newcard, '########### PARAM_CARD GENERATED {}  ###########'.format(datetime.datetime.now().ctime().upper())
@@ -344,35 +372,15 @@ class Basis(object):
         
         blocks_to_modify =('basis', self.block_in, 'mass', 'sminputs')
         lines = iter(self.card.getvalue().splitlines()) # Lines of old param card
+        done_width=False
         for line in lines:
-
-
-            
             line, block = self.line_is_block(line)
             if block==self.block_in: # Add line to self.newcard, modify block name
                 print >> self.newcard, line.strip('\n').replace(self.block_in,self.block_out)
             elif self.line_is_decay(line)=='25': # special case for modified higgs width and BRs
                 try:
-                    totalwidth = float(self.BRs['WTOT'])
-                    print >> self.newcard, 'DECAY  25  {} # New Higgs total width'.format(totalwidth)
-                    print >> self.newcard, '#   BR             NDA  ID1    ID2'.format(totalwidth)
-                    particle_IDs = {v:k for k,v in particle_names.iteritems()}
-                    for channel,BR in self.BRs.iteritems():
-                        if channel!='WTOT':
-                            p1, p2 = channel[:len(channel)/2], channel[len(channel)/2:] 
-                            id1, id2 = particle_IDs[p1], particle_IDs[p2]
-                            print >> self.newcard, '    {:.5e}    2    {: <2}    {: <2} # BR(H -> {} {})'.format(BR, id1, id2, p1, p2)
-                    param_lines = self.read_until(lines, 'Block', 'DECAY')[:-1] # read old BR values
-                    for i,pline in enumerate(param_lines):
-                        if i==0: 
-                            print >> self.newcard, '# Old BR info' 
-                            print >> self.newcard, '#'+line.strip('\n') 
-                        if self.keep_old:
-                            comment_out = (pline and not pline.startswith('#'))
-                            print >> self.newcard, '#' + pline.strip('\n') if comment_out else pline.strip('\n')
-                        else:
-                            if not pline.strip() or pline.startswith('#'): print >> self.newcard, pline.strip('\n')
-                    line, block = self.line_is_block(param_lines[-1]) # set last line read to current line
+                    line, block = new_higgs_width(lines)
+                    done_width = True
                 except AttributeError:
                     print >> self.newcard, line.strip('\n') 
                     
@@ -493,7 +501,11 @@ class Basis(object):
                     print >> self.newcard, line.strip('\n').replace(self.block_in,self.block_out) # Add line to self.newcard, modify block name
                 else:
                     print >> self.newcard, line.strip('\n') # Add line to self.newcard
-        
+        if not done_width:
+            try:
+                new_higgs_width(None)
+            except AttributeError:
+                pass
         return None
         
     def write_param_card(self,filename,overwrite=False):
@@ -513,7 +525,7 @@ class Basis(object):
             return True
         else: 
             return False
-
+    
     @staticmethod
     def read_until(lines, here, *args):
         '''Loops through an iterator of strings by calling next() until 
