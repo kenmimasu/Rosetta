@@ -252,7 +252,7 @@ class Basis(object):
                 sys.exit()
                 
         missing_masses = set(self.required_masses).difference(self.mass.keys())
-        repr_default_masses = ['{}={:.5e}'.format(k,default_masses.get(k,0.)) for k in missing_masses]
+        repr_default_masses = ['{}={: .5e}'.format(k,default_masses.get(k,0.)) for k in missing_masses]
         if missing_masses: # Deal with unassigned fermion masses
             print 'Warning: Not all required fermion masses are defined in {}.'.format(self.param_card)
             print 'Required PIDs: {}'.format(', '.join([str(x) for x in self.required_masses]))
@@ -268,7 +268,7 @@ class Basis(object):
                 sys.exit()
                 
         missing_inputs = set(self.required_inputs).difference(self.SLHA_sminputs.keys())
-        repr_default_inputs = ['{}={:.5e}'.format(input_names[k],default_inputs.get(k,0.)) for k in missing_inputs]
+        repr_default_inputs = ['{}={: .5e}'.format(input_names[k],default_inputs.get(k,0.)) for k in missing_inputs]
         if missing_inputs: # Deal with unassigned SM inputs
             print 'Warning: Not all required SM inputs are defined in {}.'.format(self.param_card)
             print 'Required inputs: {}'.format(', '.join(['{} ({})'.format(input_names[x],x) for x in self.required_inputs]))
@@ -349,7 +349,7 @@ class Basis(object):
                 if channel!='WTOT':
                     p1, p2 = channel[:len(channel)/2], channel[len(channel)/2:] 
                     id1, id2 = particle_IDs[p1], particle_IDs[p2]
-                    print >> self.newcard, '    {:.5e}    2    {: <2}    {: <2} # BR(H -> {} {})'.format(BR, id1, id2, p1, p2)
+                    print >> self.newcard, '    {: .5e}    2    {: <2}    {: <2} # BR(H -> {} {})'.format(BR, id1, id2, p1, p2)
             if lines is None: 
                 print >> self.newcard, '###################################'
                 return
@@ -403,7 +403,7 @@ class Basis(object):
                     
                 elif block==self.block_in: # When Block self.block_in is reached,
                     for i,(par,val) in enumerate(self.newpar.items()):  # write out new couplings
-                        print >> self.newcard, '    {} {:.5e} # {}'.format(i,val,par)
+                        print >> self.newcard, '    {} {: .5e} # {}'.format(i,val,par)
                     param_lines = self.read_until(lines,'Block', 'DECAY') 
                     if self.keep_old: # write old parameters
                         print >> self.newcard, ''
@@ -424,10 +424,10 @@ class Basis(object):
                         for i,(ID, inpt) in enumerate(self.missing_inputs.items()): 
                             if i==0: print >> self.newcard, '# missing inputs'
                             if ID in self.newinput:
-                                print >> self.newcard, '    {} {:.5e} # {} '.format(ID, self.newinput[ID], input_names[ID])
-                                print >> self.newcard, '#    {} {:.5e} # {} old value'.format(ID, inpt, input_names[ID])
+                                print >> self.newcard, '    {} {: .5e } # {} '.format(ID, self.newinput[ID], input_names[ID])
+                                print >> self.newcard, '#    {} {: .5e } # {} old value'.format(ID, inpt, input_names[ID])
                             else:
-                                print >> self.newcard, '    {} {:.5e} # {} '.format(ID, inpt, input_names[ID])
+                                print >> self.newcard, '    {} {: .5e } # {} '.format(ID, inpt, input_names[ID])
                     except AttributeError as e:
                         pass
                     
@@ -437,9 +437,9 @@ class Basis(object):
                         if i==0: print >> self.newcard, '# additional inputs'
                         if not ID in self.SLHA_sminputs:
                             if type(ID)==int:
-                                print >> self.newcard, '    {} {:.5e} # {} '.format(ID, inpt, input_names.get(ID,''))
+                                print >> self.newcard, '    {} {: .5e } # {} '.format(ID, inpt, input_names.get(ID,''))
                             elif type(ID)==str:
-                                print >> self.newcard, '    {} {:.5e} # {} '.format(input_names_reversed.get(ID,99), inpt,ID )
+                                print >> self.newcard, '    {} {: .5e } # {} '.format(input_names_reversed.get(ID,99), inpt,ID )
                                 
                     print >> self.newcard, '# original inputs'
 
@@ -449,7 +449,7 @@ class Basis(object):
                         try: # do if match
                             ID, inpt = int(match.group(1)), match.group(2)
                             try:  # if a new value exists
-                                print >> self.newcard, pline.replace(inpt, '{:.5e}'.format(self.newinput[ID])).strip('\n')
+                                print >> self.newcard, pline.replace(inpt, '{: .5e }'.format(self.newinput[ID])).strip('\n')
                                 if self.keep_old: print >> self.newcard, '# '+pline.strip('\n')+' # old value'
                             except KeyError as e:
                                 print >> self.newcard, pline.strip('\n')
@@ -464,17 +464,17 @@ class Basis(object):
                         for i,(ID, mass) in enumerate(self.missing_masses.items()): 
                             if i==0: print >> self.newcard, '# missing masses'
                             if ID in self.newmass:
-                                print >> self.newcard, '    {} {:.5e} # M{} '.format(ID, self.newmass[ID], particle_names[ID])
-                                print >> self.newcard, '#    {} {:.5e} # M{} old value'.format(ID, mass, particle_names[ID])
+                                print >> self.newcard, '    {} {: .5e } # M{} '.format(ID, self.newmass[ID], particle_names[ID])
+                                print >> self.newcard, '#    {} {: .5e } # M{} old value'.format(ID, mass, particle_names[ID])
                             else:
-                                print >> self.newcard, '    {} {:.5e} # M{} '.format(ID, mass, particle_names[ID])
+                                print >> self.newcard, '    {} {: .5e } # M{} '.format(ID, mass, particle_names[ID])
                     except AttributeError as e: # self.missing_masses may not exist
                         pass
                     
                     try: # add missing inputs that are masses
                         for inID, PID in input_to_PID.iteritems():
                             try:
-                                print >> self.newcard, '    {} {:.5e} # {} '.format(PID,self.missing_inputs[inID],input_names[inID])
+                                print >> self.newcard, '    {} {: .5e } # {} '.format(PID,self.missing_inputs[inID],input_names[inID])
                             except KeyError:
                                 pass
                     except AttributeError as e: # self.missing_inputs may not exist
@@ -488,7 +488,7 @@ class Basis(object):
                         try: # do if match
                             ID, mass = int(match.group(1)), match.group(2)
                             try:  # if a new value exists
-                                print >> self.newcard, pline.replace(mass, '{:.5e}'.format(self.newmass[ID])).strip('\n')
+                                print >> self.newcard, pline.replace(mass, '{: .5e }'.format(self.newmass[ID])).strip('\n')
                                 if self.keep_old: print >> self.newcard, '# '+pline.strip('\n')+' # old value'
                             except KeyError:
                                 print >> self.newcard, pline.strip('\n')
