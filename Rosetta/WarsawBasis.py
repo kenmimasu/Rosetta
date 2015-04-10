@@ -7,8 +7,8 @@ from Rosetta import PID
 ####################################################################################################
 # Warsaw basis class        
 class WarsawBasis(Basis):
-    independent = ['cH','cT','cGG','cWW','cBB','cWB','c3W',
-              'ctGG','ctWW','ctBB','ctWB','ct3W','cpll',
+    independent = ['cH','cT','cGG','cWW','cBB','cWB','c3W','c3G',
+              'ctGG','ctWW','ctBB','ctWB','ct3W','ct3G','cpll',
               'cHl11','cHl12','cHl13','cHl22','cHl23','cHl33',
               'cpHl11','cpHl12','cpHl13','cpHl22','cpHl23','cpHl33',
               'cHe11','cHe12','cHe13','cHe22','cHe23','cHe33',
