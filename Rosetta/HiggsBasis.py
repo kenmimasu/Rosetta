@@ -52,11 +52,11 @@ class HiggsBasis(Basis):
         s2w, ee2, gw2, gp2 = tuple([self.input[x] for x in ('s2w', 'ee2', 'gw2', 'gp2')]) # get EW params
         
         # Higgs and EW gauge bosons [Sec 3.4] [eqn (3.11)]
-        p['dCw']  = p['dCz'] + 4.*p['dM'] 
-        p['Cww']  = p['Czz'] + 2.*s2w*p['Cza'] + s2w**2*p['Caa'] 
-        p['CTww'] = p['CTzz'] + 2.*s2w*p['CTza'] + s2w**2*p['CTaa'] 
-        p['Cwbx'] = (   gw2*p['Czbx'] + gp2*p['Czz'] - ee2*s2w*p['Caa'] - (gw2-gp2)*s2w*p['CTza'])/(gw2-gp2)
-        p['Cabx'] = (2.*gw2*p['Czbx'] + (gw2+gp2)*p['Czz'] - ee2*p['Caa'] - (gw2-gp2)*p['CTza'])/(gw2-gp2)
+        p['dCw']  = p['dCz']  + p['dM']*4. 
+        p['Cww']  = p['Czz']  + p['Cza']*2.*s2w  + p['Caa'] *s2w**2
+        p['CTww'] = p['CTzz'] + p['CTza']*2.*s2w + p['CTaa']*s2w**2 
+        p['Cwbx'] = (p['Czbx']*gw2    + p['Czz']*gp2       - p['Caa']*ee2*s2w - p['Cza']*(gw2-gp2)*s2w)/(gw2-gp2)
+        p['Cabx'] = (p['Czbx']*2.*gw2 + p['Czz']*(gw2+gp2) - p['Caa']*ee2     - p['Cza']*(gw2-gp2)    )/(gw2-gp2)
         
         # Gauge-current and Higgs-gauge-current contact interactions [Sec 3.6]
         for i,j in comb((1,2,3),2):# dependent dgV coeffs [eqn (3.5)]
@@ -71,12 +71,12 @@ class HiggsBasis(Basis):
                 p[cvff] = p['dG{}w{}{}{}'.format(chi,f,i,j)]
                 
         # Triple gauge couplings [Sec 3.7] [eqn (3.21)] 
-        p['dG1z'] = ( p['Caa']*ee2*gp2 + p['Cza']*(gw2-gp2)*gp2 - p['Czz']*(gw2+gp2)*gp2 - p['Czbx']*(gw2+gp2)*gw2 )/2./(gw2-gp2)
-        p['dKa']  = - gw2*( p['Caa']*ee2 + p['Cza']*(gw2-gp2) - p['Czz']*(gw2+gp2))/2./(gw2+gp2)
+        p['dG1z'] =   ( p['Caa']*ee2*gp2 + p['Cza']*(gw2-gp2)*gp2 - p['Czz']*(gw2+gp2)*gp2 - p['Czbx']*(gw2+gp2)*gw2 )/2./(gw2-gp2)
+        p['dKa']  = - gw2*( p['Caa']*ee2  + p['Cza']*(gw2-gp2)  - p['Czz']*(gw2+gp2) )/2./(gw2+gp2)
         p['KTa']  = - gw2*( p['CTaa']*ee2 + p['CTza']*(gw2-gp2) - p['CTzz']*(gw2+gp2))/2./(gw2+gp2)
-        p['dKz']  = p['dG1z'] - gp2/gw2*p['dKa']
-        p['KTz']  = - gp2/gw2*p['KTa']
-        p['La'] = p['Lz']
-        p['LTa'] = p['LTz']
+        p['dKz']  =   p['dG1z'] - gp2/gw2*p['dKa']
+        p['KTz']  = - p['KTa']*gp2/gw2
+        p['La']   =   p['Lz']
+        p['LTa']  =   p['LTz']
         
 ####################################################################################################

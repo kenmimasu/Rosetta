@@ -488,7 +488,7 @@ class Basis(object):
                         try: # do if match
                             ID, mass = int(match.group(1)), match.group(2)
                             try:  # if a new value exists
-                                print >> self.newcard, pline.replace(mass, '{: .5e }'.format(self.newmass[ID])).strip('\n')
+                                print >> self.newcard, pline.strip('\n').replace(mass, '{: .5e}'.format(self.newmass[ID]))
                                 if self.keep_old: print >> self.newcard, '# '+pline.strip('\n')+' # old value'
                             except KeyError:
                                 print >> self.newcard, pline.strip('\n')

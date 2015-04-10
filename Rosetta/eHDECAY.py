@@ -28,8 +28,6 @@ eHDECAY exectuable and store the output so that it may be written to the new par
 '''.format(', '.join(SM_inputs),', '.join(SILH_inputs))
 ####################################################################################################
 
-
-   
 def eHDECAY(basis):
     print 'Running eHDECAY'
     input_dict = basis.eHDECAY_inputs()
