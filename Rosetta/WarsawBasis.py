@@ -5,7 +5,7 @@ from itertools import combinations_with_replacement as comb
 from itertools import product
 from Rosetta import PID
 ####################################################################################################
-# Warsaw basis class        
+# Warsaw basis class
 class WarsawBasis(Basis):
     independent = ['cH','cT','cGG','cWW','cBB','cWB','c3W','c3G',
               'ctGG','ctWW','ctBB','ctWB','ct3W','ct3G','cpll',

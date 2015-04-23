@@ -67,19 +67,19 @@ Rosetta/    # Python package containing implementation of the basis
                             # for output parameter cards, corresponds to the 
                             # redundant set of operators defined in  
                             # HiggsBasis.py without imposing any dependency 
-                            # conditions. There are 169 coefficients.
+                            # conditions. There are 183 coefficients.
                             
     --> HiggsBasis.py       # Basis class corresponding to the Higgs Basis as 
                             # defined in the HXSWG draft. Using this basis as 
                             # input calculates the dependent coefficients.
-                            # There are 95 independent coefficients and 74 
+                            # There are 99 independent coefficients and 84 
                             # dependent coefficients.
                             
     --> WarsawBasis.py      # Basis class corresponding to the Warsaw Basis
                             # defined arXiv:1008.4884. Using this basis
                             # input calculates the Mass Basis coefficients 
                             # as per the formulae in the HXSWG draft. There are 
-                            # 95 independent coefficients.
+                            # 99 independent coefficients.
     
     --> TemplateBasis.py    # Template for a user-defined Basis class 
                             # implemented in the Rosetta package. Toy versions 
@@ -109,16 +109,16 @@ translate   # Command line tool to perform basis translation based on the
 ################################################################################
 3) Usage
 ################################################################################
-The translate command line tool takes an LHA-style param card (see sample 
+The translate command line tool takes an SLHA-style param card (see sample 
 cards provided in Cards/ directory) in a particular basis and outputs a new 
 card in the specified basis (default is Mass Basis). So far, only the Mass 
-Basis can be takes as the target basis. 
+Basis can be taken as the target basis. 
 
-The options BLOCKIN and BLOCKOUT allow the user to specify the name of the LHA 
+The options BLOCKIN and BLOCKOUT allow the user to specify the name of the SLHA 
 block that contains the new couplings. The names of these couplings, specified 
 as the first non-whitespace characters following a hash ("#") character after 
 the numerical value of the parameter, should match those defined in the 
-'independent' list of the specified input basis.
+'independent' list of the specified input basis implementation.
 
     Command line documentation:
     
@@ -243,6 +243,9 @@ following useful data members:
                             # calculate_dependent().
                             
     self.input              # dictionary with names and values of parameters 
+                            # defined in block SMINPUTS.
+                            
+    self.SHLA_sminputs      # dictionary with SLHA IDs and values of parameters 
                             # defined in block SMINPUTS. Cross checked with 
                             # self.required_inputs
                             
@@ -254,9 +257,11 @@ following useful data members:
                             # translate() function. The contents of this 
                             # dictionary are written out to the output parameter
                             # card in place of the old basis coefficients of the
-                            #  input parameter card.
+                            # input parameter card.
 
-    self.newmass            # dictionary of parameters to be filled in
+    self.newmass            # dictionary of modified masses to be filled in
+                            # translate() function
+    self.newinput           # dictionary of modified SM inputs to be filled in
                             # translate() function
 
 The basic steps are as follows:
