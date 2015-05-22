@@ -46,7 +46,7 @@ def eHDECAY(basis):
     # read BRs and total width
     result = read_output(tmpdir)
     # clean up temp directory
-    # sub.call(['rm','-r',tmpdir])
+    sub.call(['rm','-r',tmpdir])
     return result
 
 def read_output(workdir):

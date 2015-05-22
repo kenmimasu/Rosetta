@@ -424,10 +424,10 @@ class Basis(object):
                         for i,(ID, inpt) in enumerate(self.missing_inputs.items()): 
                             if i==0: print >> self.newcard, '# missing inputs'
                             if ID in self.newinput:
-                                print >> self.newcard, '    {} {: .5e } # {} '.format(ID, self.newinput[ID], input_names[ID])
-                                print >> self.newcard, '#    {} {: .5e } # {} old value'.format(ID, inpt, input_names[ID])
+                                print >> self.newcard, '    {} {: .5e} # {} '.format(ID, self.newinput[ID], input_names[ID])
+                                print >> self.newcard, '#    {} {: .5e} # {} old value'.format(ID, inpt, input_names[ID])
                             else:
-                                print >> self.newcard, '    {} {: .5e } # {} '.format(ID, inpt, input_names[ID])
+                                print >> self.newcard, '    {} {: .5e} # {} '.format(ID, inpt, input_names[ID])
                     except AttributeError as e:
                         pass
                     
@@ -437,9 +437,9 @@ class Basis(object):
                         if i==0: print >> self.newcard, '# additional inputs'
                         if not ID in self.SLHA_sminputs:
                             if type(ID)==int:
-                                print >> self.newcard, '    {} {: .5e } # {} '.format(ID, inpt, input_names.get(ID,''))
+                                print >> self.newcard, '    {} {: .5e} # {} '.format(ID, inpt, input_names.get(ID,''))
                             elif type(ID)==str:
-                                print >> self.newcard, '    {} {: .5e } # {} '.format(input_names_reversed.get(ID,99), inpt,ID )
+                                print >> self.newcard, '    {} {: .5e} # {} '.format(input_names_reversed.get(ID,99), inpt,ID )
                                 
                     print >> self.newcard, '# original inputs'
 
@@ -449,7 +449,7 @@ class Basis(object):
                         try: # do if match
                             ID, inpt = int(match.group(1)), match.group(2)
                             try:  # if a new value exists
-                                print >> self.newcard, pline.replace(inpt, '{: .5e }'.format(self.newinput[ID])).strip('\n')
+                                print >> self.newcard, pline.replace(inpt, '{: .5e}'.format(self.newinput[ID])).strip('\n')
                                 if self.keep_old: print >> self.newcard, '# '+pline.strip('\n')+' # old value'
                             except KeyError as e:
                                 print >> self.newcard, pline.strip('\n')
@@ -464,17 +464,17 @@ class Basis(object):
                         for i,(ID, mass) in enumerate(self.missing_masses.items()): 
                             if i==0: print >> self.newcard, '# missing masses'
                             if ID in self.newmass:
-                                print >> self.newcard, '    {} {: .5e } # M{} '.format(ID, self.newmass[ID], particle_names[ID])
-                                print >> self.newcard, '#    {} {: .5e } # M{} old value'.format(ID, mass, particle_names[ID])
+                                print >> self.newcard, '    {} {: .5e} # M{} '.format(ID, self.newmass[ID], particle_names[ID])
+                                print >> self.newcard, '#    {} {: .5e} # M{} old value'.format(ID, mass, particle_names[ID])
                             else:
-                                print >> self.newcard, '    {} {: .5e } # M{} '.format(ID, mass, particle_names[ID])
+                                print >> self.newcard, '    {} {: .5e} # M{} '.format(ID, mass, particle_names[ID])
                     except AttributeError as e: # self.missing_masses may not exist
                         pass
                     
                     try: # add missing inputs that are masses
                         for inID, PID in input_to_PID.iteritems():
                             try:
-                                print >> self.newcard, '    {} {: .5e } # {} '.format(PID,self.missing_inputs[inID],input_names[inID])
+                                print >> self.newcard, '    {} {: .5e} # {} '.format(PID,self.missing_inputs[inID],input_names[inID])
                             except KeyError:
                                 pass
                     except AttributeError as e: # self.missing_inputs may not exist
