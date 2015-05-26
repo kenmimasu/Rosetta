@@ -36,8 +36,7 @@ basis_instance = mybasis(param_card=args.param_card,
                          output_basis=args.target,
                          ehdecay=args.ehdecay) # create instance of mybasis
 print 'Basis name: {}'.format(basis_instance.name)
-if basis_instance.write_param_card(new_param_card, overwrite=args.overwrite): # write out new param card
-    # print 'Wrote new param card to {}.'.format(new_param_card)
+if basis_instance.write_param_card(new_param_card, overwrite=args.overwrite): # 
     print '#############################'
     print ''
 else:
