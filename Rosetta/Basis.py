@@ -784,10 +784,11 @@ class Basis(object):
     def eHDECAY_inputs(self):
         raise NotImplementedError
 ########################################################################
-def flavour_matrix(name, kind='hermitian', domain='real', dimension=3):
+def flavour_matrix(name, kind='hermitian', domain='real', 
+                   dimension=3):
     index = range(1,dimension+1)
     
-    if   (kind, domain) == ('hermitian', 'complex'):
+    if (kind, domain) == ('hermitian', 'complex'):
         real = ['{0}{0}'.format(i) for i in index]
         cplx = ['{}{}'.format(i,j) for i,j in combinations(index,2)]
 

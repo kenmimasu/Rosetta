@@ -32,7 +32,8 @@ class WarsawBasis(Basis):
     cHud = flavour_matrix('cHud',kind='general',domain='complex')
     f2H2D = cHl + cpHl + cHe + cHq + cpHq + cHu + cHd + cHud
     
-    fourfermi = ['cll1221'] # affects Gf input
+    # affects Gf input, Warsaw <-> SILH translation
+    fourfermi = ['cll1221','cuu3333','cpuu3333'] 
     
     independent = H4D2 + H6 + V3D3 + f2H3  + V2H2 + f2H2D + fourfermi
     
@@ -68,18 +69,15 @@ class WarsawBasis(Basis):
         B = MassBasis().coeffs._asdict()
         # B = MassBasis().coeffs
         
-        def f(T3,Q,i,j): # [eqn (4.11)]
-            if i==j:
-                return - Q*A['cWB']*gw2*gp2/(gw2-gp2) \
-                       + (A['cT']-dv)*(T3 + Q*gp2/(gw2-gp2))
-            else:
-                return 0.
-        
         def delta(i,j):
             return 1. if i==j else 0.
-            
+                    
+        def f(T3,Q,i,j): # [eqn (4.11)]
+                return delta(i,j)*( -Q*A['cWB']*gw2*gp2/(gw2-gp2)
+                                   + (A['cT']-dv)*(T3 + Q*gp2/(gw2-gp2)))
+
         # Higgs vev shift [eqn (4.8)]
-        dv = (A['cpHl11']+A['cpHl22'])/2.-A['cll1221']
+        dv = (A['cpHl11']+A['cpHl22'])/2.-A['cll1221']/4.
         
         # W mass shift [eqn (4.9)]
         B['dM'] = ( gw2*A['cT'] - gp2*gw2*A['cWB']-gp2*dv )/(gw2-gp2)
@@ -168,7 +166,7 @@ class WarsawBasis(Basis):
                     dy_cosphi = (vev*A['c'+name+'_Re']/sqrt(2.*mi*mj) -
                                                        delta(i,j)*(A['cH']+dv))
                     dy_sinphi = vev*A['c'+name+'_Im']/sqrt(2.*mi*mj) 
-                    B['S'+name], B['dY'+name] = dy_sf(dy_cosphi, dy_sinphi)
+                    B['dY'+name], B['S'+name] = dy_sf(dy_cosphi, dy_sinphi)
         
         # Double Higgs Yukawa type interaction coefficients [eqn. (4.17)]
         for i,j in comb((1,2,3),2):
@@ -198,7 +196,12 @@ class WarsawBasis(Basis):
         # Couplings of two Higgs bosons to gluons [Sec 3.8]
         # [eqn (3.27)] copied from HiggsBasis implemetation
         B['Cgg2'], B['CTgg2'] = B['Cgg'], B['CTgg']
-
+        
+        # 4-fermion 
+        B['cuu3333'] = A['cuu3333']
+        B['cpuu3333'] = A['cpuu3333']
+        B['cll1221'] = A['cll1221']
+        
         self.newpar = B
         self.newmass[24] = self.mass[24]+self.newpar['dM'] # W mass shift
         

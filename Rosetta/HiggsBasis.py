@@ -73,15 +73,20 @@ class HiggsBasis(Basis):
     Y2e = flavour_matrix('Y2e', kind='symmetric', domain='complex')
     two_higgs_dep = gg2 + Y2u + Y2d + Y2e
     
+    # 4-fermion operators
+    fourfermi_ind = ['cuu3333','cpuu3333'] # needed for SILH <-> Warsaw
+    fourfermi_dep = ['cll1221'] # affects Gf input
+    
     # Full set of independent and dependent coefficients
     independent = (kinetic_ind + zvertex_ind + wvertex_ind 
                  + higgs_gauge_ind + higgs_ferm_ind + triple_quartic_ind 
-                 + two_higgs_ind )
+                 + two_higgs_ind + fourfermi_ind )
                 
     dependent   = (zvertex_dep + wvertex_dep + higgs_gauge_dep 
                  + higgs_contact_dep + triple_quartic_dep 
-                 + two_higgs_dep)
-                   
+                 + two_higgs_dep + fourfermi_dep)
+                 
+    # Required inputs/masses             
     required_masses = {1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16}
     required_inputs = {1, 2, 4} # aEWM1, Gf, MZ
 
@@ -154,5 +159,8 @@ class HiggsBasis(Basis):
                 cosij = sqrt(1. - sinij**2)
                 p['Y2{}_Re'.format(name)] = (3.*Yij*cosij - p['dCz']*delta(i,j))
                 p['Y2{}_Im'.format(name)] = 3.*Yij*sinij
+        # 4-fermion operators [Sec. 3.9]
+        # [eqn (3.32)]
+        p['cll1221'] = 2.*(p['dGLwl11'] + p['dGLwl22'] - 2.*p['dM']) 
             
 ########################################################################
