@@ -67,10 +67,13 @@ class SILHBasis(Basis):
             self.translate_to_mass()
         else: 
             raise NotImplementedError
-    # def translate_to_warsaw(self):
-    #     self.newname='Warsaw'
-    #     s2w, ee2, gw2, gp2, vev = self.calculate_inputs()
-            
+    def translate_to_warsaw(self):
+        self.newname='Warsaw'
+        s2w, ee2, gw2, gp2, vev = self.calculate_inputs()
+        MH = self.input['MH']
+        
+        
+        
     def translate_to_mass(self):
         self.newname='Mass'
         s2w, ee2, gw2, gp2, vev = self.calculate_inputs()
@@ -78,20 +81,19 @@ class SILHBasis(Basis):
 
         A = self.coeffs._asdict()
         B = MassBasis().coeffs._asdict()
+        
         # These coefficients are implictly set to zero
         A['sHl11'], A['spHl11']=0.,0.
-        
-        
         # W mass shift [eqn (5.11)]
         B['dM'] = - gw2*gp2/(4.*(gw2-gp2))*(A['sW'] + A['sB'] + A['s2W'] + A['s2B']
                                       - 4./gp2*A['sT'] + 2./gw2*A['spHl22'])
-        def f(T3,Q): # [eqn (5.12)]
-            Qcoeff = gp2/4./(gw2-gp2)*( (2.*gw2-gp2)*A['s2B'] 
+        def f(T3,Q): # [eqn (5.12)] MINUS SIGN WRONG IN NOTE
+            Qcoeff = gp2/4./(gw2-gp2)*( -(2.*gw2-gp2)*A['s2B'] 
                        - gw2*(A['s2W'] + A['sW'] + A['sB'] ) 
                        + 4.*A['sT'] - 2.*A['spHl22'])
             T3coeff = ( gw2*A['s2W'] + gp2*A['s2B'] 
                         + 4.*A['sT']-2.*A['spHl22'])/4.
-            return  Q*Qcoeff + T3*T3coeff
+            return  delta(i,j)*(Q*Qcoeff + T3*T3coeff)
             
         def delta(i,j):
             return 1. if i==j else 0.
@@ -146,7 +148,7 @@ class SILHBasis(Basis):
         B['Caa']  = A['sBB'] 
         B['Czz']  = -1./(gw2+gp2)*( gw2*A['sHW'] + gp2*A['sHB'] 
                                      - gp2*s2w*A['sBB'] )
-        B['Czbx'] =  -1./(2.*gw2)*( gw2*(A['sW'] + A['sHW'] +A ['s2W'])
+        B['Czbx'] =  1./(2.*gw2)*( gw2*(A['sW'] + A['sHW'] +A ['s2W'])
                                   + gp2*(A['sB'] + A['sHB'] +A ['s2B'])
                                   - 4.*A['sT'] + 2.*A['spHl22'] ) 
         B['Cza']  = ( A['sHB'] - A['sHW'])/2. - s2w*A['sBB']
@@ -155,9 +157,10 @@ class SILHBasis(Basis):
                            gw2*(A['sW']+A['s2W']) + gp2*(A['sB']+A['s2B'])
                          - 4.*A['sT'] + 2.*A['spHl22'] )
         B['Cww']  =  -A['sHW']
-        B['Cwbx'] =  A['sHW']/2. + 1./(gw2-gp2)*(
+        # factor 2 wrong in note here 
+        B['Cwbx'] =  A['sHW']/2. + 1./2./(gw2-gp2)*(
                            gw2*(A['sW']+A['s2W']) + gp2*(A['sB']+A['s2B'])
-                         - 4.*A['sT'] + 2.*A['spHl22'] )
+                         - 4.*A['sT'] + 2.*A['spHl22'] ) 
         B['CTgg'] = A['stGG'] 
         B['CTaa'] = A['stBB']
         B['CTzz'] = -1./(gw2+gp2)*( gw2*A['stHW'] + gp2*A['stHB'] 
@@ -195,30 +198,31 @@ class SILHBasis(Basis):
                 Yij   = B['dY' + name]
                 sinij = B['S' + name] 
                 cosij = sqrt(1. - sinij**2)
-                B['Y2{}_Re'.format(name)] = (3.*Yij*cosij 
-                                     + delta(i,j)*(A['sH']
-                                     + 3./4.*gw2*(A['sW'] + A['sHW'] + A['s2W']) 
-                                     + 3./2.* A['spHl22']))
-                B['Y2{}_Im'.format(name)] = 3.*Yij*sinij
+                B['Y2{}_Re'.format(name)] = (3.*Yij*cosij + delta(i,j)*(
+                                                  A['sH'] + 3./2.*A['spHl22']))
+                B['Y2{}_Im'.format(name)] =  3.*Yij*sinij
         
         # Triple gauge couplings [eqn. (4.18)]
         B['dG1z'] = -(gw2+gp2)/(gw2-gp2)/4.*( (gw2-gp2)*A['sHW'] 
                         + gw2*(A['sW'] + A['s2W']) + gp2*(A['sB'] + A['s2B']) 
                         - 4.*A['sT'] + 2.*A['spHl22'] )
-        B['dKa']  = - gw2/4.*(A['sHW']+A['sHB'])
-        B['dKz']  = (-1./4.*(gw2*A['sHW'] + gp2*A['sHB'])
-                    -(gw2+gp2)/(gw2-gp2)/4.*(gw2*(A['sW'] + A['s2W'])
-                         + gp2*(A['sB'] + A['s2B']) 
-                         - 4.*A['sT'] + 2.*A['spHl22'] ))
-        B['La']   = -A['s3W']*3./2.*gw2**2
-        B['Lz']   =  B['La']
-        B['KTa']  =  - gw2/4.*(A['stHW']+A['stHB'])
-        B['KTz']  = gp2/4.*(A['stHW']+A['stHB'])
-        B['LTa']  = -A['st3W']*3./2.*gw2**2
-        B['LTz']  =  B['LTa']
+        B['dKa'] = - gw2/4.*(A['sHW']+A['sHB'])
+        B['dKz'] = ( -1./4.*(gw2*A['sHW'] - gp2*A['sHB'])
+                      -(gw2+gp2)/(gw2-gp2)/4.*(
+                          gw2*(A['sW'] + A['s2W'])
+                          + gp2*(A['sB'] + A['s2B']) 
+                          - 4.*A['sT'] + 2.*A['spHl22'] 
+                          )
+                      )
+        B['La'] = -A['s3W']*3./2.*gw2**2
+        B['Lz'] =  B['La']
+        B['KTa'] =  - gw2/4.*(A['stHW']+A['stHB'])
+        B['KTz'] = gp2/4.*(A['stHW']+A['stHB'])
+        B['LTa'] = -A['st3W']*3./2.*gw2**2
+        B['LTz'] =  B['LTa']
         
         # Higgs cubic interaction [eqn. (4.19)]
-        B['dL3']  =  -MH**2/(2.*vev**2) * (3.*A['sH'] + A['spHl22']/2.) - A['s6H']
+        B['dL3']  =  -MH**2/(2.*vev**2)*(3.*A['sH'] + A['spHl22']/2.) - A['s6H']
         
         # Couplings of two Higgs bosons to gluons [Sec 3.8]
         # [eqn (3.27)] copied from HiggsBasis implemetation

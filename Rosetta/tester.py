@@ -68,5 +68,6 @@ def generate_coeffs(basis_class, rand=False):
 
 if __name__=='__main__':
     # generate_coeffs(WarsawBasis,rand=True)
-    higgs_basis_check(WarsawBasis,'../Cards/param_card_WarsawBasis.dat',tolerance=1e-4)
-    # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat')
+    # generate_coeffs(SILHBasis,rand=True)
+    # higgs_basis_check(WarsawB asis,'../Cards/param_card_WarsawBasis.dat',tolerance=1e-4)
+    higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat')
