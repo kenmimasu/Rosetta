@@ -1,5 +1,6 @@
 from Basis import Basis, flavour_matrix
 from MassBasis import MassBasis
+import WarsawBasis as WB
 import math
 from math import sqrt
 from itertools import combinations_with_replacement as comb
@@ -45,12 +46,13 @@ class SILHBasis(Basis):
                 +  not_warsaw + fourfermi)
     
     required_masses = set([y for x in PID.values() for y in x.values()])
-    required_inputs = {1, 2, 4, 8} # aEWM1, Gf, MZ, MH
+    required_inputs = {1, 2, 3, 4, 8} # aEWM1, Gf, aS, MZ, MH
     
     translate_to={'mass','warsaw'}
         
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
         ee2 = 4.*math.pi/self.input['aEWM1'] # EM coupling squared
+        gs2 = 4.*math.pi*self.input['aS'] # strong coupling squared
         Gf, MZ = self.input['Gf'], self.input['MZ']
         s2w = (1.- sqrt(1. - ee2/(sqrt(2.)*Gf*MZ**2)))/2.#sin^2(theta_W)
         c2w = 1. - s2w
@@ -60,23 +62,19 @@ class SILHBasis(Basis):
         self.input['s2w'],self.input['ee2'] = s2w, ee2
         self.input['gw2'],self.input['gp2'] = gw2, gp2
         self.input['vev'] = vev
-        return s2w, ee2, gw2, gp2, vev
+        return s2w, ee2, gw2, gp2, vev, gs2
         
     def translate(self):
         if self.target_basis=='mass': 
             self.translate_to_mass()
+        elif self.target_basis=='warsaw':
+            self.translate_to_warsaw()
         else: 
             raise NotImplementedError
-    def translate_to_warsaw(self):
-        self.newname='Warsaw'
-        s2w, ee2, gw2, gp2, vev = self.calculate_inputs()
-        MH = self.input['MH']
-        
-        
-        
+                
     def translate_to_mass(self):
         self.newname='Mass'
-        s2w, ee2, gw2, gp2, vev = self.calculate_inputs()
+        s2w, ee2, gw2, gp2, vev, gs2 = self.calculate_inputs()
         MH = self.input['MH']
 
         A = self.coeffs._asdict()
@@ -144,8 +142,8 @@ class SILHBasis(Basis):
         B['dCz'] = -A['sH'] - 3./2.*A['spHl22'] 
         
         # Two derivative field strength interactions [eqn (4.15)]
-        B['Cgg']  = A['sGG'] 
-        B['Caa']  = A['sBB'] 
+        B['Cgg']  = A['sGG']
+        B['Caa']  = A['sBB']
         B['Czz']  = -1./(gw2+gp2)*( gw2*A['sHW'] + gp2*A['sHB'] 
                                      - gp2*s2w*A['sBB'] )
         B['Czbx'] =  1./(2.*gw2)*( gw2*(A['sW'] + A['sHW'] +A ['s2W'])
@@ -185,9 +183,11 @@ class SILHBasis(Basis):
                 name = '{}{}{}'.format(f,i,j)
                 if mi and mj:
                     dy_cosphi = (vev*A['s'+name+'_Re']/sqrt(2.*mi*mj) -
-                                 delta(i,j)*(A['sH']
-                                     + 3./4.*gw2*(A['sW'] + A['sHW'] + A['s2W'])
-                                     + A['spHl22']/2.))
+                                 delta(i,j)*(A['sH'] + A['spHl22']/2.))
+                    # dy_cosphi = (vev*A['s'+name+'_Re']/sqrt(2.*mi*mj) -
+                    #              delta(i,j)*(A['sH']
+                    #                  + 3./4.*gw2*(A['sW'] + A['sHW'] + A['s2W'])
+                    #                  + A['spHl22']/2.))
                     dy_sinphi = vev*A['s'+name+'_Im']/sqrt(2.*mi*mj) 
                     B['dY'+name], B['S'+name]  = dy_sf(dy_cosphi, dy_sinphi)
         
@@ -232,5 +232,77 @@ class SILHBasis(Basis):
         self.newpar = B
         
         self.newmass[24] = self.mass[24]+self.newpar['dM'] # W mass shift
+        
+    def translate_to_warsaw(self):
+        self.newname='Warsaw'
+        s2w, ee2, gw2, gp2, vev, gs2 = self.calculate_inputs()
+        MH = self.input['MH']
+        lam = -MH**2/(2.*vev**2) # Higgs self-coupling
+        
+        A = self.coeffs._asdict()
+        B = WB.WarsawBasis().coeffs._asdict()
+        # These coefficients are implictly set to zero
+        A['sHl11'], A['spHl11']=0.,0.
+        
+        def delta(i,j):
+            return 1. if i==j else 0.
+        
+        # [eqn (5.7)]
+        B['cH'] = A['sH'] - 3./4.*gw2*(A['sW'] + A['sHW'] + A['s2W'])
+        B['cT'] = A['sT'] - 1./4.*gw2*(A['sB'] + A['sHB'] + A['s2B'])
+        B['c6H'] = A['s6H'] - 2.*lam*gw2*(A['sW'] + A['sHW'] + A['s2W'])
+        B['cWB'] = - 1./4.*(A['sHB'] + A['sHW'])
+        B['cBB'] = A['sBB'] - A['sHB']
+        B['cWW'] = -A['sHW']
+        B['ctWB'] = - 1./4.*(A['stHB'] + A['stHW'])
+        B['ctBB'] = A['stBB'] - A['stHB']
+        B['ctWW'] = -A['stHW']
+        
+        def cHf(sc, Yf, i, j):
+            return A[sc] + delta(i,j)*gp2*Yf/2.*(A['sB'] + A['sHB'] + 2.*A['s2B'])
+            
+        def cpHf(sc, i, j):
+            return A[sc] + delta(i,j)*gw2/4.*(A['sW'] + A['sHW'] + 2.*A['s2W'])
+            
+        # [eqn (5.8)]
+        for i,j in comb((1,2,3),2):
+            ind = '{}{}'.format(i,j)
+            tail = [ind] if i==j else [ind+'_Re', ind+'_Im']
+            for t in tail:
+                B['cHl'+t] = cHf('sHl'+t, -1./2., i, j)
+                B['cHe'+t] = cHf('sHe'+t, -1., i, j)
+                B['cHq'+t] = cHf('sHq'+t, 1./6., i, j)
+                B['cHu'+t] = cHf('sHu'+t, 2./3., i, j)
+                B['cHd'+t] = cHf('sHd'+t, -1./3., i, j)
+                B['cpHl'+t] = cpHf('spHl'+t, i, j)
+                B['cpHq'+t] = cpHf('spHq'+t, i, j)
+
+        # [eqn (5.9)]
+        # self.mass[ PID[f][i] ],self.mass[ PID[f][j] ]
+        for i,j in comb((1,2,3),2):
+            ind = ['{}{}_{}'.format(i,j,cplx) for cplx in ('Re','Im')]
+            for t in ind:
+                for f in ('u','d','e'):
+                    mass = self.mass[ PID[f][i] ]
+                    yuk = sqrt(2.)*mass/vev
+                    wcoeff, scoeff = 'c{}{}'.format(f,t),'s{}{}'.format(f,t)
+                    B[wcoeff] = A[scoeff] - delta(i,j)*gw2*yuk*(
+                                              A['sW'] + A['sHW'] + A['s2W'])/2.
+
+        # [eqn (5.10)]
+        B['cll1221'] = gw2*A['s2W'] # cll1221==0 in SILH
+        # derived from [eqn (5.4)]
+        B['cuu3333'] = (4./9.)*gp2*A['s2B']
+        B['cpuu3333'] = (1./3.)*gs2*A['s2G']
+        
+        # trivial translation, cX==sX
+        cHud = flavour_matrix('cHud', kind='general', domain='complex')
+        others = ['cGG','ctGG','c3W','ct3W','c3G','ct3G']
+        trivial = cHud+others
+        for coeff in trivial:
+            scoeff = 's'+coeff[1:]
+            B[coeff] = A[scoeff]
+        
+        self.newpar = B
         
 ################################################################################
