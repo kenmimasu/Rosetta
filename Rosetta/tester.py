@@ -66,7 +66,7 @@ def higgs_basis_check(MyBasis,param_card,tolerance=1e-4):
     os.remove(out_card)
     os.rmdir(tmpdir)
     
-def SILH_Warsaw_triangle(param_card,tolerance=1e-1):
+def SILH_Warsaw_triangle(param_card,tolerance=1e-4):
     tmpdir = tempfile.mkdtemp(prefix = 'rosetta_temp_', dir=os.getcwd())
     out_card = '{}/output_card.dat'.format(tmpdir)
     to_warsaw = SILHBasis(param_card=param_card, 
@@ -88,10 +88,10 @@ def SILH_Warsaw_triangle(param_card,tolerance=1e-1):
     os.rmdir(tmpdir)
     
     
-def generate_coeffs(basis_class, rand=False):
+def generate_coeffs(basis_class, val, rand=False):
     myinstance = basis_class()
     for i,coeff in enumerate(myinstance.independent):
-        val = random.uniform(-1.,1.) if rand else 0.1
+        val = random.uniform(-1.,1.) if rand else val
         print '    {:<2} {:.5e} # {}'.format(i,val,coeff)
         
 def generate_frdef(basis_class,filename):
@@ -106,8 +106,9 @@ def generate_frdef(basis_class,filename):
             out.write('\n')
 
 if __name__=='__main__':
-    # generate_coeffs(WarsawBasis,rand=True)
-    generate_frdef(MassBasis,'definitions.fr')
-    # higgs_basis_check(WarsawB asis,'../Cards/param_card_WarsawBasis.dat',tolerance=1e-4)
+    # generate_coeffs(WarsawBasis,0.,rand=False)
+    generate_coeffs(SILHBasis,0.,rand=False)
+    # generate_frdef(MassBasis,'definitions.fr')
+    # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat',tolerance=1e-4)
     # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat')
     # SILH_Warsaw_triangle('../Cards/param_card_SILHBasis.dat')

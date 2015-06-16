@@ -76,15 +76,16 @@ class SILHBasis(Basis):
         self.newname='Mass'
         s2w, ee2, gw2, gp2, vev, gs2 = self.calculate_inputs()
         MH = self.input['MH']
-
+        print gw2, gp2
         A = self.coeffs._asdict()
         B = MassBasis().coeffs._asdict()
         
         # These coefficients are implictly set to zero
         A['sHl11'], A['spHl11']=0.,0.
         # W mass shift [eqn (5.11)]
-        B['dM'] = - gw2*gp2/(4.*(gw2-gp2))*(A['sW'] + A['sB'] + A['s2W'] + A['s2B']
-                                      - 4./gp2*A['sT'] + 2./gw2*A['spHl22'])
+        B['dM'] = - gw2*gp2/(4.*(gw2-gp2))*(A['sW'] + A['sB'] + A['s2W'] 
+                                            + A['s2B'] - 4./gp2*A['sT'] 
+                                            + 2./gw2*A['spHl22'])
         def f(T3,Q): # [eqn (5.12)] MINUS SIGN WRONG IN NOTE
             Qcoeff = gp2/4./(gw2-gp2)*( -(2.*gw2-gp2)*A['s2B'] 
                        - gw2*(A['s2W'] + A['sW'] + A['sB'] ) 
@@ -249,7 +250,7 @@ class SILHBasis(Basis):
         
         # [eqn (5.7)]
         B['cH'] = A['sH'] - 3./4.*gw2*(A['sW'] + A['sHW'] + A['s2W'])
-        B['cT'] = A['sT'] - 1./4.*gw2*(A['sB'] + A['sHB'] + A['s2B'])
+        B['cT'] = A['sT'] - 1./4.*gp2*(A['sB'] + A['sHB'] + A['s2B'])
         B['c6H'] = A['s6H'] - 2.*lam*gw2*(A['sW'] + A['sHW'] + A['s2W'])
         B['cWB'] = - 1./4.*(A['sHB'] + A['sHW'])
         B['cBB'] = A['sBB'] - A['sHB']
