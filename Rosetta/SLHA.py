@@ -1,4 +1,6 @@
 from collections import OrderedDict
+import sys
+import re
 # import warnings
 #
 class Block(OrderedDict):
@@ -56,8 +58,8 @@ class NamedBlock(Block):
         else:
             return key
     
-    def __init__(self, name=None, data=None, 
-                       names=None, decimal=5):
+    def __init__(self, name=None, data=None, names=None, comment='',decimal=5):
+        
         super(NamedBlock, self).__init__(name=name, 
                                          data=data, decimal=decimal)
         if names is not None:
@@ -70,6 +72,7 @@ class NamedBlock(Block):
                                  'dictionary or support iteritems() method.')
         else:
             self._names, self._numbers = {}, {}
+        self.comment=comment
 
     def __setitem__(self,key, value):
         return super(Block,self).__setitem__(self.__parse__(key),value)
@@ -99,7 +102,7 @@ class NamedBlock(Block):
         return ('<SHLA NamedBlock: "{}"; {} entries, {} named.>'.format(
                                         self.name,len(self), len(self._names)))
     def name(key):
-        return self._names[key]
+        return self._names.get(key,'')
         
     def number(name):
         return self._numbers[name]
@@ -122,11 +125,17 @@ class NamedBlock(Block):
             self[key]=value
 
     def __str__(self):
-        line = ('    {{: <4}} {{{}}} # {{}}'.format(self.fmt)).format
-        content = '\n'.join([line(k, v, self._names[k]) 
-                             for k,v in self.iteritems()])
-        string = ('BLOCK {}\n'.format(self.name)
-                   + content)
+        line1 = ('    {{: <4}} {{{}}} {{}}'.format(self.fmt)).format
+        line2 = ('    {{: <4}} {{{}}} # {{}}'.format(self.fmt)).format
+        content = []
+        for k,v in self.iteritems():
+            line = line1 if not self._names[k] else line2
+            try:
+                content.append(line(k, v, self._names[k]))
+            except ValueError:
+                content.append('    {: <4} {} # {}'.format(k,v,self._names[k]))
+        string = ('BLOCK {} # {}\n'.format(self.name,self.comment)
+                   + '\n'.join(content))
         return string        
 
 class Decay(OrderedDict):
@@ -179,9 +188,10 @@ class Decay(OrderedDict):
         
         self._BRtot = 0.
         
-        self.fmt= ':+.{}e'.format(decimal)
-        self.comment=comment
-        self.decimal=decimal
+        self._fmt= ':+.{}e'.format(decimal)
+        self._comment=comment
+        self._decimal=decimal
+        self._comments={}
                 
     def __setitem__(self,key,value):
         super(Decay,self).__setitem__(self.__check__( key ),self.__checkval__(value))
@@ -201,15 +211,226 @@ class Decay(OrderedDict):
     
     def __str__(self):
         above = '#\tPDG\t\tWidth\n'
-        below = '#    BR{}\tNDA\tID1       ID2\n'.format(' '*self.decimal)
-        line = ('{{{}}}\t{{}}\t{{: <10}}{{: <10}}'.format(self.fmt)).format
-        content = '\n'.join([line(v,len(k),*k) for k,v in self.iteritems()])
-        title = ('DECAY\t{{:<10}} {{{}}} # {{}}\n'.format(self.fmt)).format
-        string = (above + title(self.PID, self.total, self.comment) 
-                + below + content)
+        title = ('DECAY\t{{:<10}} {{{}}} # {{}}\n'.format(self._fmt)).format
+        below = '#    BR{}\tNDA\tID1       ID2...\n'.format(' '*self._decimal)
+        if len(self)==0: below=''
+        content = []
+        for k,v in self.iteritems():
+            nparts = len(k)
+            idfmt = nparts*'{: <10}'
+            line = ('{{{}}}\t{{}}\t{}'.format(self._fmt,idfmt)).format
+
+            cmnt = ('# {}'.format(self._comments[k]) 
+                     if k in self._comments else '')
+            
+            content.append(line(v, nparts, *k) + cmnt)
+
+        string = (above + title(self.PID, self.total, self._comment) 
+                + below + '\n'.join(content))
         return string
     
+    def new_channel(self,PIDs,partial,comment=None):
+        self[PIDs]=partial
+        if comment is not None: self._comments[PIDs]=comment
+        
+class Card(object):
+    
+    def _container(key):
+        if type(key) is int:
+            return self.decays
+        elif type(key) is str:
+            return self.blocks
+        else:
+            err = ('SLHA Card has integer keys for '
+                   'DECAY and string keys for BLOCK.')
+            raise ValueError(err)
+    
+    def __init__(self, param_card=None):
+        self.blocks=OrderedDict()
+        self.decays=OrderedDict()
+        
+    def __repr__(self):
+        return ('<SHLA Card: {} blocks, {} decays.>'.format(
+                                        len(self.blocks), len(self.decays)))
+    def __contains__(self,key):
+        return key in self._container(key)
+    
+    def __getitem__(self,key):
+        return self._container(key)[key]
+    
+    def __delitem__(self,key):
+        del self._container(key)[key]
+    
+    def __setitem__(self,key,value):
+        self._container(key)[key]=value
+        
+            
+    def add_block(self, block):
+        self.blocks[block.name] = block
+        
+    def add_decay(self, decay):
+        self.decays[decay.PID] = decay
+    
+    def has_block(self, name):
+        return name in self.blocks
+    
+    def has_decay(self, PID):
+        return PID in self.decay
+    
+    def write(filename):
+        pass
+    
+
+class SLHAReadError(Exception):
+    pass
+
+def read(card):
+    thecard = Card()
+    pcard = open(card,'r')
+    lines = iter(pcard)
+    counter = 0
+    try:
+        while True:
+            counter+=1
+        
+            try: line=(last_line.strip()).lower()
+            except NameError: line = lines.next()
+        
+            ll = (line.strip()).lower()
+            if not ll: continue
+
+            first_chars = re.match(r'\s*(\S+).*',ll).group(1)
+            if first_chars=='block':
+                try:
+                    block_details = re.match(r'\s*\S+\s+(.+)',ll).group(1)
+                except AttributeError:
+                    err = ('Invalid block format encountered' + 
+                          'in line {} of {}.'.format(counter, card) )
+                    raise SHLAReadError(err)
+                try:
+                    bname, comment = map(str.strip, block_details.split('#'))
+                except ValueError:
+                    bname, comment = block_details.strip(), ''
+            
+                theblock = NamedBlock(name=bname, comment=comment)
+            
+                block_data, last_line = read_until(lines,'block','decay')
+
+                for datum in block_data:
+                    counter +=1                    
+                    is_comment = re.match(r'\s*#.*',datum)
+                
+                    if (not datum.strip() or is_comment): continue
+                
+                    try:
+                        info = re.match(r'\s*(\S+)\s+(\S+)\s*#\s*(.*)',
+                                        datum)
+                        index, value, dname = tuple([info.group(x) 
+                                                    for x in xrange(1,4)])
+                    except AttributeError:
+                        info = re.match(r'\s*(\d+)\s+(\S+).*',
+                                        datum)
+                        if not info:
+                            print datum
+                            print ('Ignored datum in block '+
+                                    '{},'.format(theblock.name) +
+                                    ' (line {} of {})'.format(counter, card))
+                            continue
+                        index, value = info.group(1), info.group(2)  
+                        dname=None
+                    theblock.new_entry(int(index),value,name=dname)
+                
+                thecard.add_block(theblock)
+                
+            elif first_chars=='decay':
+                try:
+                    decay_details = re.match(r'\s*\S+\s+(.+)',ll).group(1)
+                except AttributeError:
+                    err = ('Invalid decay format encountered' + 
+                          'in line {} of {}.'.format(counter, card) )
+                    raise SHLAReadError(err)
+                try:
+                    info = re.match(r'\s*(\d+)\s+(\S+)\s*#\s*(.*)',
+                                    decay_details)
+                    PID, total, comment = tuple([info.group(x) 
+                                                    for x in xrange(1,4)])
+                except AttributeError:
+                    info = re.match(r'\s*(\d+)\s+(\S+).*',decay_details)
+                    PID, total = info.group(1), info.group(2)
+                    comment=''
+
+                thedecay = Decay(PID=int(PID), total=float(total), 
+                                 comment=comment)
+                
+                decay_data, last_line = read_until(lines,'block','decay')
+
+                for datum in decay_data:
+                    counter +=1                    
+                    is_comment = re.match(r'\s*#.*',datum)
+                
+                    if (not datum.strip() or is_comment): continue
+                
+                    try:
+                        info = re.match( (r'\s*(\S+)\s+(\d+)\s+([\d+-]+)'+
+                                          r'\s+([\d+-]+)\s*#\s*(.*)'), datum)
+                        partial, nout = info.group(1), info.group(2)  
+                        ID1, ID2 = info.group(3), info.group(4) 
+                        comment = info.group(5)
+                    except AttributeError:
+                        info = re.match( (r'\s*(\S+)\s+(\d+)\s+([\d+-]+)'+
+                                          r'\s+([\d+-]+).*'), datum)
+                        partial, nout = info.group(1), info.group(2)  
+                        ID1, ID2 = info.group(3), info.group(4) 
+                        comment=''
+                        if not info:
+                            print datum
+                            print ('Ignored above datum in decay '+
+                                    '{},'.format(thedecay.PID) +
+                                    ' (line {} of {})'.format(counter, card))
+                            continue
+                        index, value = info.group(1), info.group(2)  
+                        dname=None
+                        
+                    thedecay.new_channel( (int(ID1),int(ID2)), float(partial) )
+                    
+                thecard.add_decay(thedecay)
+                
+    except StopIteration:
+        print 'Finished reading.'
+        print 
+                
+    pcard.close()
+    
+    return thecard
+    
+def read_until(lines, here, *args):
+    '''Loops through an iterator of strings by calling next() until 
+       it reaches a line starting with a particular string.
+       Case insensitive.
+       Args:
+           lines - iterator of strings
+           here - string (plus any further argumnts). 
+                  Reading will end if the line matches any of these.
+       Return:
+           lines_read - list of lines read
+           line - last line that was read (containing string "here")
+    '''
+    end_strings = [here.lower()]+[a.lower() for a in args]
+    lines_read = []
+    line = ''
+    while not any([line.strip().lower().startswith(x) 
+                   for x in end_strings]): 
+        line = lines.next()
+        lines_read.append(line.strip('\n'))
+    return lines_read[:-1],lines_read[-1]
+
+
+
 if __name__=='__main__':
+    mycard = read('param_card_test.dat')
+    print mycard
+    sys.exit()
+    
     _input = OrderedDict([(0,0.),(1,1.),(2,2.)])
     _entries = {0:'zero', 1:'one', 2:'two'}
     myblock = NamedBlock(data=_input, name='test', names=_entries, decimal=3)
