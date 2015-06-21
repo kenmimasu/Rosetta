@@ -20,9 +20,9 @@ class SILHBasis(Basis):
     
     V3D3 = ['s3W','s3G','st3W','st3G']
     
-    cu = flavour_matrix('su',kind='symmetric',domain='complex')
-    cd = flavour_matrix('sd',kind='symmetric',domain='complex')
-    ce = flavour_matrix('se',kind='symmetric',domain='complex')
+    cu = flavour_matrix('su',kind='general',domain='complex')
+    cd = flavour_matrix('sd',kind='general',domain='complex')
+    ce = flavour_matrix('se',kind='general',domain='complex')
     f2H3 = cu + cd + ce
     
     cHl  = flavour_matrix('sHl' ,kind='hermitian',domain='complex')
