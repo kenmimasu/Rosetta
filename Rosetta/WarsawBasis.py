@@ -17,9 +17,9 @@ class WarsawBasis(Basis):
     
     V3D3 = ['c3W','c3G','ct3W','ct3G']
     
-    cu = flavour_matrix('cu',kind='symmetric',domain='complex')
-    cd = flavour_matrix('cd',kind='symmetric',domain='complex')
-    ce = flavour_matrix('ce',kind='symmetric',domain='complex')
+    cu = flavour_matrix('cu',kind='general',domain='complex')
+    cd = flavour_matrix('cd',kind='general',domain='complex')
+    ce = flavour_matrix('ce',kind='general',domain='complex')
     f2H3 = cu + cd + ce
     
     cHl  = flavour_matrix('cHl' ,kind='hermitian',domain='complex')

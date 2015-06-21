@@ -36,12 +36,12 @@ class HiggsBasis(Basis):
     higgs_gauge_dep = ['dCw','Cww','CTww','Cwbx','Cabx']
     
     # Single Higgs couplings to fermions
-    dYu = flavour_matrix('dYu', kind='symmetric', domain='real')
-    dYd = flavour_matrix('dYd', kind='symmetric', domain='real')
-    dYe = flavour_matrix('dYe', kind='symmetric', domain='real')
-    Su  = flavour_matrix('Su', kind='symmetric', domain='real')
-    Sd  = flavour_matrix('Sd', kind='symmetric', domain='real')
-    Se  = flavour_matrix('Se', kind='symmetric', domain='real')
+    dYu = flavour_matrix('dYu', kind='general', domain='real')
+    dYd = flavour_matrix('dYd', kind='general', domain='real')
+    dYe = flavour_matrix('dYe', kind='general', domain='real')
+    Su  = flavour_matrix('Su', kind='general', domain='real')
+    Sd  = flavour_matrix('Sd', kind='general', domain='real')
+    Se  = flavour_matrix('Se', kind='general', domain='real')
     
     higgs_ferm_ind = dYu + dYd + dYe + Su + Sd + Se
 

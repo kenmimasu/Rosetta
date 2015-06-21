@@ -111,4 +111,4 @@ if __name__=='__main__':
     # generate_frdef(MassBasis,'definitions.fr')
     # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat',tolerance=1e-4)
     # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat')
-    SILH_Warsaw_triangle('../Cards/param_card_SILHBasis_random.dat', tolerance=1e-3)
+    SILH_Warsaw_triangle('../Cards/param_card_SILHBasis_random.dat', tolerance=1e-4)
