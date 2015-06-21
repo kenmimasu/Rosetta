@@ -33,7 +33,7 @@ class WarsawBasis(Basis):
     f2H2D = cHl + cpHl + cHe + cHq + cpHq + cHu + cHd + cHud
     
     # affects Gf input, Warsaw <-> SILH translation
-    fourfermi = ['cll1221','cuu3333','cpuu3333'] 
+    fourfermi = ['cll1221','cll1122','cpuu3333'] 
     
     independent = H4D2 + H6 + V3D3 + f2H3  + V2H2 + f2H2D + fourfermi
     
@@ -68,6 +68,7 @@ class WarsawBasis(Basis):
         A = self.coeffs._asdict()
         B = MassBasis().coeffs._asdict()
         # B = MassBasis().coeffs
+        # print 'vev',vev
         
         def delta(i,j):
             return 1. if i==j else 0.
@@ -156,17 +157,19 @@ class WarsawBasis(Basis):
             sf = -Y/R # solution is +-Y/R 
             dy = (-Y**2 + X*abs(X))/R
             return dy,sf
-        
         # Yukawa type interaction coefficients [eqn. (4.16)]
         for i,j in comb((1,2,3),2): 
             for f in ('u','d','e'):
                 mi, mj = self.mass[ PID[f][i] ],self.mass[ PID[f][j] ] 
                 name = '{}{}{}'.format(f,i,j)
-                if mi and mj:
+                if (mi and mj):
                     dy_cosphi = (vev*A['c'+name+'_Re']/sqrt(2.*mi*mj) -
                                                        delta(i,j)*(A['cH']+dv))
                     dy_sinphi = vev*A['c'+name+'_Im']/sqrt(2.*mi*mj) 
-                    B['dY'+name], B['S'+name] = dy_sf(dy_cosphi, dy_sinphi)
+                    if (dy_cosphi == 0.) and (dy_sinphi == 0.): # check this consistency
+                        B['dY'+name], B['S'+name] = 0., 0.
+                    else:
+                        B['dY'+name], B['S'+name] = dy_sf(dy_cosphi, dy_sinphi)
         
         # Double Higgs Yukawa type interaction coefficients [eqn. (4.17)]
         for i,j in comb((1,2,3),2):
@@ -198,7 +201,7 @@ class WarsawBasis(Basis):
         B['Cgg2'], B['CTgg2'] = B['Cgg'], B['CTgg']
         
         # 4-fermion 
-        B['cuu3333'] = A['cuu3333']
+        B['cll1122'] = A['cll1122']
         B['cpuu3333'] = A['cpuu3333']
         B['cll1221'] = A['cll1221']
         

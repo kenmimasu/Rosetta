@@ -76,7 +76,6 @@ class SILHBasis(Basis):
         self.newname='Mass'
         s2w, ee2, gw2, gp2, vev, gs2 = self.calculate_inputs()
         MH = self.input['MH']
-        print gw2, gp2
         A = self.coeffs._asdict()
         B = MassBasis().coeffs._asdict()
         
@@ -86,7 +85,7 @@ class SILHBasis(Basis):
         B['dM'] = - gw2*gp2/(4.*(gw2-gp2))*(A['sW'] + A['sB'] + A['s2W'] 
                                             + A['s2B'] - 4./gp2*A['sT'] 
                                             + 2./gw2*A['spHl22'])
-        def f(T3,Q): # [eqn (5.12)] MINUS SIGN WRONG IN NOTE
+        def f(T3,Q): # [eqn (5.12)]
             Qcoeff = gp2/4./(gw2-gp2)*( -(2.*gw2-gp2)*A['s2B'] 
                        - gw2*(A['s2W'] + A['sW'] + A['sB'] ) 
                        + 4.*A['sT'] - 2.*A['spHl22'])
@@ -185,12 +184,11 @@ class SILHBasis(Basis):
                 if mi and mj:
                     dy_cosphi = (vev*A['s'+name+'_Re']/sqrt(2.*mi*mj) -
                                  delta(i,j)*(A['sH'] + A['spHl22']/2.))
-                    # dy_cosphi = (vev*A['s'+name+'_Re']/sqrt(2.*mi*mj) -
-                    #              delta(i,j)*(A['sH']
-                    #                  + 3./4.*gw2*(A['sW'] + A['sHW'] + A['s2W'])
-                    #                  + A['spHl22']/2.))
-                    dy_sinphi = vev*A['s'+name+'_Im']/sqrt(2.*mi*mj) 
-                    B['dY'+name], B['S'+name]  = dy_sf(dy_cosphi, dy_sinphi)
+                    dy_sinphi = vev*A['s'+name+'_Im']/sqrt(2.*mi*mj)
+                    if (dy_cosphi == 0.) and (dy_sinphi == 0.): # check this consistency
+                        B['dY'+name], B['S'+name] = 0., 0. 
+                    else:
+                        B['dY'+name], B['S'+name]  = dy_sf(dy_cosphi, dy_sinphi)
         
         # Double Higgs Yukawa type interaction coefficients [eqn. (4.17)]
         for i,j in comb((1,2,3),2):
@@ -229,7 +227,9 @@ class SILHBasis(Basis):
         # [eqn (3.27)] copied from HiggsBasis implemetation
         B['Cgg2'], B['CTgg2'] = B['Cgg'], B['CTgg']
         
+        B['cll1122']=(gw2*A['s2W']+gp2*A['s2B'])/2.
         B['cll1221']=gw2*A['s2W']
+        B['cpuu3333'] = (1./3.)*gs2*A['s2G']
         self.newpar = B
         
         self.newmass[24] = self.mass[24]+self.newpar['dM'] # W mass shift
@@ -260,10 +260,18 @@ class SILHBasis(Basis):
         B['ctWW'] = -A['stHW']
         
         def cHf(sc, Yf, i, j):
-            return A[sc] + delta(i,j)*gp2*Yf/2.*(A['sB'] + A['sHB'] + 2.*A['s2B'])
+            if '_Im' not in sc: 
+                return A[sc] + delta(i,j)*gp2*Yf/2.*(A['sB'] + 
+                                                     A['sHB'] + 2.*A['s2B'])
+            else:
+                return A[sc]
             
         def cpHf(sc, i, j):
-            return A[sc] + delta(i,j)*gw2/4.*(A['sW'] + A['sHW'] + 2.*A['s2W'])
+            if '_Im' not in sc:
+                return A[sc] + delta(i,j)*gw2/4.*(A['sW'] +
+                                                  A['sHW'] + 2.*A['s2W'])
+            else:
+                return A[sc]
             
         # [eqn (5.8)]
         for i,j in comb((1,2,3),2):
@@ -287,13 +295,16 @@ class SILHBasis(Basis):
                     mass = self.mass[ PID[f][i] ]
                     yuk = sqrt(2.)*mass/vev
                     wcoeff, scoeff = 'c{}{}'.format(f,t),'s{}{}'.format(f,t)
-                    B[wcoeff] = A[scoeff] - delta(i,j)*gw2*yuk*(
+                    if '_Im' not in scoeff:
+                        B[wcoeff] = A[scoeff] - delta(i,j)*gw2*yuk*(
                                               A['sW'] + A['sHW'] + A['s2W'])/2.
+                    else:
+                        B[wcoeff] = A[scoeff] 
 
         # [eqn (5.10)]
         B['cll1221'] = gw2*A['s2W'] # cll1221==0 in SILH
         # derived from [eqn (5.4)]
-        B['cuu3333'] = (4./9.)*gp2*A['s2B']
+        B['cll1122']=(gw2*A['s2W']+gp2*A['s2B'])/2.
         B['cpuu3333'] = (1./3.)*gs2*A['s2G']
         
         # trivial translation, cX==sX
