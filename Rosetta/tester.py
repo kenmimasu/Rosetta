@@ -3,6 +3,7 @@ from HiggsBasis import HiggsBasis
 from WarsawBasis import WarsawBasis
 from SILHBasis import SILHBasis
 from MassBasis import MassBasis
+import SLHA
 import tempfile
 import os
 import sys
@@ -66,7 +67,7 @@ def higgs_basis_check(MyBasis,param_card,tolerance=1e-4):
     os.remove(out_card)
     os.rmdir(tmpdir)
     
-def SILH_Warsaw_triangle(param_card,tolerance=1e-1):
+def SILH_Warsaw_triangle(param_card,tolerance=1e-4):
     tmpdir = tempfile.mkdtemp(prefix = 'rosetta_temp_', dir=os.getcwd())
     out_card = '{}/output_card.dat'.format(tmpdir)
     to_warsaw = SILHBasis(param_card=param_card, 
@@ -88,26 +89,48 @@ def SILH_Warsaw_triangle(param_card,tolerance=1e-1):
     os.rmdir(tmpdir)
     
     
-def generate_coeffs(basis_class, rand=False):
+def generate_coeffs(basis_class, val, rand=False):
     myinstance = basis_class()
-    for i,coeff in enumerate(myinstance.independent):
-        val = random.uniform(-1.,1.) if rand else 0.1
-        print '    {:<2} {:.5e} # {}'.format(i,val,coeff)
+    SLHA_card = myinstance.card
+    # print myinstance.independent
+    for name, blk in SLHA_card.blocks.iteritems():
+        for coeff in blk:
+            if blk.get_name(coeff) not in myinstance.independent:
+                del blk[coeff]
+            else:
+                blk[coeff]=val if not rand else random.uniform(-1.,1.)
+    for name, blk in myinstance.card.blocks.iteritems():
+        print blk
         
 def generate_frdef(basis_class,filename):
     myinstance = basis_class()
+    SLHA_card = myinstance.card
+    for name, blk in SLHA_card.blocks.iteritems():
+        for coeff in blk:
+            if blk.get_name(coeff) not in myinstance.independent:
+                del blk[coeff]
+        # print repr(blk)
     with open(filename,'w') as out:
-        for i,coeff in enumerate(myinstance.independent):
-            out.write('{} == {{ ParameterType -> External,\n'.format(coeff))
-            out.write('   Value -> 0,\n')
-            out.write('   InteractionOrder -> {QNP, 1},\n')
-            out.write('   TeX -> Subscript[{},Subscript[{}]],\n'.format(coeff[0],coeff[1:]))
-            out.write('   Description -> "{} coupling parameter"}},\n'.format(coeff))
-            out.write('\n')
+        for name, blk in myinstance.card.blocks.iteritems():
+            bname = blk.name
+            for index, value in blk.iteritems():
+                cname = blk.get_name(index)
+                out.write('{} == {{ ParameterType -> External,\n'.format(cname))
+                out.write('   Value -> {},\n'.format(value))
+                out.write('   InteractionOrder -> {QNP, 1},\n')
+                out.write('   TeX -> {},\n'.format(cname))
+                out.write('   BlockName -> {},\n'.format(bname))
+                out.write('   OrderBlock -> {},\n'.format(index))
+                out.write('   Description -> "{} coupling parameter"}},\n'.format(cname))
+                out.write('\n')
 
 if __name__=='__main__':
-    # generate_coeffs(WarsawBasis,rand=True)
-    generate_frdef(MassBasis,'definitions.fr')
-    # higgs_basis_check(WarsawB asis,'../Cards/param_card_WarsawBasis.dat',tolerance=1e-4)
+    # generate_coeffs(WarsawBasis,0.,rand=False)
+    # generate_coeffs(SILHBasis,0.,rand=True)
+    generate_coeffs(HiggsBasis,1.,rand=True)
+    # generate_coeffs(MassBasis,1.,rand=True)
+    # generate_frdef(HiggsBasis,'HB_definitions.fr')
+    # generate_frdef(MassBasis,'MB_definitions.fr')
+    # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat',tolerance=1e-4)
     # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat')
-    # SILH_Warsaw_triangle('../Cards/param_card_SILHBasis.dat')
+    # SILH_Warsaw_triangle('../Cards/param_card_SILHBasis_random.dat', tolerance=1e-4)

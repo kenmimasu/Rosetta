@@ -5,13 +5,12 @@ import os
 import math
 import datetime
 import SLHA
-import copy
 from collections import namedtuple,OrderedDict
 from itertools import product, combinations
 from itertools import combinations_with_replacement as combinations2
 from query import query_yes_no as Y_or_N
 from __init__ import (PID, default_inputs, default_masses, input_names, 
-                      particle_names, input_to_PID, PID_to_input)
+                      particle_names, input_to_PID)
 from eHDECAY import eHDECAY
 ########################################################################
 # Base Basis class
@@ -79,7 +78,8 @@ class Basis(object):
     translate_to = {'mass'}
     blocks = {}
     
-    def __init__(self, param_card=None, output_basis='mass', 
+    def __init__(self, param_card=None, block_in='newcoup', 
+                 block_out='newcoup', output_basis='mass', 
                  keep_old=True, ehdecay=False):
         # Check that target basis has a translation implemented
         if output_basis in self.translate_to:
@@ -93,15 +93,14 @@ class Basis(object):
             raise ValueError(error)
             
         self.param_card = param_card
-        # self.block_in, self.block_out= block_in, block_out
-        # self.keep_old = keep_old
-        # self.card, self.newcard = StringIO.StringIO(), StringIO.StringIO()
-        # self.input, self.SLHA_sminputs = OrderedDict(), OrderedDict()
-        # self.mass, self.par_dict = OrderedDict(), OrderedDict()
-        # self.newinput, self.newmass, self.newpar = dict(), dict(), dict()
+        self.block_in, self.block_out= block_in, block_out
+        self.keep_old = keep_old
+        self.card, self.newcard = StringIO.StringIO(), StringIO.StringIO()
+        self.input, self.SLHA_sminputs = OrderedDict(), OrderedDict()
+        self.mass, self.par_dict = OrderedDict(), OrderedDict()
+        self.newinput, self.newmass, self.newpar = dict(), dict(), dict()
         self.newname = 'Basis'
         self.all_coeffs = self.independent + self.dependent
-        self.blocks = {k.lower():v for k,v in self.blocks.iteritems()}
         # read param card (sets self.par_dict, self.input, 
         # self.mass, self.name, self.card)
         if param_card is not None: 
@@ -109,13 +108,11 @@ class Basis(object):
                    '{} does not exist!'.format(self.param_card)
             
             self.read_param_card() 
-            # various input checks 
+            # if self.name=='Mass':
+            #     print self.par_dict['C1z']
             self.check_param_data() 
-            self.check_sminputs() 
-            self.check_param_data()
-            # assign self.dependent_card
-            self.init_dependent()
             self.calculate_dependent() # (User defined function)
+            self.check_calculated_data() # consistency check 
             
             # namedtuple declaration
             coeffclass = namedtuple(self.name, self.all_coeffs)
@@ -123,7 +120,7 @@ class Basis(object):
             
             self.translate() # translate to new basis (User defined)
             # consistency checkbetween self.newinput and self.newmass
-            self.check_new()
+            self.check_new() 
             # set new masses in self.newinput
             self.set_new_masses() 
             
@@ -144,241 +141,9 @@ class Basis(object):
             self.name=self.__class__.__name__
             coeffclass = namedtuple(self.name, self.all_coeffs)
             self.coeffs = coeffclass(**{k:0. for k in self.all_coeffs})
-            self.card = SLHA.Card(blocks=self.blocks)
             
+
     def read_param_card(self):
-        self.card = SLHA.read(self.param_card)
-        self.inputs = self.card.blocks.get('sminputs',None)
-        self.mass = self.card.blocks.get('mass',None)        
-        
-    def check_sminputs(self):
-        # Check all required inputs have been set
-        input_list = ', '.join( ['{} ({})'.format(x,input_names[x]) 
-                                for x in self.required_inputs] )
-        if self.required_inputs:
-            if self.inputs is None:
-                repr_default = ['{}={: .5e}'.format(input_names[k], 
-                                 default_inputs.get(k,0.)) for 
-                                 k in self.required_inputs]
-                
-                print 'Warning: Block "sminputs" not found. '\
-                      'Assume default values for required inputs?'
-                print 'Required inputs: {}'.format(input_list)
-                carry_on = Y_or_N(
-                    'Continue with default values '\
-                    'for unspecified inputs? '\
-                    '({})'.format(', '.join(repr_default))
-                                 )
-                if carry_on:
-                    theblock = SLHA.NamedBlock(name='sminputs')
-                    for m in self.required_inputs: 
-                        theblock.new_entry(m, default_inputs[m], 
-                                           name=input_names[m])
-                    self.card.add_block(theblock)
-                    self.inputs = theblock
-                else:
-                    print 'Exit'
-                    sys.exit()
-            else:
-                if self.mass:
-                    for k,v in [(i,j) for i,j in self.mass.iteritems() 
-                                if i in (23,25)]:
-                        i = PID_to_input[k]
-                        if i in self.inputs:
-                            v2 = float(self.inputs[i])
-                            if v!=v2:
-                                print ('Warning: {} '.format(input_names[i])
-                                + 'specified in block sminput[{}] '.format(i)
-                                + '({:.5e}) not consistent with '.format(v2)
-                                + 'value specified in block mass '
-                                + '[{}] ({:.5e}).\n'.format(k,float(v))
-                                + 'Rosetta will keep value from sminputs.')
-                                self.mass[k]=v2
-                        else:
-                            mstring = 'M{}'.format(particle_names[k])
-                            self.inputs.new_entry(i, v,name=mstring)
-
-                required = set(self.required_inputs)
-                inputs = set(self.inputs.keys())
-                missing_inputs = required.difference(inputs)
-                missing_values = {k:default_inputs.get(k,0.) for k in missing_inputs}
-                repr_default = ['{}={: .5e}'.format(input_names[k], 
-                                 default_inputs.get(k,0.)) for 
-                                 k in missing_inputs]
-                if missing_inputs: # Deal with unassigned SM inputs
-                    print 'Warning: Not all required SM inputs are '\
-                          'defined.'
-                    print 'Required inputs: {}'.format(input_list)
-                    missing_list = ', '.join([str(x) for x in missing_inputs])
-                    print 'Missing inputs: {}'.format(missing_list)
-                    carry_on = Y_or_N(
-                        'Continue with default values '\
-                        'for unspecified inputs? '\
-                        '({})'.format(', '.join(repr_default))
-                                     )
-                    if carry_on: # sets unspecified inputs
-                        for m in missing_inputs: 
-                            self.inputs.new_entry(m, default_inputs[m], 
-                                                  name=input_names[m])
-                    else:
-                        print 'Exit'
-                        sys.exit()
-        print 'SM inputs are OK.'
-        
-    def check_masses(self):
-        mass_list = ', '.join( ['{} (M{})'.format(x,particle_names[x]) 
-                                for x in self.required_masses] )
-        PID_list = ', '.join([str(x) for x in self.required_masses])
-        if self.required_masses:
-            if self.mass is None:
-                repr_default = ['{}={: .5e}'.format(particle_names[k], 
-                                 default_inputs.get(k,0.)) for 
-                                 k in self.required_masses]
-                print 'Warning: Block "mass" not found. '\
-                      'Assume default values for required masses?'
-                print 'Required PIDs: {}'.format(mass_list)
-
-                carry_on = Y_or_N(
-                    'Continue with default values '\
-                    'for unspecified masses? '\
-                    '({})'.format(', '.join(repr_default))
-                                 )
-                if carry_on:
-                    self.card.add_block('sminputs')
-                    for m in self.required_inputs: 
-                        self.inputs[m]=default_inputs[m]
-                else:
-                    print 'Exit'
-                    sys.exit()
-            else:
-                masses = set(self.mass.keys())
-                required = set(self.required_masses)
-                missing_masses = required.difference(masses)
-                missing_values = {k:default_masses.get(k,0.) 
-                                  for k in missing_masses}
-                if missing_masses: # Deal with unassigned fermion masses
-                    repr_default = ['{}={: .5e}'.format(particle_names[k], 
-                                     default_inputs.get(k,0.)) for 
-                                     k in missing_masses]
-                    print 'Warning: Not all required fermion masses are '\
-                          'defined.'
-                    print 'Required PIDs: {}'.format(PID_list)
-                    print 'Missing PIDs: {}'.format(mass_list)
-                    carry_on = Y_or_N(
-                        'Continue assuming default values '\
-                        'for unspecified masses? '\
-                        '({})'.format(', '.join(repr_default))
-                        )
-                    if carry_on: 
-                        for m in missing_inputs: 
-                            self.mass.new_entry(m, default_masses[m], 
-                                                name='M%s' % particle_names[m])
-                    else:
-                        print 'Exit'
-                        sys.exit()
-        print 'Particle masses are OK.'
-                        
-    def check_param_data(self):
-        for bname, defined in self.blocks.iteritems():
-            
-            # collect block info
-            inputblock = self.card.blocks.get(bname,SLHA.Block())
-            input_eles = set(inputblock.keys())
-            
-            defined_block = {i:v for i,v in enumerate(defined)}
-            defined_eles = set(defined_block.keys())
-            
-            independent = {i:v for i,v in defined_block.iteritems() 
-                           if v in self.independent}
-            dependent = {i:v for i,v in defined_block.iteritems() 
-                           if v in self.dependent}
-                           
-            # check for unrecognised coefficient numbers              
-            unknown = input_eles.difference(defined_eles)
-            if unknown:
-                unknown_names = {i:inputblock.get_name(i,'none') 
-                                 for i in unknown}
-                print 'Warning: you have declared coefficients '\
-                      'undefined in {}, block:{}.'.format(self.__class__,
-                                                          bname)
-                print 'The following will be ignored - '\
-                      '{}'.format(', '.join(['{}:"{}"'.format(k,v) for k,v 
-                                             in unknown_names.iteritems()]))
-                                             
-            # check that name, number pairs match
-            mismatched = []
-            unnamed = []
-            
-            for index, name in independent.items():
-                input_name = inputblock.get_name(index, None)
-                if input_name is None: 
-                    inputblock._names[index] = name
-                elif input_name!=name:
-                    mismatched.append((index,name,input_name))
-                    
-            if mismatched:
-                print 'Warning: Mismatch of coefficient names '\
-                      'in {}, block:{}.'.format(self.__class__,
-                                                          bname)
-                for index, name, input_name in mismatched:
-                    print ('    Coefficient {}, named {} '.format(index, input_name) +
-                          'will be renamed to {}'.format(name))
-                    inputblock._names[index] = name
-                    inputblock._numbers[name] = index
-            
-            # check if coefficients defined as dependent 
-            # have been assigned values
-            defined_dependent = set(dependent).intersection(input_eles)
-            if defined_dependent: 
-                print 'Warning: you have assigned values to some '\
-                      'coefficients defined as dependent '\
-                      'in {}, block:{}.'.format(self.__class__, bname)
-                print 'Coefficients: {}'.format(', '.join(
-                                                  ['{}:"{}"'.format(k,v) 
-                                                   for k,v in dependent.items() 
-                                                   if k in defined_dependent]
-                                                   ))
-                print 'These may be overwritten by an implementation of '\
-                      '{}.translate()'.format(self.__class__.__name__)
-                carry_on = Y_or_N('Continue?')
-                if carry_on:
-                    pass
-                else:
-                    print 'Exit'
-                    sys.exit()
-            
-            # check if all independent coefficients are assigned values
-            missing = set(independent).difference(input_eles)
-            if missing: # Deal with unassigned independent coefficients
-                print 'Warning: some coefficients defined as independent '\
-                      'in block "{}" of {} have not been assigned values.'\
-                      '.'.format(self.__class__, bname)
-                print 'Undefined: {}'.format(', '.join(
-                                                  ['{}:"{}"'.format(k,v) 
-                                                   for k,v in independent.items() 
-                                                   if k in missing]
-                                                   ))
-                carry_on = Y_or_N('Continue assuming unspecified '\
-                                  'coefficients are Zero?')
-                if carry_on:
-                    for m in missing: 
-                        inputblock.new_entry(m, 0., independent[m])
-                else:
-                    print 'Exit'
-                    sys.exit()
-                    
-    def init_dependent(self):
-        thecard = SLHA.Card(blocks=self.card.blocks,
-                             decays=self.card.decays)
-                                        
-        for bname, fields in self.blocks.iteritems():
-            to_add = [f for f in fields if f in self.dependent]
-            for entry in to_add:
-                thecard.add_entry(bname, fields.index(entry), 0., name=entry)
-        
-        self.dependent_card = thecard
-    
-    def read_param_card_old(self):
         '''
         Reads SLHA style param card and stores values of parameters.
         Looks for Blocks "basis", "mass", "newcoup" and "sminput" and 
@@ -387,7 +152,7 @@ class Basis(object):
         (SLHA ID, value) respectively. The whole param_card is also 
         stored in self.card for later use.
         '''
-
+        
         def read_pattern(plines, patt, pdict, ikey=2, ival=1, 
                          convert_key=str, convert_val=float):
             '''Takes a list of lines and looks for regexp pattern "patt" 
@@ -513,7 +278,7 @@ class Basis(object):
                 except KeyError:
                     pass
         
-    def check_param_data_old(self):
+    def check_param_data(self):
         '''
         Compares lists of coefficients declared in self.independent and 
         self.dependent to those read in from self.param_card.

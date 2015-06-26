@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import sys
 import re
+
 # import warnings
 #
 class Block(OrderedDict):
@@ -19,16 +20,17 @@ class Block(OrderedDict):
         else:
             return key
         
-    def __init__(self, name=None, data=None, decimal=5):
+    def __init__(self, name=None, data=None, decimal=5, dtype=lambda x: x):
         super(Block, self).__init__()
         self.name = name
+        self.cast = dtype
         self.fmt= ':+.{}e'.format(decimal)
         if data is not None:
             for k,v in data.iteritems():
-                self[k]=v
+                self[k]=dtype(v)
                 
     def __setitem__(self,key,value):
-        super(Block,self).__setitem__(self.__check__(key),value)
+        super(Block,self).__setitem__(self.__check__(key),self.cast(value))
     
     def __repr__(self):
         return ( '<SHLA Block: "{}"; {} entries.>'.format(self.name,len(self)) )
@@ -38,9 +40,11 @@ class Block(OrderedDict):
         content = '\n'.join([line(k,v) 
                              for k,v in self.iteritems()])
         string = ('BLOCK {}\n'.format(self.name)
-                   + content)
+                   + content+ '\n\n')
         return string
-        
+    
+    def dict(self):
+        return {k:v for k,v in self.iteritems()}
 
 class NamedBlock(Block):
     '''    Class derived from 'Block' with the added functionality of assigning a 
@@ -58,24 +62,26 @@ class NamedBlock(Block):
         else:
             return key
     
-    def __init__(self, name=None, data=None, names=None, comment='',decimal=5):
-        
-        super(NamedBlock, self).__init__(name=name, 
-                                         data=data, decimal=decimal)
-        if names is not None:
-            self._names = names
+    def __init__(self, name=None, data=None, 
+                 comment='',decimal=5, dtype=lambda x:x):
+        super(NamedBlock, self).__init__(name=name, data=data, 
+                                         decimal=decimal, dtype=dtype)
+        if data is not None:
+            self._names = data._names
             try:
-                self._numbers = data={v:k for k,v 
+                self._numbers = {v:k for k,v 
                                       in self._names.iteritems()}
             except AttributeError:
                 raise ValueError('"names" keyword argument must be a'
                                  'dictionary or support iteritems() method.')
         else:
             self._names, self._numbers = {}, {}
+        self.cast=dtype
         self.comment=comment
 
     def __setitem__(self,key, value):
-        return super(Block,self).__setitem__(self.__parse__(key),value)
+        return super(Block,self).__setitem__(self.__parse__(key),
+                                             self.cast(value))
 
     def __getitem__(self, key):
         return super(Block,self).__getitem__(self.__parse__(key))
@@ -87,7 +93,8 @@ class NamedBlock(Block):
                 del self._names[key]
             except KeyError:
                 pass
-        if type(key) is str:
+        elif type(key) is str:
+            key = key
             try:
                 del self._names[self._numbers[key]]
                 del self._numbers[key]
@@ -96,47 +103,56 @@ class NamedBlock(Block):
         return super(Block,self).__delitem__(self.__parse__(key))
                      
     def __contains__(self, key):
-        return super(Block,self).__contains__(self.__parse__(key))
+        if type(key) is str:
+            return key in self._numbers 
+        elif type(key) is int:
+            return super(Block,self).__contains__(key)
         
     def __repr__(self):
         return ('<SHLA NamedBlock: "{}"; {} entries, {} named.>'.format(
                                         self.name,len(self), len(self._names)))
-    def name(key):
-        return self._names.get(key,'')
+    def __str__(self):
+        content = []
+        for k,v in self.iteritems():
+            try:
+                strval = ('{{{}}}'.format(self.fmt)).format(float(v))
+            except ValueError:
+                strval = v
+            if k in self._names:
+                content.append('    {: <4} {} # {}'.format(k,strval,
+                                                           self._names[k]))
+            else:
+                content.append('    {: <4} {}'.format(k,strval))
+        string = ('BLOCK {} # {}\n'.format(self.name,self.comment)
+                   + '\n'.join(content) + '\n\n')       
+        return string
+
+    def get_name(self, key, default=''):
+        return self._names.get(key,default)
         
-    def number(name):
+    def get_number(self, name):
         return self._numbers[name]
     
     def new_entry(self,key,value,name=None):
         if key in self:
             err = ("Key '{}' already belongs to NamedBlock ".format(key) +
                    "'{}', mapped to name '{}'.".format(self.name,
-                                                    self._names[key]) )
+                                                    self._names[key]))
             raise KeyError(err)
         elif name in self._numbers:
             err = ("Name '{}' already booked in ".format(name) +
                    "NamedBlock {}, mapped to key '{}'.".format(
-                                   self.name,self._numbers[name]) )
+                                   self.name,self._numbers[name]))
             raise KeyError(err)
         else:
             if name is not None:
                 self._names[key] = name
                 self._numbers[name] = key
             self[key]=value
-
-    def __str__(self):
-        line1 = ('    {{: <4}} {{{}}} {{}}'.format(self.fmt)).format
-        line2 = ('    {{: <4}} {{{}}} # {{}}'.format(self.fmt)).format
-        content = []
-        for k,v in self.iteritems():
-            line = line1 if not self._names[k] else line2
-            try:
-                content.append(line(k, v, self._names[k]))
-            except ValueError:
-                content.append('    {: <4} {} # {}'.format(k,v,self._names[k]))
-        string = ('BLOCK {} # {}\n'.format(self.name,self.comment)
-                   + '\n'.join(content))
-        return string        
+            
+    def namedict(self):
+        return {self._names.get(k,''):v for k,v in self.iteritems()}
+        
 
 class Decay(OrderedDict):
     '''Container class for SLHA Decay. A subclass of `collections.OrderedDict`
@@ -151,7 +167,7 @@ class Decay(OrderedDict):
     def __check__(self,key):
         if type(key) is not tuple: 
             raise TypeError( self.__class__.__name__ +
-                             ' only accepts tuple keys: (PID1, PID2).' ) 
+                             ' only accepts tuple keys: (PID1, PID2,...).' ) 
         else:
             return tuple(map(int,key))
     
@@ -226,7 +242,7 @@ class Decay(OrderedDict):
             content.append(line(v, nparts, *k) + cmnt)
 
         string = (above + title(self.PID, self.total, self._comment) 
-                + below + '\n'.join(content))
+                + below + '\n'.join(content) + '\n')
         return string
     
     def new_channel(self,PIDs,partial,comment=None):
@@ -235,27 +251,40 @@ class Decay(OrderedDict):
         
 class Card(object):
     
-    def _container(key):
+    def _parent_block(self, key):
+        for block in self.blocks.values():
+            if key in block:
+                return block
+        return OrderedDict()
+    
+    def _container(self, key):
         if type(key) is int:
             return self.decays
         elif type(key) is str:
-            return self.blocks
+            return self._parent_block(key)
         else:
             err = ('SLHA Card has integer keys for '
                    'DECAY and string keys for BLOCK.')
             raise ValueError(err)
-    
-    def __init__(self, param_card=None):
+        
+    def __init__(self, blocks=None, decays=None):
         self.blocks=OrderedDict()
         self.decays=OrderedDict()
-        
+        if blocks is not None:
+            for bname, block in blocks.iteritems():
+                self.blocks[bname] = NamedBlock(name=bname, data=block)  
+        if decays is not None:
+            for PID, decay in decays.iteritems():
+                self.decays[PID]= Decay(PID,decay.total, data=decay)
+                
+    
     def __repr__(self):
         return ('<SHLA Card: {} blocks, {} decays.>'.format(
                                         len(self.blocks), len(self.decays)))
     def __contains__(self,key):
         return key in self._container(key)
     
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         return self._container(key)[key]
     
     def __delitem__(self,key):
@@ -271,14 +300,41 @@ class Card(object):
     def add_decay(self, decay):
         self.decays[decay.PID] = decay
     
+    def add_entry(self,block,key,value,name=None):
+        if self.has_block(block):
+            self.blocks[block].new_entry(key,value,name=name)
+        else:
+            if name is not None:
+                theblock = NamedBlock(name=block)
+                theblock.new_entry(key,value,name=name)
+            else:
+                theblock = Block(name=block)
+                theblock.new_entry(key,value)
+                
+            self.add_block(theblock)
+                
+    def add_channel(self,PID,channel,partial,comment=None):
+        assert(self.has_decay(PID)),('Tried adding a decay channel '
+                                     'for non existent decay PID')
+        self.decays[PID].new_channel(channel,partial,comment=comment)
+    
+    def new_channel(self,PIDs,partial,comment=None):
+        self[PIDs]=partial
+        if comment is not None: self._comments[PIDs]=comment
+        
     def has_block(self, name):
         return name in self.blocks
     
     def has_decay(self, PID):
         return PID in self.decay
     
-    def write(filename):
-        pass
+    def write(self,filename):
+        with open(filename,'w') as out:
+            for block in self.blocks.values():
+                out.write(str(block))
+            for decay in self.decays.values():
+                out.write(str(decay))
+            
     
 
 class SLHAReadError(Exception):
@@ -312,7 +368,7 @@ def read(card):
                 except ValueError:
                     bname, comment = block_details.strip(), ''
             
-                theblock = NamedBlock(name=bname, comment=comment)
+                theblock = NamedBlock(name=bname.lower(), comment=comment)
             
                 block_data, last_line = read_until(lines,'block','decay')
 
@@ -323,7 +379,7 @@ def read(card):
                     if (not datum.strip() or is_comment): continue
                 
                     try:
-                        info = re.match(r'\s*(\S+)\s+(\S+)\s*#\s*(.*)',
+                        info = re.match(r'\s*(\S+)\s+(\S+)\s*#\s*(\S+).*',
                                         datum)
                         index, value, dname = tuple([info.group(x) 
                                                     for x in xrange(1,4)])
@@ -338,7 +394,13 @@ def read(card):
                             continue
                         index, value = info.group(1), info.group(2)  
                         dname=None
-                    theblock.new_entry(int(index),value,name=dname)
+                    try:
+                        entry = float(value)
+                    except ValueError:
+                        entry = value
+                    finally:
+                        theblock.new_entry(int(index),entry,name=dname)
+                        
                 
                 thecard.add_block(theblock)
                 
@@ -350,7 +412,7 @@ def read(card):
                           'in line {} of {}.'.format(counter, card) )
                     raise SHLAReadError(err)
                 try:
-                    info = re.match(r'\s*(\d+)\s+(\S+)\s*#\s*(.*)',
+                    info = re.match(r'\s*(\d+)\s+(\S+)\s*#\s*(\S+).*',
                                     decay_details)
                     PID, total, comment = tuple([info.group(x) 
                                                     for x in xrange(1,4)])
@@ -424,13 +486,10 @@ def read_until(lines, here, *args):
         lines_read.append(line.strip('\n'))
     return lines_read[:-1],lines_read[-1]
 
-
-
 if __name__=='__main__':
     mycard = read('param_card_test.dat')
     print mycard
     sys.exit()
-    
     _input = OrderedDict([(0,0.),(1,1.),(2,2.)])
     _entries = {0:'zero', 1:'one', 2:'two'}
     myblock = NamedBlock(data=_input, name='test', names=_entries, decimal=3)

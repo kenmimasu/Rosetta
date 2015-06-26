@@ -31,8 +31,8 @@ print ''
 print '########## Rosetta ##########'
 print 'Basis class used to read in param card: {}'.format(mybasis)
 basis_instance = mybasis(param_card=args.param_card, 
-                         block_in=args.blockin,
-                         block_out=args.blockout,
+                         # block_in=args.blockin,
+                         # block_out=args.blockout,
                          output_basis=args.target,
                          ehdecay=args.ehdecay) # create instance of mybasis
 print 'Basis name: {}'.format(basis_instance.name)
