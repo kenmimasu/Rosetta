@@ -9,18 +9,18 @@ from __init__ import PID
 # Warsaw basis class
 class WarsawBasis(Basis):
     # [Tab. 1]
-    V2H2 = ['cGG','ctGG','cWW','ctWW','cBB','ctBB','cWB','ctWB']
+    WBV2H2 = ['cGG','ctGG','cWW','ctWW','cBB','ctBB','cWB','ctWB']
     
-    H4D2 = ['cH','cT']
+    WBH4D2 = ['cH','cT']
     
-    H6 = ['c6H']
+    WBH6 = ['c6H']
     
-    V3D3 = ['c3W','c3G','ct3W','ct3G']
+    WBV3D3 = ['c3W','c3G','ct3W','ct3G']
     
     cu = flavour_matrix('cu',kind='general',domain='complex')
     cd = flavour_matrix('cd',kind='general',domain='complex')
     ce = flavour_matrix('ce',kind='general',domain='complex')
-    f2H3 = cu + cd + ce
+    WBF2H3 = cu + cd + ce
     
     cHl  = flavour_matrix('cHl' ,kind='hermitian',domain='complex')
     cpHl = flavour_matrix('cpHl',kind='hermitian',domain='complex')
@@ -30,46 +30,52 @@ class WarsawBasis(Basis):
     cHu  = flavour_matrix('cHu' ,kind='hermitian',domain='complex')
     cHd  = flavour_matrix('cHd' ,kind='hermitian',domain='complex')
     cHud = flavour_matrix('cHud',kind='general',domain='complex')
-    f2H2D = cHl + cpHl + cHe + cHq + cpHq + cHu + cHd + cHud
+    WBF2H2D = cHl + cpHl + cHe + cHq + cpHq + cHu + cHd + cHud
     
     # affects Gf input, Warsaw <-> SILH translation
-    fourfermi = ['cll1221','cll1122','cpuu3333'] 
+    WB4F = ['cll1221','cll1122','cpuu3333'] 
     
-    independent = H4D2 + H6 + V3D3 + f2H3  + V2H2 + f2H2D + fourfermi
+    independent = WBH4D2 + WBH6 + WBV3D3 + WBF2H3  + WBV2H2 + WBF2H2D + WB4F
     
     required_masses = set([y for x in PID.values() for y in x.values()])
     required_inputs = {1, 2, 4, 8} # aEWM1, Gf, MZ, MH
     
-    translate_to={'mass'}
-        
+    translate_to={'mass', 'higgs'}
+    
+    blocks = {'WBV2H2':WBV2H2, 'WBH4D2':WBH4D2, 'WBH6':WBH6, 'WBV3D3':WBV3D3, 
+              'WBF2H3':WBF2H3, 'WBF2H2D':WBF2H2D, 'WB4F':WB4F}
+    
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
-        ee2 = 4.*math.pi/self.input['aEWM1'] # EM coupling squared
-        Gf, MZ = self.input['Gf'], self.input['MZ']
-        s2w = (1.- sqrt(1. - ee2/(sqrt(2.)*Gf*MZ**2)))/2.#sin^2(theta_W)
-        c2w = 1. - s2w
+        ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared
+        gs2 = 4.*math.pi*self.inputs['aS'] # strong coupling squared
+        Gf, MZ = self.inputs['Gf'], self.inputs['MZ']
+        s2w = (1.- sqrt(1. - ee2/(sqrt(2.)*Gf*MZ**2)))/2. # sin^2(theta_W)
+        c2w = (1.-s2w)
         gw2 = ee2/s2w # SU(2) coupling squared
         gp2 = gw2*s2w/c2w # Hypercharge coupling squared
         vev =  2.*MZ*sqrt(c2w/gw2)
-        self.input['s2w'],self.input['ee2'] = s2w, ee2
-        self.input['gw2'],self.input['gp2'] = gw2, gp2
-        self.input['vev'] = vev
-        return s2w, ee2, gw2, gp2, vev
+        return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
         
     def translate(self):
         if self.target_basis=='mass': 
-            self.translate_to_mass()
+            self.newname='Mass'
+            instance = MassBasis()
+            return self.translate_to_mass(instance)
+        elif self.target_basis=='higgs':
+            self.newname='Higgs'
+            instance = HiggsBasis() 
+            return self.translate_to_mass(instance)
         else: 
             raise NotImplementedError
             
-    def translate_to_mass(self):
-        self.newname='Mass'
-        s2w, ee2, gw2, gp2, vev = self.calculate_inputs() # EW params
-        MH = self.input['MH']
-        A = self.coeffs._asdict()
-        B = MassBasis().coeffs._asdict()
-        # B = MassBasis().coeffs
-        # print 'vev',vev
+    def translate_to_mass(self, instance):
+        s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
+        MH = self.mass[25]
+        MW = MZ*sqrt(c2w)
         
+        A = self
+        B = instance
+
         def delta(i,j):
             return 1. if i==j else 0.
                     
@@ -193,6 +199,25 @@ class WarsawBasis(Basis):
         B['LTa']  = -A['ct3W']*3./2.*gw2**2
         B['LTz']  =  B['LTa']
         
+        # Quartic gauge couplings [Sec 3.7] [eqn (3.23)] 
+        B['dGw4'] = 2.*c2w*B['dG1z']
+        B['dGw2z2'] = 2.*B['dG1z']
+        B['dGw2za'] = B['dG1z']
+        
+        # two derivative quartic gauge couplings [Sec 3.7] [eqn (3.24)] 
+        B['Ldw4'] = -gw2/2./MW**2*B['Lz']
+        B['LTdw4'] = -gw2/2./MW**2*B['LTz']
+        B['Ldzdw_zw'] = -gw2*c2w/MW**2*B['Lz']
+        B['LTdzdw_zw'] = -gw2*c2w/MW**2*B['LTz']
+        B['Ldzdw_aw'] = -ee2/MW**2*B['Lz']
+        B['LTdzdw_aw'] = -ee2/MW**2*B['LTz']
+        B['Ldadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
+        B['LTdadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
+        B['Ldadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
+        B['LTdadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
+        B['Ldg_g3'] = 3.*sqrt(gs2)**3/vev**2*B['C3G']
+        B['LTdg_g3'] = 3.*sqrt(gs2)**3/vev**2*B['CT3G']
+        
         # Higgs cubic interaction [eqn. (4.19)]
         B['dL3']  =  -MH**2/(2.*vev**2) * (3.*A['cH'] + dv) - A['c6H']
         
@@ -205,8 +230,9 @@ class WarsawBasis(Basis):
         B['cpuu3333'] = A['cpuu3333']
         B['cll1221'] = A['cll1221']
         
-        self.newpar = B
-        self.newmass[24] = self.mass[24]+self.newpar['dM'] # W mass shift
+        # W mass shift
+        self.mass[24] = MW + B['dM']
+        return B
         
         
 

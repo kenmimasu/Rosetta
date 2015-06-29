@@ -2,8 +2,7 @@ from collections import OrderedDict
 import sys
 import re
 
-# import warnings
-#
+
 class Block(OrderedDict):
     '''    Container class for SLHA block. A subclass of `collections.OrderedDict`
     with a restriction on integer keys and a modified __repr__(). 
@@ -20,11 +19,13 @@ class Block(OrderedDict):
         else:
             return key
         
-    def __init__(self, name=None, data=None, decimal=5, dtype=lambda x: x):
+    def __init__(self, name=None, data=None, 
+                 decimal=5, dtype=lambda x: x, preamble=''):
         super(Block, self).__init__()
         self.name = name
         self.cast = dtype
         self.fmt= ':+.{}e'.format(decimal)
+        self.preamble=preamble
         if data is not None:
             for k,v in data.iteritems():
                 self[k]=dtype(v)
@@ -39,12 +40,14 @@ class Block(OrderedDict):
         line = ('    {{: <4}} {{{}}}'.format(self.fmt)).format
         content = '\n'.join([line(k,v) 
                              for k,v in self.iteritems()])
-        string = ('BLOCK {}\n'.format(self.name)
-                   + content+ '\n\n')
+        string = (self.preamble+'\n'
+                  +'BLOCK {}\n'.format(self.name)
+                  + content + '\n')
         return string
     
     def dict(self):
         return {k:v for k,v in self.iteritems()}
+
 
 class NamedBlock(Block):
     '''    Class derived from 'Block' with the added functionality of assigning a 
@@ -57,13 +60,13 @@ class NamedBlock(Block):
                 return self._numbers[key]
             except KeyError:
                 err = ('Name "{}" has not been assigned '.format(key) +
-                       'to a key in {}.names'.format(self.name))
+                       'to a key in {}._names'.format(self.name))
                 raise KeyError(err)
         else:
             return key
     
     def __init__(self, name=None, data=None, 
-                 comment='',decimal=5, dtype=lambda x:x):
+                 comment='',decimal=5, dtype=lambda x:x, preamble=''):
         super(NamedBlock, self).__init__(name=name, data=data, 
                                          decimal=decimal, dtype=dtype)
         if data is not None:
@@ -78,8 +81,8 @@ class NamedBlock(Block):
             self._names, self._numbers = {}, {}
         self.cast=dtype
         self.comment=comment
-
-    def __setitem__(self,key, value):
+        self.preamble = preamble
+    def __setitem__(self, key, value):
         return super(Block,self).__setitem__(self.__parse__(key),
                                              self.cast(value))
 
@@ -110,7 +113,7 @@ class NamedBlock(Block):
         
     def __repr__(self):
         return ('<SHLA NamedBlock: "{}"; {} entries, {} named.>'.format(
-                                        self.name,len(self), len(self._names)))
+                                        self.name, len(self), len(self._names)))
     def __str__(self):
         content = []
         for k,v in self.iteritems():
@@ -119,12 +122,13 @@ class NamedBlock(Block):
             except ValueError:
                 strval = v
             if k in self._names:
-                content.append('    {: <4} {} # {}'.format(k,strval,
+                content.append('    {: <4} {} # {}'.format(k, strval,
                                                            self._names[k]))
             else:
                 content.append('    {: <4} {}'.format(k,strval))
-        string = ('BLOCK {} # {}\n'.format(self.name,self.comment)
-                   + '\n'.join(content) + '\n\n')       
+        string = (self.preamble + '\n' 
+                  + 'BLOCK {} # {}\n'.format(self.name, self.comment)
+                  + '\n'.join(content) + '\n\n')       
         return string
 
     def get_name(self, key, default=''):
@@ -133,16 +137,16 @@ class NamedBlock(Block):
     def get_number(self, name):
         return self._numbers[name]
     
-    def new_entry(self,key,value,name=None):
+    def new_entry(self, key, value, name=None):
         if key in self:
             err = ("Key '{}' already belongs to NamedBlock ".format(key) +
                    "'{}', mapped to name '{}'.".format(self.name,
-                                                    self._names[key]))
+                                                       self._names[key]))
             raise KeyError(err)
         elif name in self._numbers:
             err = ("Name '{}' already booked in ".format(name) +
                    "NamedBlock {}, mapped to key '{}'.".format(
-                                   self.name,self._numbers[name]))
+                                   self.name, self._numbers[name]))
             raise KeyError(err)
         else:
             if name is not None:
@@ -152,7 +156,7 @@ class NamedBlock(Block):
             
     def namedict(self):
         return {self._names.get(k,''):v for k,v in self.iteritems()}
-        
+
 
 class Decay(OrderedDict):
     '''Container class for SLHA Decay. A subclass of `collections.OrderedDict`
@@ -164,14 +168,14 @@ class Decay(OrderedDict):
     Finally a _print() function is also defined to output the SLHA 
     formatted block.'''
     
-    def __check__(self,key):
+    def __check__(self, key):
         if type(key) is not tuple: 
             raise TypeError( self.__class__.__name__ +
                              ' only accepts tuple keys: (PID1, PID2,...).' ) 
         else:
             return tuple(map(int,key))
     
-    def __checkval__(self,val):
+    def __checkval__(self, val):
         try:
             fval = float(val)
         except ValueError:
@@ -182,7 +186,8 @@ class Decay(OrderedDict):
                             "Branching ratio > 1 encountered : {}".format(fval))
         return fval
     
-    def __init__(self, PID, total, data=None, comment="", decimal=5):
+    def __init__(self, PID, total, 
+                 data=None, comment="", decimal=5, preamble= ''):
         super(Decay, self).__init__()
         try:
             self.PID=int(PID)
@@ -195,7 +200,7 @@ class Decay(OrderedDict):
             self.total=float(total)
         except ValueError:
             err = ("SLHA Decay object for PID = {}. ".format(PID) + 
-                   "'total' argument must be a float or be castable via float()")
+                  "'total' argument must be a float or be castable via float()")
             raise TypeError(err)
 
         if data is not None:
@@ -204,13 +209,15 @@ class Decay(OrderedDict):
         
         self._BRtot = 0.
         
-        self._fmt= ':+.{}e'.format(decimal)
-        self._comment=comment
-        self._decimal=decimal
-        self._comments={}
+        self._fmt = ':+.{}e'.format(decimal)
+        self._comment = comment
+        self._decimal = decimal
+        self._comments = {}
+        self.preamble = preamble
                 
     def __setitem__(self,key,value):
-        super(Decay,self).__setitem__(self.__check__( key ),self.__checkval__(value))
+        super(Decay,self).__setitem__(self.__check__( key ),
+                                      self.__checkval__(value))
         self._BRtot+=self.__checkval__(value)
         if self._BRtot > 1.:
             print '!!! ERROR !!!'
@@ -219,16 +226,18 @@ class Decay(OrderedDict):
                             + "Sum of branching ratios > 1!")            
     
     def __delitem__(self, key):
+        super(Decay,self).__delitem__(self.__check__( key ),
+                                      self.__checkval__(value))
         self._BRtot-=self.__checkval__(self[key])
-        super(Decay,self).__delitem__(self.__check__( key ),self.__checkval__(value))
         
     def __repr__(self):
-        return ( '<SHLA Decay: PID={}; {} entries.>'.format(self.PID,len(self)) )
+        return ( '<SHLA Decay: PID={}; {} entries.>'.format(self.PID, 
+                                                            len(self)) )
     
     def __str__(self):
-        above = '#\tPDG\t\tWidth\n'
-        title = ('DECAY\t{{:<10}} {{{}}} # {{}}\n'.format(self._fmt)).format
-        below = '#    BR{}\tNDA\tID1       ID2...\n'.format(' '*self._decimal)
+        above = '#        PDG        Width\n'
+        title = ('DECAY    {{:<10}} {{{}}} # {{}}\n'.format(self._fmt)).format
+        below = '#    BR{}  NDA    ID1       ID2...\n'.format(' '*self._decimal)
         if len(self)==0: below=''
         content = []
         for k,v in self.iteritems():
@@ -241,21 +250,24 @@ class Decay(OrderedDict):
             
             content.append(line(v, nparts, *k) + cmnt)
 
-        string = (above + title(self.PID, self.total, self._comment) 
-                + below + '\n'.join(content) + '\n')
+        string = (self.preamble + '\n' + above 
+                 + title(self.PID, self.total, self._comment) 
+                 + below + '\n'.join(content) )
         return string
     
-    def new_channel(self,PIDs,partial,comment=None):
+    def new_channel(self, PIDs, partial, comment=None):
         self[PIDs]=partial
         if comment is not None: self._comments[PIDs]=comment
-        
+
+
 class Card(object):
     
     def _parent_block(self, key):
         for block in self.blocks.values():
             if key in block:
                 return block
-        return OrderedDict()
+        err = 'Key "{}" not found in {}'.format(key, self)
+        raise KeyError(err)
     
     def _container(self, key):
         if type(key) is int:
@@ -267,58 +279,59 @@ class Card(object):
                    'DECAY and string keys for BLOCK.')
             raise ValueError(err)
         
-    def __init__(self, blocks=None, decays=None):
+    def __init__(self, blocks=None, decays=None, name=None):
         self.blocks=OrderedDict()
         self.decays=OrderedDict()
+        self.name = name if name is not None else ''
         if blocks is not None:
             for bname, block in blocks.iteritems():
                 self.blocks[bname] = NamedBlock(name=bname, data=block)  
         if decays is not None:
             for PID, decay in decays.iteritems():
                 self.decays[PID]= Decay(PID,decay.total, data=decay)
+            
                 
-    
     def __repr__(self):
-        return ('<SHLA Card: {} blocks, {} decays.>'.format(
+        return ('<SHLA Card "{}": {} blocks, {} decays.>'.format(self.name,
                                         len(self.blocks), len(self.decays)))
-    def __contains__(self,key):
+    def __contains__(self, key):
         return key in self._container(key)
     
     def __getitem__(self, key):
         return self._container(key)[key]
     
-    def __delitem__(self,key):
+    def __delitem__(self, key):
         del self._container(key)[key]
     
-    def __setitem__(self,key,value):
-        self._container(key)[key]=value
+    def __setitem__(self, key, value):
+        return self._container(key).__setitem__(key,value)
         
-            
     def add_block(self, block):
         self.blocks[block.name] = block
         
-    def add_decay(self, decay):
+    def add_decay(self, decay, preamble=''):
         self.decays[decay.PID] = decay
+        self.decays[decay.PID].preamble = preamble
     
-    def add_entry(self,block,key,value,name=None):
+    def add_entry(self, block, key, value, name=None):
         if self.has_block(block):
-            self.blocks[block].new_entry(key,value,name=name)
+            self.blocks[block].new_entry(key, value, name=name)
         else:
             if name is not None:
                 theblock = NamedBlock(name=block)
-                theblock.new_entry(key,value,name=name)
+                theblock.new_entry(key, value, name=name)
             else:
                 theblock = Block(name=block)
-                theblock.new_entry(key,value)
+                theblock.new_entry(key, value)
                 
             self.add_block(theblock)
                 
-    def add_channel(self,PID,channel,partial,comment=None):
+    def add_channel(self, PID, channel, partial, comment=None):
         assert(self.has_decay(PID)),('Tried adding a decay channel '
                                      'for non existent decay PID')
-        self.decays[PID].new_channel(channel,partial,comment=comment)
+        self.decays[PID].new_channel(channel, partial, comment=comment)
     
-    def new_channel(self,PIDs,partial,comment=None):
+    def new_channel(self, PIDs, partial, comment=None):
         self[PIDs]=partial
         if comment is not None: self._comments[PIDs]=comment
         
@@ -328,17 +341,25 @@ class Card(object):
     def has_decay(self, PID):
         return PID in self.decay
     
-    def write(self,filename):
+    def write(self, filename, blockorder = [], preamble='',postamble=''):
         with open(filename,'w') as out:
-            for block in self.blocks.values():
-                out.write(str(block))
+            out.write(preamble)
+            other_blocks = [b for b in self.blocks if b not in blockorder]
+            for block in blockorder:
+                try:
+                    out.write(str(self.blocks[block]))
+                except KeyError:
+                    pass
+            for block in other_blocks:
+                out.write(str(self.blocks[block]))
             for decay in self.decays.values():
                 out.write(str(decay))
-            
-    
+            out.write(postamble)
+
 
 class SLHAReadError(Exception):
     pass
+
 
 def read(card):
     thecard = Card()
@@ -459,12 +480,12 @@ def read(card):
                 
     except StopIteration:
         print 'Finished reading.'
-        print 
                 
     pcard.close()
     
     return thecard
-    
+
+
 def read_until(lines, here, *args):
     '''Loops through an iterator of strings by calling next() until 
        it reaches a line starting with a particular string.
@@ -487,25 +508,4 @@ def read_until(lines, here, *args):
     return lines_read[:-1],lines_read[-1]
 
 if __name__=='__main__':
-    mycard = read('param_card_test.dat')
-    print mycard
-    sys.exit()
-    _input = OrderedDict([(0,0.),(1,1.),(2,2.)])
-    _entries = {0:'zero', 1:'one', 2:'two'}
-    myblock = NamedBlock(data=_input, name='test', names=_entries, decimal=3)
-    print myblock[1], myblock['one']
-    del myblock[2]
-    myblock.new_entry(3,3.,'three')
-    print myblock['three']
-    myblock['three']=3.3
-    # myblock.new_entry(700,-7,'seven')
-    # myblock.new_entry(700,-7,'argh')
-    # print 'seven' in myblock
-    mydecay = Decay(7,100., comment='bums')
-    mydecay[ (1,2) ]=0.78
-    mydecay[ (1,2,40006) ]= 0.3
-    # del mydecay[(1,2)]
-    print mydecay
-    
-# class Decay(object):
-#     def __init__(self, name, PID, total, data)
+    pass

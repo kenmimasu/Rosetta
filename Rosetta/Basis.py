@@ -4,15 +4,15 @@ import sys
 import os
 import math
 import datetime
-import SLHA
-import copy
 from collections import namedtuple,OrderedDict
 from itertools import product, combinations
 from itertools import combinations_with_replacement as combinations2
+# from implemented import bases
+import SLHA
+from eHDECAY import eHDECAY
 from query import query_yes_no as Y_or_N
 from __init__ import (PID, default_inputs, default_masses, input_names, 
                       particle_names, input_to_PID, PID_to_input)
-from eHDECAY import eHDECAY
 ########################################################################
 # Base Basis class
 class Basis(object):
@@ -77,10 +77,10 @@ class Basis(object):
     independent, dependent=[], []
     required_inputs, required_masses = set(),set()
     translate_to = {'mass'}
-    blocks = {}
+    blocks = dict()
     
     def __init__(self, param_card=None, output_basis='mass', 
-                 keep_old=True, ehdecay=False):
+                 keep_old=True, ehdecay=False, silent=False):
         # Check that target basis has a translation implemented
         if output_basis in self.translate_to:
             self.target_basis = output_basis
@@ -93,12 +93,6 @@ class Basis(object):
             raise ValueError(error)
             
         self.param_card = param_card
-        # self.block_in, self.block_out= block_in, block_out
-        # self.keep_old = keep_old
-        # self.card, self.newcard = StringIO.StringIO(), StringIO.StringIO()
-        # self.input, self.SLHA_sminputs = OrderedDict(), OrderedDict()
-        # self.mass, self.par_dict = OrderedDict(), OrderedDict()
-        # self.newinput, self.newmass, self.newpar = dict(), dict(), dict()
         self.newname = 'Basis'
         self.all_coeffs = self.independent + self.dependent
         self.blocks = {k.lower():v for k,v in self.blocks.iteritems()}
@@ -110,46 +104,79 @@ class Basis(object):
             
             self.read_param_card() 
             # various input checks 
-            self.check_param_data() 
             self.check_sminputs() 
-            self.check_param_data()
-            # assign self.dependent_card
+            self.check_masses(silent=silent) 
+            self.check_param_data(silent=silent)
+            # add dependent coefficients/blocks to self.card
             self.init_dependent()
-            self.calculate_dependent() # (User defined function)
+            # (User defined function)
+            self.calculate_dependent()
+            # translate to new basis (User defined) 
+            newbasis = self.translate()
+            self.newcard = newbasis.card
+            # fill remaining block & decay info from original
+            other_blocks = {k:v for k,v in self.card.blocks.iteritems() 
             
-            # namedtuple declaration
-            coeffclass = namedtuple(self.name, self.all_coeffs)
-            self.coeffs = coeffclass(**self.par_dict) 
+                            if not (k in self.blocks or k.lower()=='basis')}
+                            
+            for block in other_blocks:
+                theblock = self.card.blocks[block]
+                self.newcard.add_block(theblock)
             
-            self.translate() # translate to new basis (User defined)
-            # consistency checkbetween self.newinput and self.newmass
-            self.check_new()
-            # set new masses in self.newinput
-            self.set_new_masses() 
             
-            # run eHDECAY if eHDECAY_input() is implemented
-            # else raise NotImplementedeError 
+            preamble = ('###################################\n'
+                        + '## DECAY INFORMATION\n'
+                        + '###################################')
+                        
+            for i,decay in enumerate(self.card.decays.values()):
+                if i !=0: preamble = ''
+                self.newcard.add_decay(decay, preamble = preamble)
+                
             try: 
                 if ehdecay: self.BRs = eHDECAY(self) 
             except NotImplementedError:
                 pass
             
-            self.set_newcard()
-            
         # if param_card option not given, instantiate with class name 
-        # and all coeffs set
-        # to 0 (used for creating an empty basis instance for use in
-        # translate() method)
+        # and all coeffs set to 0 (used for creating an empty basis 
+        # instance for use in translate() method)
         else: 
             self.name=self.__class__.__name__
-            coeffclass = namedtuple(self.name, self.all_coeffs)
-            self.coeffs = coeffclass(**{k:0. for k in self.all_coeffs})
-            self.card = SLHA.Card(blocks=self.blocks)
+            self.card = SLHA.Card(name=self.name)
+            self.card.add_entry('basis', 0, self.name, name = 'translated basis')
             
+            preamble = ('###################################\n'
+                        + '## INFORMATION FOR {}\n'.format(self.name.upper())
+                        + '###################################')
+            self.card.blocks['basis'].preamble=preamble
+            
+            for blk, flds in self.blocks.iteritems():
+                theblock = SLHA.NamedBlock(name=blk)
+                for i,fld in enumerate(flds):
+                    theblock.new_entry(i,0., name=fld)
+                self.card.add_block(theblock)
+
+                
+    def __getitem__(self, key):
+        return self.card.__getitem__(key)
+
+    def __setitem__(self, key, value):
+        return self.card.__setitem__(key, value)
+    
+    def __contains__(self,key):
+        return self.card.__contains__(key)
+        
+    def __delitem__(self,key):
+        return self.card.__delitem__(key)
+        
     def read_param_card(self):
         self.card = SLHA.read(self.param_card)
         self.inputs = self.card.blocks.get('sminputs',None)
-        self.mass = self.card.blocks.get('mass',None)        
+        self.mass = self.card.blocks.get('mass',None)
+        try:
+            self.name = self.card.blocks.get('basis',[''])[0]
+        except KeyError:
+            print 'Formatting error for block basis. Check input card.'
         
     def check_sminputs(self):
         # Check all required inputs have been set
@@ -164,11 +191,9 @@ class Basis(object):
                 print 'Warning: Block "sminputs" not found. '\
                       'Assume default values for required inputs?'
                 print 'Required inputs: {}'.format(input_list)
-                carry_on = Y_or_N(
-                    'Continue with default values '\
-                    'for unspecified inputs? '\
-                    '({})'.format(', '.join(repr_default))
-                                 )
+                carry_on = Y_or_N('Continue with default values '\
+                                 'for unspecified inputs? '\
+                                 '({})'.format(', '.join(repr_default)))
                 if carry_on:
                     theblock = SLHA.NamedBlock(name='sminputs')
                     for m in self.required_inputs: 
@@ -225,7 +250,8 @@ class Basis(object):
                         sys.exit()
         print 'SM inputs are OK.'
         
-    def check_masses(self):
+    def check_masses(self, silent=False):
+        if silent: return
         mass_list = ', '.join( ['{} (M{})'.format(x,particle_names[x]) 
                                 for x in self.required_masses] )
         PID_list = ', '.join([str(x) for x in self.required_masses])
@@ -278,11 +304,12 @@ class Basis(object):
                         sys.exit()
         print 'Particle masses are OK.'
                         
-    def check_param_data(self):
+    def check_param_data(self, silent=False):
+        if silent: return        
         for bname, defined in self.blocks.iteritems():
             
             # collect block info
-            inputblock = self.card.blocks.get(bname,SLHA.Block())
+            inputblock = self.card.blocks.get(bname,SLHA.NamedBlock())
             input_eles = set(inputblock.keys())
             
             defined_block = {i:v for i,v in enumerate(defined)}
@@ -318,7 +345,7 @@ class Basis(object):
                     
             if mismatched:
                 print 'Warning: Mismatch of coefficient names '\
-                      'in {}, block:{}.'.format(self.__class__,
+                      'in {}, block "{}".'.format(self.__class__,
                                                           bname)
                 for index, name, input_name in mismatched:
                     print ('    Coefficient {}, named {} '.format(index, input_name) +
@@ -332,7 +359,7 @@ class Basis(object):
             if defined_dependent: 
                 print 'Warning: you have assigned values to some '\
                       'coefficients defined as dependent '\
-                      'in {}, block:{}.'.format(self.__class__, bname)
+                      'in {}, block "{}".'.format(self.__class__, bname)
                 print 'Coefficients: {}'.format(', '.join(
                                                   ['{}:"{}"'.format(k,v) 
                                                    for k,v in dependent.items() 
@@ -351,13 +378,12 @@ class Basis(object):
             missing = set(independent).difference(input_eles)
             if missing: # Deal with unassigned independent coefficients
                 print 'Warning: some coefficients defined as independent '\
-                      'in block "{}" of {} have not been assigned values.'\
-                      '.'.format(self.__class__, bname)
+                      'in {}, block "{}", have not been assigned values'\
+                      '.'.format(self.__class__,bname)
                 print 'Undefined: {}'.format(', '.join(
-                                                  ['{}:"{}"'.format(k,v) 
-                                                   for k,v in independent.items() 
-                                                   if k in missing]
-                                                   ))
+                                                ['{}:"{}"'.format(k,v) 
+                                                 for k,v in independent.items() 
+                                                 if k in missing]))
                 carry_on = Y_or_N('Continue assuming unspecified '\
                                   'coefficients are Zero?')
                 if carry_on:
@@ -368,16 +394,35 @@ class Basis(object):
                     sys.exit()
                     
     def init_dependent(self):
-        thecard = SLHA.Card(blocks=self.card.blocks,
-                             decays=self.card.decays)
-                                        
         for bname, fields in self.blocks.iteritems():
-            to_add = [f for f in fields if f in self.dependent]
+            theblock = self.card.blocks.get(bname,[])
+            to_add = [f for f in fields if f in self.dependent 
+                                        and f not in theblock]
             for entry in to_add:
-                thecard.add_entry(bname, fields.index(entry), 0., name=entry)
+                self.card.add_entry(bname, fields.index(entry), 0., name=entry)
         
-        self.dependent_card = thecard
-    
+        
+    def write_param_card(self,filename,overwrite=False):
+        '''Write contents of self.newcard to filename'''
+        preamble = ( '################################################'
+                    +'######################\n'
+                    +'############# COEFFICIENTS TRANSLATED BY ROSETTA'
+                    +' MODULE  #############\n'
+                    +'########### PARAM CARD GENERATED {}  ##########'\
+                     '#\n'.format(datetime.datetime.now().ctime().upper())
+                    +'################################################'
+                    +'######################\n\n')
+        if os.path.exists(filename) and not overwrite:
+            print '{} already exists.'.format(filename)
+            carry_on = Y_or_N('Overwrite?')
+        else:
+            carry_on=True
+        if carry_on:
+            order = ['loop','mass','sminputs','yukawa','basis']
+            self.newcard.write(filename, blockorder=order, preamble=preamble)
+        else: 
+            return False
+            
     def read_param_card_old(self):
         '''
         Reads SLHA style param card and stores values of parameters.
@@ -661,17 +706,17 @@ class Basis(object):
         MZ (PID = 23, SLHA key = 4)
         MW (PID = 24, SLHA key = 7)
         MH (PID = 25, SLHA key = 8)
-        Compares self.newinput to self.newmass and makes sure user 
-        hasn't specified different new values.
+        Compares self.input to self.mass in case user has modified 
+        one and not the other.
         '''
         for ID_input, ID_mass in input_to_PID.iteritems():
             try:
-                ipar, mpar = self.newinput[ID_input],self.newmass[ID_mass]
+                ipar, mpar = self.input[ID_input],self.mass[ID_mass]
                 if not ipar==mpar:
-                    print 'Warning: modified mass {} in self.newinput '\
-                          '({}) does not match value in self.newmass '\
+                    print 'Warning: Mass parameter {} in self.input '\
+                          '({}) does not match value in self.mass '\
                           '({})'.format(input_name[ID_input],ipar,mpar)
-                carry_on = Y_or_N('Continue using values in self.newmass?')
+                carry_on = Y_or_N('Continue using values in self.mass?')
                 if carry_on:
                     pass
                 else:
@@ -680,7 +725,7 @@ class Basis(object):
             except KeyError as e:
                 pass
     
-    def set_new_masses(self):
+    def set_new_masses_old(self):
         '''
         If the user modifies a mass input parameter, appends the change 
         to self.mass.
@@ -689,7 +734,7 @@ class Basis(object):
             if inID in self.newinput and PID not in self.newmass: 
                 self.newmass[PID] = self.newinput[inID]
         
-    def set_newcard(self):
+    def set_newcard_old(self):
         '''
         Generates a new param card in self.newcard from self.card, 
         adding the new set of coefficients in self.newpar after 
@@ -946,8 +991,8 @@ class Basis(object):
             except AttributeError:
                 pass
         return None
-        
-    def write_param_card(self,filename,overwrite=False):
+
+    def write_param_card_old(self,filename,overwrite=False):
         '''Write contents of self.newcard to filename'''
         contents = self.newcard.getvalue()
         if not contents: 
@@ -1019,8 +1064,8 @@ class Basis(object):
               'dependent()'.format(self.__class__.__name__)
     
     def translate(self): # default behaviour for translate()
-        self.keep_old=False
-        self.newpar = self.coeffs._asdict()
+        return self
+        
     def eHDECAY_inputs(self):
         raise NotImplementedError
 ########################################################################

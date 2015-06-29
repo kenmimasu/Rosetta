@@ -11,10 +11,10 @@ import random
 
 def compare_inputs(basis1, basis2, tolerance=1e-4):
     wrong_inputs = []
-    for _input,value in basis1.input.items():
-        other_value = basis2.input[_input]
+    for _input,value in basis1.inputs.items():
+        other_value = basis2.inputs[_input]
         if abs(value - other_value) > tolerance*abs(value):
-            wrong_inputs.append([_input,
+            wrong_inputs.append([basis1.inputs._names[_input],
                                  ('{}:'.format(basis1.__class__.__name__),
                                   other_value,
                                   '{}:'.format(basis2.__class__.__name__),
@@ -31,16 +31,13 @@ def compare_inputs(basis1, basis2, tolerance=1e-4):
         
 def compare_coeffs(basis1, basis2, tolerance=1e-4):
     wrong_coeffs = []
-    for coeff,value in basis1.newpar.items():
-        other_value = basis2.newpar[coeff]
-        if abs(value - other_value) > tolerance*abs(value):
+    for coeff in basis1.all_coeffs:
+        c1, c2 = basis1[coeff], basis2[coeff]
+        if abs(c1 - c2) > tolerance*abs(c1):
             wrong_coeffs.append([coeff,
-                                 ('{}:'.format(basis1.__class__.__name__),
-                                  other_value,
-                                  '{}:'.format(basis2.__class__.__name__),
-                                  value)
+                                 ('{}:'.format(basis1.__class__.__name__), c1,
+                                  '{}:'.format(basis2.__class__.__name__), c2)
                                 ])
-
     if wrong_coeffs:
         print 'Some inconsistent coefficients detected:'
         for w in wrong_coeffs:
@@ -53,40 +50,58 @@ def higgs_basis_check(MyBasis,param_card,tolerance=1e-4):
     tmpdir = tempfile.mkdtemp(prefix = 'rosetta_temp_', dir=os.getcwd())
     out_card = '{}/output_card.dat'.format(tmpdir)
     myinstance = MyBasis(param_card=param_card, 
-                         keep_old=False, 
-                         output_basis='mass')
+                         output_basis='higgs',silent=True)
+
     myinstance.write_param_card(out_card)
+    try:
+        HB_instance = HiggsBasis(param_card=out_card, 
+                             output_basis='mass',silent=True)
+        MB_instance = MassBasis(param_card=out_card, silent=True)
+        compare_inputs(HB_instance, MB_instance, tolerance=tolerance)
+        compare_coeffs(HB_instance, MB_instance, tolerance=tolerance)
 
-    HB_instance = HiggsBasis(param_card=out_card, 
-                         keep_old=False, 
-                         output_basis='mass')
-                         
-    compare_inputs(HB_instance, myinstance, tolerance=tolerance)
-    compare_coeffs(HB_instance, myinstance, tolerance=tolerance)
-
-    os.remove(out_card)
-    os.rmdir(tmpdir)
+    except Exception as e:
+        print 'Error!!!'
+        print e
+    finally:
+        os.remove(out_card)
+        os.rmdir(tmpdir)
     
-def SILH_Warsaw_triangle(param_card,tolerance=1e-4):
+def SILH_Warsaw_triangle(param_card,tolerance=1e-4, keep=False):
     tmpdir = tempfile.mkdtemp(prefix = 'rosetta_temp_', dir=os.getcwd())
-    out_card = '{}/output_card.dat'.format(tmpdir)
-    to_warsaw = SILHBasis(param_card=param_card, 
-                         keep_old=False, 
-                         output_basis='warsaw')
-    to_warsaw.write_param_card(out_card)
-    WB_instance = WarsawBasis(param_card=out_card, 
-                         keep_old=False, 
-                         output_basis='mass')
+    SB2MB_out = '{}/SB2MB.dat'.format(tmpdir)
+    SB2WB_out = '{}/SB2WB.dat'.format(tmpdir)
+    WB2MB_out = '{}/WB2MB.dat'.format(tmpdir)
+    try:
+        # translate directly to Mass Basis
+        SB2MB = SILHBasis(param_card=param_card, 
+                             output_basis='mass')
+        SB2MB.write_param_card(SB2MB_out)
+        
+        # translate to Warsaw Basis    
+        SB2WB = SILHBasis(param_card=param_card, 
+                             output_basis='warsaw')
+        SB2WB.write_param_card(SB2WB_out)
+        # translate to Mass basis  
+        WB2MB = WarsawBasis(param_card=SB2WB_out, 
+                             output_basis='mass')
+        WB2MB.write_param_card(WB2MB_out)
 
-    to_mass = SILHBasis(param_card=param_card, 
-                         keep_old=False, 
-                         output_basis='mass')
+        # read & compare both Mass Basis translations
+        from_SB = MassBasis(param_card=SB2MB_out)
+        via_WB = MassBasis(param_card=WB2MB_out)
 
-    compare_inputs(WB_instance, to_mass, tolerance=tolerance)
-    compare_coeffs(WB_instance, to_mass, tolerance=tolerance)
-    
-    os.remove(out_card)
-    os.rmdir(tmpdir)
+        compare_inputs(from_SB, via_WB, tolerance=tolerance)
+        compare_coeffs(from_SB, via_WB, tolerance=tolerance)
+    except Exception as e:
+        print 'Error!!!'
+        print e
+    finally:
+        if not keep:
+            os.remove(SB2WB_out)
+            os.remove(SB2MB_out)
+            os.remove(WB2MB_out)
+            os.rmdir(tmpdir)
     
     
 def generate_coeffs(basis_class, val, rand=False):
@@ -125,12 +140,12 @@ def generate_frdef(basis_class,filename):
                 out.write('\n')
 
 if __name__=='__main__':
-    # generate_coeffs(WarsawBasis,0.,rand=False)
+    # generate_coeffs(WarsawBasis,0.,rand=True)
     # generate_coeffs(SILHBasis,0.,rand=True)
-    generate_coeffs(HiggsBasis,1.,rand=True)
-    # generate_coeffs(MassBasis,1.,rand=True)
+    # generate_coeffs(HiggsBasis,1.,rand=True)
+    generate_coeffs(MassBasis,1.,rand=True)
     # generate_frdef(HiggsBasis,'HB_definitions.fr')
     # generate_frdef(MassBasis,'MB_definitions.fr')
-    # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat',tolerance=1e-4)
+    # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis_blocks.dat',tolerance=1e-4)
     # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat')
-    # SILH_Warsaw_triangle('../Cards/param_card_SILHBasis_random.dat', tolerance=1e-4)
+    # SILH_Warsaw_triangle('../Cards/param_card_SILHBasis_blocks.dat', tolerance=1e-4, keep=True)
