@@ -88,7 +88,6 @@ class WarsawBasis(Basis):
         
         # W mass shift [eqn (4.9)]
         B['dM'] = ( gw2*A['cT'] - gp2*gw2*A['cWB']-gp2*dv )/(gw2-gp2)
-        
         # W/Z chiral coupling deviations
         for i,j in comb((1,2,3),2):
             ind = '{}{}'.format(i,j)
@@ -230,6 +229,8 @@ class WarsawBasis(Basis):
         B['cpuu3333'] = A['cpuu3333']
         B['cll1221'] = A['cll1221']
         
+        # print B.card.blocks
+        # print B.card.blocks['mbvertex']
         # W mass shift
         self.mass[24] = MW + B['dM']
         return B

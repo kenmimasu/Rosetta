@@ -123,6 +123,7 @@ class HiggsBasis(Basis):
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
 
     def calculate_dependent(self):
+        self.newname = 'Mass'
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         A = self
         MW = MZ*sqrt(c2w)
@@ -202,83 +203,4 @@ class HiggsBasis(Basis):
         
         self.mass[24] = MW + A['dM']
         
-        
-    def calculate_dependent_old(self):
-        p = self.par_dict
-        s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2= self.calculate_inputs() 
-        MW = MZ*sqrt(c2w)
-        # Higgs and EW gauge bosons [Sec 3.4] [eqn (3.11)]
-        p['dCw']  = p['dCz']  + p['dM']*4. 
-        p['Cww']  = p['Czz']  + p['Cza']*2.*s2w  + p['Caa'] *s2w**2
-        p['CTww'] = p['CTzz'] + p['CTza']*2.*s2w + p['CTaa']*s2w**2 
-        p['Cwbx'] = (p['Czbx']*gw2 + p['Czz']*gp2 - p['Caa']*ee2*s2w 
-                    - p['Cza']*(gw2-gp2)*s2w )/(gw2-gp2)
-        p['Cabx'] = (p['Czbx']*2.*gw2 + p['Czz']*(gw2+gp2) 
-                    - p['Caa']*ee2 - p['Cza']*(gw2-gp2))/(gw2-gp2)
-        
-        # Gauge-current and Higgs-gauge-current contact interactions [Sec 3.6]
-        for i,j in comb((1,2,3),2):# dependent dgV coeffs [eqn (3.5)]
-            ind = '{}{}'.format(i,j)
-            if i==j:
-                p['dGLzv'+ind] = p['dGLze'+ind] + p['dGLwl'+ind] 
-                p['dGLwq'+ind] = p['dGLzu'+ind] - p['dGLzd'+ind]
-            else:
-                for part in ('_Re', '_Im'):
-                    tail = ind + part
-                    p['dGLzv'+tail] = p['dGLze'+tail] + p['dGLwl'+tail] 
-                    p['dGLwq'+tail] = p['dGLzu'+tail] - p['dGLzd'+tail]
-     
-        # list of all z/w vertex corrections
-        for dG in self.HBVERTEX: # 4-point coeffs [eqn (3.18)]
-            cvff = dG.replace('dG','C')
-            p[cvff] = p[dG]
-                
-        # Triple gauge couplings [Sec 3.7] [eqn (3.21)] 
-        p['dG1z'] = (p['Caa']*ee2*gp2 + p['Cza']*(gw2-gp2)*gp2 
-                    - p['Czz']*(gw2+gp2)*gp2 - p['Czbx']*(gw2+gp2)*gw2 
-                    )/2./(gw2-gp2)
-        p['dKa'] = - (p['Caa']*ee2  + p['Cza']*(gw2-gp2) 
-                    - p['Czz']*(gw2+gp2) )*gw2/2./(gw2+gp2)
-        p['KTa'] = - ( p['CTaa']*ee2 + p['CTza']*(gw2-gp2) 
-                    - p['CTzz']*(gw2+gp2))*gw2/2./(gw2+gp2)
-        p['dKz'] = p['dG1z'] - gp2/gw2*p['dKa']
-        p['KTz'] = - p['KTa']*gp2/gw2
-        p['La'] = p['Lz']
-        p['LTa'] = p['LTz']
-        
-        # Quartic gauge couplings [Sec 3.7] [eqn (3.23)] 
-        p['dGw4'] = 2.*c2w*p['dG1z']
-        p['dGw2z2'] = 2.*p['dG1z']
-        p['dGw2za'] = p['dG1z']
-        
-        # two derivative quartic gauge couplings [Sec 3.7] [eqn (3.24)] 
-        p['Ldw4'] = -gw2/2./MW**2*p['Lz']
-        p['LTdw4'] = -gw2/2./MW**2*p['LTz']
-        p['Ldzdw_zw'] = -gw2*c2w/MW**2*p['Lz']
-        p['LTdzdw_zw'] = -gw2*c2w/MW**2*p['LTz']
-        p['Ldzdw_aw'] = -ee2/MW**2*p['Lz']
-        p['LTdzdw_aw'] = -ee2/MW**2*p['LTz']
-        p['Ldadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*p['Lz']
-        p['LTdadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*p['LTz']
-        p['Ldadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*p['Lz']
-        p['LTdadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*p['LTz']
-        p['Ldg_g3'] = 3.*sqrt(gs2)**3/vev**2*p['C3G']
-        p['LTdg_g3'] = 3.*sqrt(gs2)**3/vev**2*p['CT3G']
-        
-        # Couplings of two Higgs bosons [Sec 3.8] [eqn (3.27)]
-        def delta(i,j):
-            return 1. if i==j else 0.
-        p['Cgg2'], p['CTgg2'] = p['Cgg'], p['CTgg']
-        for i,j in comb((1,2,3),2):
-            for f in ('u','d','e'):
-                name = '{}{}{}'.format(f,i,j)
-                Yij   = p['dY' + name]
-                sinij = p['S' + name] 
-                cosij = sqrt(1. - sinij**2)
-                p['Y2{}_Re'.format(name)] = (3.*Yij*cosij - p['dCz']*delta(i,j))
-                p['Y2{}_Im'.format(name)] = 3.*Yij*sinij
-        # 4-fermion operators [Sec. 3.9]
-        # [eqn (3.32)]
-        p['cll1221'] = 2.*(p['dGLwl11'] + p['dGLwl22'] - 2.*p['dM']) 
-            
 ########################################################################

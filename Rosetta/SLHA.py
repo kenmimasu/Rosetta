@@ -4,15 +4,15 @@ import re
 
 
 class Block(OrderedDict):
-    '''    Container class for SLHA block. A subclass of `collections.OrderedDict`
-    with a restriction on integer keys and a modified __repr__(). 
-    Block can't be initialised with any positional arguments but rather 
-    with the 'data' keyword argument. 
-    It can optionally be named using the 'name' keyword argument. 
-    Finally a _print() function is also defined to output the SLHA 
-    formatted block.'''
+    '''    Container class for SLHA block. A subclass of 
+    `collections.OrderedDict`with a restriction on integer keys and a modified 
+    __repr__(). Block can't be initialised with any positional arguments but 
+    rather with the 'data' keyword argument. It can optionally be named using 
+    the 'name' keyword argument. __repr__ and __str__ functions are also 
+    defined to output the SLHA formatted block.'''
         
     def __check__(self,key):
+        '''Forces key to be of integer type as in SLHA convention.'''
         if type(key) is not int: 
             raise TypeError( self.__class__.__name__ +
                              ' only accepts integer keys.' ) 
@@ -21,24 +21,35 @@ class Block(OrderedDict):
         
     def __init__(self, name=None, data=None, 
                  decimal=5, dtype=lambda x: x, preamble=''):
+        '''    Intialisation keyword arguments:
+            name - A name for the block that will appear 
+                   in the __str__ and __repr__ methods.
+            data - A dict type object supporting iteritems() 
+                   to initialize Block values.
+            decimal - Number of decimal points with which 
+                      to write out parameter values.
+            dtype - a function to cast parameter values if 
+                    read in as strings i.e. int, float.
+            preamble - Some text to print before the __str__ output.
+        '''
         super(Block, self).__init__()
         self.name = name
-        self.cast = dtype
-        self.fmt= ':+.{}e'.format(decimal)
+        self.cast = dtype # value casting function
+        self.fmt= ':+.{}e'.format(decimal) # format string
         self.preamble=preamble
         if data is not None:
             for k,v in data.iteritems():
-                self[k]=dtype(v)
+                self[k]=v
                 
     def __setitem__(self,key,value):
-        super(Block,self).__setitem__(self.__check__(key),self.cast(value))
-    
+        return super(Block,self).__setitem__(self.__check__(key),self.cast(value))
+
     def __repr__(self):
         return ( '<SHLA Block: "{}"; {} entries.>'.format(self.name,len(self)) )
-    
+
     def __str__(self):
         line = ('    {{: <4}} {{{}}}'.format(self.fmt)).format
-        content = '\n'.join([line(k,v) 
+        content = '\n'.join([line(k,v)
                              for k,v in self.iteritems()])
         string = (self.preamble+'\n'
                   +'BLOCK {}\n'.format(self.name)
@@ -46,30 +57,41 @@ class Block(OrderedDict):
         return string
     
     def dict(self):
+        '''Return SHLA Block object as a regular python dict.'''
         return {k:v for k,v in self.iteritems()}
 
 
 class NamedBlock(Block):
-    '''    Class derived from 'Block' with the added functionality of assigning a 
-    name to each key via the 'names' keyword argument. The values can then 
+    '''    Class derived from 'Block' with the added functionality of assigning 
+    a name to each key via the 'names' keyword argument. The values can then 
     also be referenced by name via a lookup in self._numbers. '''
     
     def __parse__(self, key):
+        '''    Allows for elements to additionally be referred to by name. 
+           Looks up self._numbers for an assigned name and returns the 
+           associated key. Rasies KeyError if name is not booked. 
+           Used in overloading __setitem__, __getitem__, __contains__ 
+           and __delitem__.'''
         if type(key) is str:
             try:
                 return self._numbers[key]
             except KeyError:
-                err = ('Name "{}" has not been assigned '.format(key) +
-                       'to a key in {}._names'.format(self.name))
-                raise KeyError(err)
+                return None
+                # err = ('Name "{}" has not been assigned to a '.format(key) +
+               #         'key in SLHA.NamedBlock {}._names'.format(self.name))
+               #  raise KeyError(err)
         else:
             return key
     
     def __init__(self, name=None, data=None, 
                  comment='',decimal=5, dtype=lambda x:x, preamble=''):
-        super(NamedBlock, self).__init__(name=name, data=data, 
-                                         decimal=decimal, dtype=dtype)
-        if data is not None:
+        '''    Same as the SLHA.Block constructor but aditionally 
+        checks if the data keyword argument has a "_names" attribute (i.e. 
+        if it is an existing instance of NamedBlock) and stores it. The 
+        "comment" keyword argument prints a comment to the right of the 
+        block declaration in __str__().
+        '''        
+        if data is not None and hasattr(data, '_names'):
             self._names = data._names
             try:
                 self._numbers = {v:k for k,v 
@@ -82,14 +104,18 @@ class NamedBlock(Block):
         self.cast=dtype
         self.comment=comment
         self.preamble = preamble
+        return super(NamedBlock, self).__init__(name=name, data=data, 
+                                                decimal=decimal, dtype=dtype)
     def __setitem__(self, key, value):
-        return super(Block,self).__setitem__(self.__parse__(key),
+        # print self.__dict__
+        super(NamedBlock,self).__setitem__(self.__parse__(key),
                                              self.cast(value))
 
     def __getitem__(self, key):
-        return super(Block,self).__getitem__(self.__parse__(key))
+        return super(NamedBlock,self).__getitem__(self.__parse__(key))
     
     def __delitem__(self, key):
+        # Additional cleanup needed for _names and _numbers lookup dicts.
         if type(key) is int:
             try:
                 del self._numbers[self._names[key]]
@@ -103,13 +129,11 @@ class NamedBlock(Block):
                 del self._numbers[key]
             except KeyError:
                 pass
-        return super(Block,self).__delitem__(self.__parse__(key))
+                
+        return super(NamedBlock,self).__delitem__(self.__parse__(key))
                      
     def __contains__(self, key):
-        if type(key) is str:
-            return key in self._numbers 
-        elif type(key) is int:
-            return super(Block,self).__contains__(key)
+        return super(NamedBlock,self).__contains__(self.__parse__(key))
         
     def __repr__(self):
         return ('<SHLA NamedBlock: "{}"; {} entries, {} named.>'.format(
@@ -121,29 +145,35 @@ class NamedBlock(Block):
                 strval = ('{{{}}}'.format(self.fmt)).format(float(v))
             except ValueError:
                 strval = v
+
             if k in self._names:
                 content.append('    {: <4} {} # {}'.format(k, strval,
                                                            self._names[k]))
             else:
                 content.append('    {: <4} {}'.format(k,strval))
-        string = (self.preamble + '\n' 
+
+        string = (self.preamble + '\n'
                   + 'BLOCK {} # {}\n'.format(self.name, self.comment)
-                  + '\n'.join(content) + '\n\n')       
+                  + '\n'.join(content) + '\n')
         return string
 
     def get_name(self, key, default=''):
         return self._names.get(key,default)
         
-    def get_number(self, name):
-        return self._numbers[name]
+    def get_number(self, name, default=-1):
+        return self._numbers.get(name,default)
     
     def new_entry(self, key, value, name=None):
+        '''    Add a new named block entry. Ensures that the key hasn't already 
+           been set and the name given hasn't already been booked.'''
+           
         if key in self:
             err = ("Key '{}' already belongs to NamedBlock ".format(key) +
                    "'{}', mapped to name '{}'.".format(self.name,
                                                        self._names[key]))
             raise KeyError(err)
-        elif name in self._numbers:
+            
+        if name in self._numbers:
             err = ("Name '{}' already booked in ".format(name) +
                    "NamedBlock {}, mapped to key '{}'.".format(
                                    self.name, self._numbers[name]))
@@ -155,20 +185,23 @@ class NamedBlock(Block):
             self[key]=value
             
     def namedict(self):
-        return {self._names.get(k,''):v for k,v in self.iteritems()}
+        '''Return python dict of name:key pairs.'''
+        return {self._names[k]:v for k,v in self.iteritems() 
+                                 if k in self._names }
 
 
 class Decay(OrderedDict):
-    '''Container class for SLHA Decay. A subclass of `collections.OrderedDict`
-    with a restriction on tuple keys and float values less than 1. A modified 
-    __repr__() funciton is implemented for easy writing to file. 
-    Decay is initialised with a PID argument to specify the particle to which 
-    it refers as well as its total width. 
-    It can optionally be named using the 'name' keyword argument. 
-    Finally a _print() function is also defined to output the SLHA 
-    formatted block.'''
+    '''   Container class for SLHA Decay blocks. A subclass of 
+    `collections.OrderedDict` with a restriction on tuple keys and float values 
+    less than 1. A modified __repr__() function is implemented for easy writing 
+    to file. Decay is initialised with a PID argument to specify the particle 
+    to which it refers as well as its total width. The sum of branching ratios 
+    is kept and a ValueError will be raised if the total exceeds 1. 
+    It can optionally be named using the 'name' keyword argument. Finally 
+    a __str__() function is also defined to output the SLHA formatted block.'''
     
-    def __check__(self, key):
+    def __checkkey__(self, key):
+        '''    Forces key to be a tuple and casts the elements to integers.'''
         if type(key) is not tuple: 
             raise TypeError( self.__class__.__name__ +
                              ' only accepts tuple keys: (PID1, PID2,...).' ) 
@@ -176,6 +209,7 @@ class Decay(OrderedDict):
             return tuple(map(int,key))
     
     def __checkval__(self, val):
+        '''    Forces values (i.e. branching ratios) to be a float less than 1.'''
         try:
             fval = float(val)
         except ValueError:
@@ -188,6 +222,19 @@ class Decay(OrderedDict):
     
     def __init__(self, PID, total, 
                  data=None, comment="", decimal=5, preamble= ''):
+        '''    Positional arguments:
+            PID - integer to denote particle whose decay is being described
+            total - total width
+            
+            Keyword arguments:
+            data - A dict type object supporting iteritems() 
+                   to initialize Decay values.
+            comment - prints a comment to the right of the block 
+                      declaration in __str__().
+            decimal - Number of decimal points with which 
+                      to write out width and BRs.
+            preamble - Some text to print before the __str__ output.'''
+            
         super(Decay, self).__init__()
         try:
             self.PID=int(PID)
@@ -216,17 +263,17 @@ class Decay(OrderedDict):
         self.preamble = preamble
                 
     def __setitem__(self,key,value):
-        super(Decay,self).__setitem__(self.__check__( key ),
+        super(Decay,self).__setitem__(self.__checkkey__( key ),
                                       self.__checkval__(value))
         self._BRtot+=self.__checkval__(value)
         if self._BRtot > 1.:
             print '!!! ERROR !!!'
             print self
-            raise TypeError("SLHA Decay object for PID = {}. ".format(self.PID)
+            raise ValueError("SLHA Decay object for PID = {}. ".format(self.PID)
                             + "Sum of branching ratios > 1!")            
     
     def __delitem__(self, key):
-        super(Decay,self).__delitem__(self.__check__( key ),
+        super(Decay,self).__delitem__(self.__checkkey__( key ),
                                       self.__checkval__(value))
         self._BRtot-=self.__checkval__(self[key])
         
@@ -255,14 +302,28 @@ class Decay(OrderedDict):
                  + below + '\n'.join(content) )
         return string
     
-    def new_channel(self, PIDs, partial, comment=None):
+    def new_channel(self, PIDs, BR, comment=None):
+        '''    Add a new decay channel. 
+        PIDs - tuple of integers.
+        BR - the branching ratio into that channel.
+        comment - optional comment to be written to the 
+                  right of that channel in __str__().'''
         self[PIDs]=partial
         if comment is not None: self._comments[PIDs]=comment
 
 
 class Card(object):
-    
+    '''    SLHA card object: a container for storing multiple SLHA.Block, 
+    SLHA.NamedBlock and SLHA.Decay objects. Blocks and decays are stored in 
+    OrderedDicts self.blocks and self.decays respectively. 
+    Index syntax mycard[key] can be used to get or set elements of blocks or 
+    decays possessed by the Card instance. If passed a string key, the card 
+    instance will look up the first block in self.blocks possessing a parameter 
+    with the given name while an int key will return the SLHA.Decay object for 
+    that PID.'''
     def _parent_block(self, key):
+        '''    Finds the parent block of a given string key. Raises Key error 
+        if the key is not booked in any of the card's blocks.'''
         for block in self.blocks.values():
             if key in block:
                 return block
@@ -270,6 +331,9 @@ class Card(object):
         raise KeyError(err)
     
     def _container(self, key):
+        '''    Returns the container containing the indexed key. Used in 
+        overloading __setitem__, __getitem__, __contains__ and __delitem__.
+        '''
         if type(key) is int:
             return self.decays
         elif type(key) is str:
@@ -280,6 +344,13 @@ class Card(object):
             raise ValueError(err)
         
     def __init__(self, blocks=None, decays=None, name=None):
+        '''    Keyword arguments:
+        blocks - a dictionary of items with which to initialise 
+                 individual blocks in the card instance i.e. 
+                 name:block pairs with block an SLHA.NamedBlock.
+        decays - a dictionary of SLHA.Decay objects.
+        name - card name'''
+        
         self.blocks=OrderedDict()
         self.decays=OrderedDict()
         self.name = name if name is not None else ''
@@ -307,31 +378,39 @@ class Card(object):
         return self._container(key).__setitem__(key,value)
         
     def add_block(self, block):
+        '''Append an SLHA.Block or NamedBlock to self.blocks.'''
         self.blocks[block.name] = block
         
     def add_decay(self, decay, preamble=''):
+        '''Append an SLHA.Decay to self.decays.'''
         self.decays[decay.PID] = decay
         self.decays[decay.PID].preamble = preamble
     
-    def add_entry(self, block, key, value, name=None):
-        if self.has_block(block):
-            self.blocks[block].new_entry(key, value, name=name)
+    def add_entry(self, blockname, key, value, name=None):
+        '''    Add a new field in a given block. If the Card instance already  
+        has such a block, a new field is appended. If the Card doesn't, a new 
+        block is created.'''
+        if self.has_block(blockname):
+            self.blocks[blockname].new_entry(key, value, name=name)
         else:
             if name is not None:
-                theblock = NamedBlock(name=block)
+                theblock = NamedBlock(name=blockname)
                 theblock.new_entry(key, value, name=name)
             else:
-                theblock = Block(name=block)
+                theblock = Block(name=blockname)
                 theblock.new_entry(key, value)
                 
             self.add_block(theblock)
                 
     def add_channel(self, PID, channel, partial, comment=None):
+        '''    Add a new channel in a given decay. The Decay for the given PID 
+        must already exist in the Card instance.'''
         assert(self.has_decay(PID)),('Tried adding a decay channel '
                                      'for non existent decay PID')
         self.decays[PID].new_channel(channel, partial, comment=comment)
     
     def new_channel(self, PIDs, partial, comment=None):
+        '''   Append a new channel to a given Decay block.'''
         self[PIDs]=partial
         if comment is not None: self._comments[PIDs]=comment
         
@@ -342,6 +421,17 @@ class Card(object):
         return PID in self.decay
     
     def write(self, filename, blockorder = [], preamble='',postamble=''):
+        '''    Write contents of Card in SLHA formatted style to "filename". 
+        Makes use of the __str__ methods written for the SLHA elements. 
+        Keyword arguments:
+            blockorder - Specify an ordering for printing the block names. 
+                         Names given in blockorder will be printed first in the 
+                         order specified and others will be printed as ordered 
+                         in self.blocks
+            preamble - Some text to write before the Block and Decay information
+            postamble - Some text to write after the Block and Decay information
+        '''
+        
         with open(filename,'w') as out:
             out.write(preamble)
             other_blocks = [b for b in self.blocks if b not in blockorder]
@@ -357,11 +447,16 @@ class Card(object):
             out.write(postamble)
 
 
-class SLHAReadError(Exception):
+class SLHAReadError(Exception): # Custom error name for reader
     pass
 
 
 def read(card):
+    '''    SLHA formatted card reader. Blocks and Decay structures are read 
+    into an SLHA.Card object which is returned. Comments are specified by the # 
+    character. Comments to the right of the structures as wel as the individual 
+    fields are stored.'''
+    
     thecard = Card()
     pcard = open(card,'r')
     lines = iter(pcard)
@@ -479,7 +574,7 @@ def read(card):
                 thecard.add_decay(thedecay)
                 
     except StopIteration:
-        print 'Finished reading.'
+        print 'Finished reading "{}".'.format(card)
                 
     pcard.close()
     
