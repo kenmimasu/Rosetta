@@ -20,6 +20,7 @@ class WarsawBasis(Basis):
     cu = flavour_matrix('cu',kind='general',domain='complex')
     cd = flavour_matrix('cd',kind='general',domain='complex')
     ce = flavour_matrix('ce',kind='general',domain='complex')
+
     WBF2H3 = cu + cd + ce
     
     cHl  = flavour_matrix('cHl' ,kind='hermitian',domain='complex')

@@ -24,6 +24,7 @@ class SILHBasis(Basis):
     cu = flavour_matrix('su',kind='general',domain='complex')
     cd = flavour_matrix('sd',kind='general',domain='complex')
     ce = flavour_matrix('se',kind='general',domain='complex')
+
     SBF2H3 = cu + cd + ce
     
     cHl  = flavour_matrix('sHl' ,kind='hermitian',domain='complex')
