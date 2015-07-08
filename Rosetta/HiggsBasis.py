@@ -1,29 +1,32 @@
-from Basis import Basis, flavour_matrix
+from internal import Basis
+
 import math, re
 from math import sqrt
 from itertools import combinations_with_replacement as comb
 from itertools import product
-from __init__ import PID
+from internal import PID
 ########################################################################
+flavmat = Basis.flavour_matrix
 # Higgs basis class
-class HiggsBasis(Basis):
+class HiggsBasis(Basis.Basis):
+    ##### declare blocks
     # Kinetic terms
     KIN_ind =['dM']
     HBKIN = KIN_ind
     
     # Z Vertex Corrections
-    dGLze = flavour_matrix('dGLze', kind='hermitian', domain='complex')
-    dGRze = flavour_matrix('dGRze', kind='hermitian', domain='complex')
-    dGLzv = flavour_matrix('dGLzv', kind='hermitian', domain='complex')
-    dGLzu = flavour_matrix('dGLzu', kind='hermitian', domain='complex')
-    dGRzu = flavour_matrix('dGRzu', kind='hermitian', domain='complex')
-    dGLzd = flavour_matrix('dGLzd', kind='hermitian', domain='complex')
-    dGRzd = flavour_matrix('dGRzd', kind='hermitian', domain='complex')
+    dGLze = flavmat('dGLze', kind='hermitian', domain='complex')
+    dGRze = flavmat('dGRze', kind='hermitian', domain='complex')
+    dGLzv = flavmat('dGLzv', kind='hermitian', domain='complex')
+    dGLzu = flavmat('dGLzu', kind='hermitian', domain='complex')
+    dGRzu = flavmat('dGRzu', kind='hermitian', domain='complex')
+    dGLzd = flavmat('dGLzd', kind='hermitian', domain='complex')
+    dGRzd = flavmat('dGRzd', kind='hermitian', domain='complex')
 
     # W Vertex Corrections
-    dGLwl = flavour_matrix('dGLwl', kind='hermitian', domain='complex')
-    dGLwq = flavour_matrix('dGLwq', kind='hermitian', domain='complex')
-    dGRwq = flavour_matrix('dGRwq', kind='general'  , domain='complex')
+    dGLwl = flavmat('dGLwl', kind='hermitian', domain='complex')
+    dGLwq = flavmat('dGLwq', kind='hermitian', domain='complex')
+    dGRwq = flavmat('dGRwq', kind='general'  , domain='complex')
 
     VERTEX_ind = dGLze + dGRze+ dGLzu+ dGRzu+ dGLzd+ dGRzd + dGLwl + dGRwq
     VERTEX_dep = dGLzv + dGLwq
@@ -36,27 +39,27 @@ class HiggsBasis(Basis):
     HBHVV = HVV_ind + HVV_dep
     
     # Single Higgs couplings to fermions
-    dYu = flavour_matrix('dYu', kind='general', domain='real')
-    dYd = flavour_matrix('dYd', kind='general', domain='real')
-    dYe = flavour_matrix('dYe', kind='general', domain='real')
-    Su  = flavour_matrix('Su', kind='general', domain='real')
-    Sd  = flavour_matrix('Sd', kind='general', domain='real')
-    Se  = flavour_matrix('Se', kind='general', domain='real')
+    dYu = flavmat('dYu', kind='general', domain='real')
+    dYd = flavmat('dYd', kind='general', domain='real')
+    dYe = flavmat('dYe', kind='general', domain='real')
+    Su  = flavmat('Su', kind='general', domain='real')
+    Sd  = flavmat('Sd', kind='general', domain='real')
+    Se  = flavmat('Se', kind='general', domain='real')
     
     HFF_ind = dYu + dYd + dYe + Su + Sd + Se
     HBHFF = HFF_ind
     
     # Higgs contact interactions HVff
-    CLze = flavour_matrix('CLze', kind='hermitian', domain='complex')
-    CRze = flavour_matrix('CRze', kind='hermitian', domain='complex')
-    CLzv = flavour_matrix('CLzv', kind='hermitian', domain='complex')
-    CLzu = flavour_matrix('CLzu', kind='hermitian', domain='complex')
-    CRzu = flavour_matrix('CRzu', kind='hermitian', domain='complex')
-    CLzd = flavour_matrix('CLzd', kind='hermitian', domain='complex')
-    CRzd = flavour_matrix('CRzd', kind='hermitian', domain='complex')
-    CLwl = flavour_matrix('CLwl', kind='hermitian', domain='complex')
-    CLwq = flavour_matrix('CLwq', kind='hermitian', domain='complex')
-    CRwq = flavour_matrix('CRwq', kind='general'  , domain='complex')
+    CLze = flavmat('CLze', kind='hermitian', domain='complex')
+    CRze = flavmat('CRze', kind='hermitian', domain='complex')
+    CLzv = flavmat('CLzv', kind='hermitian', domain='complex')
+    CLzu = flavmat('CLzu', kind='hermitian', domain='complex')
+    CRzu = flavmat('CRzu', kind='hermitian', domain='complex')
+    CLzd = flavmat('CLzd', kind='hermitian', domain='complex')
+    CRzd = flavmat('CRzd', kind='hermitian', domain='complex')
+    CLwl = flavmat('CLwl', kind='hermitian', domain='complex')
+    CLwq = flavmat('CLwq', kind='hermitian', domain='complex')
+    CRwq = flavmat('CRwq', kind='general'  , domain='complex')
     
     HVFF_dep = (CLze + CRze + CLzv + CLzu + CRzu 
               + CLzd + CRzd + CLwl + CLwq + CRwq)
@@ -64,17 +67,17 @@ class HiggsBasis(Basis):
     
     # Triple and quartic gauge couplings [Sec. 3.7]
     
-    V3_ind = [ 'Lz','C3G','LTz','CT3G' ]
+    V3_ind = [ 'Lz','C3g','LTz','CT3g' ]
     V3_dep = [ 'dG1z','dKa','dKz','La','KTa','KTz','LTa' ]
     HBV3 = V3_ind + V3_dep
     
     V4_dep = ['dGw4','dGw2z2','dGw2za']
     HBV4 = V4_dep
     
-    D2V4_dep = ['Ldw4', 'Ldzdw_zw', 'Ldzdw_aw', 
-                'Ldadw_aw', 'Ldadw_zw', 'Ldg_g3',
-                'LTdw4', 'LTdzdw_zw', 'LTdzdw_aw',
-                'LTdadw_aw', 'LTdadw_zw', 'LTdg_g3']
+    D2V4_dep = ['Ldw4', 'Ldzdwzw', 'Ldzdwaw', 
+                'Ldadwaw', 'Ldadwzw', 'Ldgg3',
+                'LTdw4', 'LTdzdwzw', 'LTdzdwaw',
+                'LTdadwaw', 'LTdadwzw', 'LTdgg3']
     HBD2V4 = D2V4_dep
     
     # Couplings of two Higgs bosons [Sec. 3.8]
@@ -84,9 +87,9 @@ class HiggsBasis(Basis):
     HHVV_dep = ['Cgg2','CTgg2']
     HBHHVV = HHVV_dep
     
-    Y2u = flavour_matrix('Y2u', kind='symmetric', domain='complex')
-    Y2d = flavour_matrix('Y2d', kind='symmetric', domain='complex')
-    Y2e = flavour_matrix('Y2e', kind='symmetric', domain='complex')
+    Y2u = flavmat('Y2u', kind='symmetric', domain='complex')
+    Y2d = flavmat('Y2d', kind='symmetric', domain='complex')
+    Y2e = flavmat('Y2e', kind='symmetric', domain='complex')
     HHFF_dep = Y2u + Y2d + Y2e
     HBHHFF = HHFF_dep
     
@@ -95,19 +98,18 @@ class HiggsBasis(Basis):
     fourfermi_dep = ['cll1221'] # affects Gf input
     HB4F = fourfermi_ind + fourfermi_dep
     
-    # Full set of independent and dependent coefficients
+    # block structure
+    blocks = {'HBKIN':HBKIN,'HBVERTEX':HBVERTEX, 'HBHVV':HBHVV, 'HBHFF':HBHFF,
+              'HBHVFF':HBHVFF, 'HBV3':HBV3, 'HBV4':HBV4,'HBD2V4':HBD2V4,
+              'HBH3':HBH3, 'HBHHVV':HBHHVV, 'HBHHFF':HBHHFF, 'HB4F':HB4F}  
+                
+    # Full set of independent coefficients
     independent = (KIN_ind + VERTEX_ind  + HVV_ind + HFF_ind + V3_ind
                   + H3_ind + fourfermi_ind )
                 
-    dependent   = (VERTEX_dep  + HVV_dep + HVFF_dep + V3_dep + V4_dep
-                   + D2V4_dep + HHVV_dep + HHFF_dep + fourfermi_dep )
     # Required inputs/masses             
     required_masses = {1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16}
     required_inputs = {1, 2, 3, 4} # aEWM1, Gf, aS, MZ
-    
-    blocks = {'HBKIN':HBKIN,'HBVERTEX':HBVERTEX, 'HBHVV':HBHVV, 'HBHFF':HBHFF,
-              'HBHVFF':HBHVFF, 'HBV3':HBV3, 'HBV4':HBV4,'HBD2V4':HBD2V4,
-              'HBH3':HBH3, 'HBHHVV':HBHHVV, 'HBHHFF':HBHHFF, 'HB4F':HB4F}
     
     translate_to={'mass'}
     
@@ -143,7 +145,7 @@ class HiggsBasis(Basis):
                 A['dGLzv'+indx] = A['dGLze'+indx] + A['dGLwl'+indx] 
                 A['dGLwq'+indx] = A['dGLzu'+indx] - A['dGLzd'+indx]
             else:
-                for part in ('_Re', '_Im'):
+                for part in ('Re', 'Im'):
                     tail = indx + part
                     A['dGLzv'+tail] = A['dGLze'+tail] + A['dGLwl'+tail] 
                     A['dGLwq'+tail] = A['dGLzu'+tail] - A['dGLzd'+tail]
@@ -181,8 +183,8 @@ class HiggsBasis(Basis):
         A['LTdadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*A['LTz']
         A['Ldadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*A['Lz']
         A['LTdadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*A['LTz']
-        A['Ldg_g3'] = 3.*sqrt(gs2)**3/vev**2*A['C3G']
-        A['LTdg_g3'] = 3.*sqrt(gs2)**3/vev**2*A['CT3G']
+        A['Ldg_g3'] = 3.*sqrt(gs2)**3/vev**2*A['C3g']
+        A['LTdg_g3'] = 3.*sqrt(gs2)**3/vev**2*A['CT3g']
         
         # Couplings of two Higgs bosons [Sec 3.8] [eqn (3.27)]
         def delta(i,j):
@@ -194,13 +196,14 @@ class HiggsBasis(Basis):
                 Yij   = A['dY' + name]
                 sinij = A['S' + name] 
                 cosij = sqrt(1. - sinij**2)
-                A['Y2{}_Re'.format(name)] = (3.*Yij*cosij 
+                A['Y2{}Re'.format(name)] = (3.*Yij*cosij 
                                                - A['dCz']*delta(i,j))
-                A['Y2{}_Im'.format(name)] = 3.*Yij*sinij
+                A['Y2{}Im'.format(name)] = 3.*Yij*sinij
         # 4-fermion operators [Sec. 3.9]
         # [eqn (3.32)]
         A['cll1221'] = 2.*(A['dGLwl11'] + A['dGLwl22'] - 2.*A['dM']) 
         
         self.mass[24] = MW + A['dM']
-        
+
+
 ########################################################################

@@ -1,11 +1,14 @@
-from Basis import Basis
-from HiggsBasis import HiggsBasis
+from internal import Basis
+import HiggsBasis as HB
+
 ################################################################################
 # Mass basis class
-class MassBasis(Basis):
-    independent = HiggsBasis.independent + HiggsBasis.dependent
+class MassBasis(Basis.Basis):
+    # all coefficients stored in HiggsBasis.blocks
+    independent = [c for v in HB.HiggsBasis.blocks.values() for c in v]
+    # independent = HiggsBasis.independent + HiggsBasis.dependent
     dependent=[]
-    blocks = {k.replace('HB','MB'):v for k,v in HiggsBasis.blocks.iteritems()}
+    blocks = {k.replace('HB','MB'):v for k,v in HB.HiggsBasis.blocks.iteritems()}
     # def __init__(self,*args,**kwargs):
     #     super(MassBasis, self).__init__(*args,**kwargs)
 ################################################################################

@@ -1,22 +1,58 @@
 #!/usr/bin/env python
 ################################################################################
-import Rosetta as HEFT
 from Rosetta.implemented import bases
+from Rosetta.internal import RosettaError
+from Rosetta.internal import SLHA
 import StringIO, os, argparse, sys
 import subprocess as sub
 ################################################################################
-parser = argparse.ArgumentParser(description="Read in an LHA format parameter card in a particular basis and write a new param card in the mass basis.")
-parser.add_argument("param_card", metavar="PARAMCARD", type=str,  help="Input parameter card.")
-parser.add_argument("basis", metavar="BASIS", type=str,  help="Basis of coefficients in parameter card (one of: {}).".format(', '.join(bases.keys())))
-parser.add_argument("-o","--output", metavar="OUTPUT", type=str, default='', help="Output file name. Default: [PARAMCARD]_new")
-parser.add_argument("-b","--blockin", metavar="BLOCKIN", type=str, default='newcoup', help="New coupling block to be read in. Default: newcoup")
-parser.add_argument("-B","--blockout", metavar="BLOCKOUT", type=str, default='newcoup', help="New coupling block to be written out. Default: newcoup")
-parser.add_argument("-t","--target", metavar="TARGETBASIS", type=str, default='mass', help="Basis into which to translate (one of: {}). Default: mass".format(', '.join(bases.keys())))
-parser.add_argument("-w","--overwrite", action='store_true', help="Overwrite any pre-existing output file.")
-parser.add_argument("-e","--ehdecay", action='store_true', help="Interface with eHDECAY")
+existing = bases.keys()
+################################################################################
+parser = argparse.ArgumentParser(
+                  description=(
+                  "Read in an SLHA format parameter card in a particular basis "
+                  "and write a new card in another implemented basis."
+                  )
+        )
+parser.add_argument("param_card", metavar="PARAMCARD",  
+                     type=str, help="Input parameter card.")
+# parser.add_argument("basis", metavar="BASIS", type=str,
+#                     help= ("Basis of coefficients in parameter card" +
+#                            " (one of: {}).".format(', '.join(bases.keys()))))
+parser.add_argument("-o", "--output", metavar="OUTPUT", type=str, default='',
+                    help="Output file name. Default: [PARAMCARD]_new")
+parser.add_argument("-t", "--target", metavar="TARGETBASIS", type=str, 
+                    default='mass', 
+                    help=("Basis into which to translate (one of: " +
+                          "{}). Default: mass".format(', '.join(existing))))
+parser.add_argument("-w", "--overwrite", action='store_true', 
+                    help="Overwrite any pre-existing output file.")
+parser.add_argument("-e", "--ehdecay", action='store_true', 
+                    help="Interface with eHDECAY for Higgs branching fractions.")
 ################################################################################
 args = parser.parse_args()
-mybasis = bases[args.basis.lower()] # Set basis class, must be defined in Rosetta.implemented.bases
+print ''
+print '########## Rosetta ##########'
+# Read basis class from paramerter card, 
+# must be defined in Rosetta.implemented.bases
+print 'Reading "{}"'.format(args.param_card)
+thecard = SLHA.read(args.param_card)
+if 'basis' not in thecard.blocks:
+    raise RosettaError('\n\tParameter card {} '.format(args.param_card) + 
+                       'does not have a block "BASIS".')
+else:
+    try:
+        basis = thecard.blocks['basis'][0]
+    except KeyError:
+        raise RosettaError('\n\tParameter card {} '.format(args.param_card) + 
+                           'does not have a block "basis".')
+try:
+    mybasis = bases[basis.lower()] 
+except KeyError:
+    err = ('\n\tElement 0 of block "BASIS", "{}", not recognised. '.format(basis)
+           + 'Rosetta accepts one of: {}.'.format(', '.join(bases.keys())))
+    raise RosettaError(err)
+    
 if not args.output: # output file name
     if '.' in args.param_card:
         new_name = args.param_card.split('.')
@@ -27,19 +63,18 @@ if not args.output: # output file name
 else:
     new_param_card = args.output
 
-print ''
-print '########## Rosetta ##########'
 print 'Basis class used to read in param card: {}'.format(mybasis)
+# create instance of mybasis
 basis_instance = mybasis(param_card=args.param_card, 
-                         # block_in=args.blockin,
-                         # block_out=args.blockout,
                          output_basis=args.target,
-                         ehdecay=args.ehdecay) # create instance of mybasis
-print 'Basis name: {}'.format(basis_instance.name)
+                         ehdecay=args.ehdecay)
+
 if basis_instance.write_param_card(new_param_card, overwrite=args.overwrite): # 
     print '#############################'
     print ''
 else:
     print 'Exit'
+    print '#############################'
+    print ''
 ################################################################################
 

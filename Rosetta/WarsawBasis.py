@@ -1,13 +1,15 @@
-from Basis import Basis, flavour_matrix
-from MassBasis import MassBasis
+from internal import Basis
+import SILHBasis as SB
 import math
 from math import sqrt
 from itertools import combinations_with_replacement as comb
 from itertools import product
-from __init__ import PID
-####################################################################################################
+from internal import PID
+################################################################################
+flavmat = Basis.flavour_matrix
 # Warsaw basis class
-class WarsawBasis(Basis):
+class WarsawBasis(Basis.Basis):
+    ###### declare blocks
     # [Tab. 1]
     WBV2H2 = ['cGG','ctGG','cWW','ctWW','cBB','ctBB','cWB','ctWB']
     
@@ -17,24 +19,27 @@ class WarsawBasis(Basis):
     
     WBV3D3 = ['c3W','c3G','ct3W','ct3G']
     
-    cu = flavour_matrix('cu',kind='general',domain='complex')
-    cd = flavour_matrix('cd',kind='general',domain='complex')
-    ce = flavour_matrix('ce',kind='general',domain='complex')
+    cu = flavmat('cu',kind='general',domain='complex')
+    cd = flavmat('cd',kind='general',domain='complex')
+    ce = flavmat('ce',kind='general',domain='complex')
 
     WBF2H3 = cu + cd + ce
     
-    cHl  = flavour_matrix('cHl' ,kind='hermitian',domain='complex')
-    cpHl = flavour_matrix('cpHl',kind='hermitian',domain='complex')
-    cHe  = flavour_matrix('cHe' ,kind='hermitian',domain='complex')
-    cHq  = flavour_matrix('cHq' ,kind='hermitian',domain='complex')
-    cpHq = flavour_matrix('cpHq',kind='hermitian',domain='complex')
-    cHu  = flavour_matrix('cHu' ,kind='hermitian',domain='complex')
-    cHd  = flavour_matrix('cHd' ,kind='hermitian',domain='complex')
-    cHud = flavour_matrix('cHud',kind='general',domain='complex')
+    cHl  = flavmat('cHl' ,kind='hermitian',domain='complex')
+    cpHl = flavmat('cpHl',kind='hermitian',domain='complex')
+    cHe  = flavmat('cHe' ,kind='hermitian',domain='complex')
+    cHq  = flavmat('cHq' ,kind='hermitian',domain='complex')
+    cpHq = flavmat('cpHq',kind='hermitian',domain='complex')
+    cHu  = flavmat('cHu' ,kind='hermitian',domain='complex')
+    cHd  = flavmat('cHd' ,kind='hermitian',domain='complex')
+    cHud = flavmat('cHud',kind='general',domain='complex')
     WBF2H2D = cHl + cpHl + cHe + cHq + cpHq + cHu + cHd + cHud
     
     # affects Gf input, Warsaw <-> SILH translation
     WB4F = ['cll1221','cll1122','cpuu3333'] 
+    ######
+    blocks = {'WBV2H2':WBV2H2, 'WBH4D2':WBH4D2, 'WBH6':WBH6, 'WBV3D3':WBV3D3, 
+              'WBF2H3':WBF2H3, 'WBF2H2D':WBF2H2D, 'WB4F':WB4F}
     
     independent = WBH4D2 + WBH6 + WBV3D3 + WBF2H3  + WBV2H2 + WBF2H2D + WB4F
     
@@ -42,9 +47,6 @@ class WarsawBasis(Basis):
     required_inputs = {1, 2, 4, 8} # aEWM1, Gf, MZ, MH
     
     translate_to={'mass', 'higgs'}
-    
-    blocks = {'WBV2H2':WBV2H2, 'WBH4D2':WBH4D2, 'WBH6':WBH6, 'WBV3D3':WBV3D3, 
-              'WBF2H3':WBF2H3, 'WBF2H2D':WBF2H2D, 'WB4F':WB4F}
     
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
         ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared
@@ -57,19 +59,21 @@ class WarsawBasis(Basis):
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
         
-    def translate(self):
-        if self.target_basis=='mass': 
-            self.newname='Mass'
-            instance = MassBasis()
-            return self.translate_to_mass(instance)
-        elif self.target_basis=='higgs':
-            self.newname='Higgs'
-            instance = HiggsBasis() 
-            return self.translate_to_mass(instance)
-        else: 
-            raise NotImplementedError
+    # def translate(self):
+    #     if self.target_basis=='mass':
+    #         from MassBasis import MassBasis
+    #         self.newname='Mass'
+    #         instance = MassBasis()
+    #         return self.translate_to_mass(instance)
+    #     elif self.target_basis=='higgs':
+    #         from HiggsBasis import HiggsBasis
+    #         self.newname='Higgs'
+    #         instance = HiggsBasis()
+    #         return self.translate_to_mass(instance)
+    #     else:
+    #         raise NotImplementedError
             
-    def translate_to_mass(self, instance):
+    def to_mass(self, instance):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
         MW = MZ*sqrt(c2w)
@@ -92,7 +96,7 @@ class WarsawBasis(Basis):
         # W/Z chiral coupling deviations
         for i,j in comb((1,2,3),2):
             ind = '{}{}'.format(i,j)
-            tail = [ind] if i==j else [ind+'_Re', ind+'_Im']
+            tail = [ind] if i==j else [ind+'Re', ind+'Im']
             for t in tail:
                 # [eqn (4.10)]
                 B['dGLwl%s' % t] = (A['cpHl%s' % t] + f(1./2.,0.,i,j) 
@@ -123,7 +127,7 @@ class WarsawBasis(Basis):
                 B['CRzd%s' % t] = B['dGRzd%s' % t]
         
         # Treat dGRwq separately as it has more flavour components
-        dGRwq = flavour_matrix('dGRwq', kind='general', domain='complex')
+        dGRwq = flavmat('dGRwq', kind='general', domain='complex')
         for coeffW, coeffM in zip(self.cHud, dGRwq):
             B[coeffM] = -1./2.*A[coeffW]
             cvff = coeffM.replace('dG','C')
@@ -169,9 +173,9 @@ class WarsawBasis(Basis):
                 mi, mj = self.mass[ PID[f][i] ],self.mass[ PID[f][j] ] 
                 name = '{}{}{}'.format(f,i,j)
                 if (mi and mj):
-                    dy_cosphi = (vev*A['c'+name+'_Re']/sqrt(2.*mi*mj) -
+                    dy_cosphi = (vev*A['c'+name+'Re']/sqrt(2.*mi*mj) -
                                                        delta(i,j)*(A['cH']+dv))
-                    dy_sinphi = vev*A['c'+name+'_Im']/sqrt(2.*mi*mj) 
+                    dy_sinphi = vev*A['c'+name+'Im']/sqrt(2.*mi*mj) 
                     if (dy_cosphi == 0.) and (dy_sinphi == 0.): # check this consistency
                         B['dY'+name], B['S'+name] = 0., 0.
                     else:
@@ -184,20 +188,22 @@ class WarsawBasis(Basis):
                 Yij   = B['dY' + name]
                 sinij = B['S' + name] 
                 cosij = sqrt(1. - sinij**2)
-                B['Y2{}_Re'.format(name)] = (3.*Yij*cosij 
+                B['Y2{}Re'.format(name)] = (3.*Yij*cosij 
                                              + delta(i,j)*(A['cH'] + 3.*dv))
-                B['Y2{}_Im'.format(name)] = 3.*Yij*sinij
+                B['Y2{}Im'.format(name)] = 3.*Yij*sinij
         
         # Triple gauge couplings [eqn. (4.18)]
         B['dG1z'] = (gw2+gp2)/(gw2-gp2)*( -A['cWB']*gp2 + A['cT'] - dv )
-        B['dKa']  =  A['cWB']*gw2
+        B['dKa']  = A['cWB']*gw2
         B['dKz']  = (-A['cWB']*2.*gw2*gp2 + (gw2+gp2)*(A['cT'] - dv))/(gw2-gp2)
         B['La']   = -A['c3W']*3./2.*gw2**2
-        B['Lz']   =  B['La']
-        B['KTa']  =  A['ctWB']*gw2
+        B['Lz']   = B['La']
+        B['KTa']  = A['ctWB']*gw2
         B['KTz']  = -A['ctWB']*gp2
         B['LTa']  = -A['ct3W']*3./2.*gw2**2
-        B['LTz']  =  B['LTa']
+        B['LTz']  = B['LTa']
+        B['C3g']  = A['c3G']
+        B['CT3g']  = A['ct3G']
         
         # Quartic gauge couplings [Sec 3.7] [eqn (3.23)] 
         B['dGw4'] = 2.*c2w*B['dG1z']
@@ -207,16 +213,16 @@ class WarsawBasis(Basis):
         # two derivative quartic gauge couplings [Sec 3.7] [eqn (3.24)] 
         B['Ldw4'] = -gw2/2./MW**2*B['Lz']
         B['LTdw4'] = -gw2/2./MW**2*B['LTz']
-        B['Ldzdw_zw'] = -gw2*c2w/MW**2*B['Lz']
-        B['LTdzdw_zw'] = -gw2*c2w/MW**2*B['LTz']
-        B['Ldzdw_aw'] = -ee2/MW**2*B['Lz']
-        B['LTdzdw_aw'] = -ee2/MW**2*B['LTz']
-        B['Ldadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
-        B['LTdadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
-        B['Ldadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
-        B['LTdadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
-        B['Ldg_g3'] = 3.*sqrt(gs2)**3/vev**2*B['C3G']
-        B['LTdg_g3'] = 3.*sqrt(gs2)**3/vev**2*B['CT3G']
+        B['Ldzdwzw'] = -gw2*c2w/MW**2*B['Lz']
+        B['LTdzdwzw'] = -gw2*c2w/MW**2*B['LTz']
+        B['Ldzdwaw'] = -ee2/MW**2*B['Lz']
+        B['LTdzdwaw'] = -ee2/MW**2*B['LTz']
+        B['Ldadwaw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
+        B['LTdadwaw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
+        B['Ldadwzw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
+        B['LTdadwzw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
+        B['Ldgg3'] = 3.*sqrt(gs2)**3/vev**2*B['C3g']
+        B['LTdgg3'] = 3.*sqrt(gs2)**3/vev**2*B['CT3g']
         
         # Higgs cubic interaction [eqn. (4.19)]
         B['dL3']  =  -MH**2/(2.*vev**2) * (3.*A['cH'] + dv) - A['c6H']
@@ -236,6 +242,16 @@ class WarsawBasis(Basis):
         self.mass[24] = MW + B['dM']
         return B
         
+    def to_silh(self, instance):
+        A = self
+        B = instance
+        # set all values of silh basis coeffs to 0.0001:
+        for k in B.all_coeffs: 
+            B[k] = 0.0
+        # self.mass[23]=91.19 # MZ in newmass
+        # self.inputs[8]=126. # MH in newinput
+        self.newname = 'SILH'
         
+        return B
 
 ################################################################################

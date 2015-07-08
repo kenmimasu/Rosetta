@@ -1,9 +1,10 @@
 ################################################################################
 Rosetta: A Higgs Effective Field Theory basis translator
 
-Benjamin Fuks, Fabio Maltoni, Kentarou Mawatari, Ken Mimasu, Veronica Sanz 
+Benjamin Fuks, Fabio Maltoni, Kentarou Mawatari, 
+Ken Mimasu, Veronica Sanz, Francesco Riva 
 
-Version 0, March 2015
+Version 1, July 2015
 ################################################################################
 Rosetta is a translation tool to aid in the Monte Carlo generation of events for
 Higgs Effective Field Theory. The idea is to provide a simple way to map 
@@ -11,37 +12,35 @@ different parametrisations of the deviations of Higgs couplings from SM
 expectations to a single 'basis' of Wilson coefficients corresponding to 
 operators up to dimension 6.
 
-Given an LHA style input parameter card in the users basis of choice, Rosetta 
+Given an SLHA style input parameter card in the users basis of choice, Rosetta 
 has the capability to read in the parameters, calculate any dependent 
 parameters, perform a number of consistency checks with respect to required and 
-derived inputs and finally write out a new parameter card in the target basis 
-which can be used as input to the associated UFO model in e.g. 
-MadGraph5_aMC@NLO. 
+derived inputs and finally write out a new parameter card in the target basis. 
+The SHLA output for the default target, MassBasis, can be used as input to the 
+associated UFO model in a compatible event generator. 
 
 The tool consists of a Python package containing implementations of 
 Higgs Effective Theory bases and a command line tool 'translate' that performs 
 the task of mapping a given basis to a target output basis. The core of the 
 package is based on the contents of the LHCHiggs Cross Section Working Group 
-(HXSWG) draft. The slides at
-https://indico.cern.ch/event/375176/contribution/5/material/slides/0.pdf 
-provide a more detailed description of the tool as well as some examples of 
-usage and the code structure (see backup slides).
+(HXSWG) draft.
 
 ################################################################################
-README Contents
+   Contents
 ################################################################################
 1) Contact
 2) Prerequisites
 3) Usage
 4) Input cards
-5) Implementing your own basis
-6) eHDECAY interface
+5) The basis class
+6) Implementing your own basis
+7) eHDECAY interface
 
 ################################################################################
 1) Contact
 ################################################################################
 Feel free to contact the authors with requests for features, bugs 
-etc.through k.mimasu@sussex.ac.uk.
+etc. through k.mimasu@sussex.ac.uk.
 
 ################################################################################
 2) Prerequisites
@@ -54,47 +53,48 @@ Python 2.7 or above
 Rosetta/    # Python package containing implementation of the basis 
             # translation machinery.
             
-    __init__.py     # Stores a dictionary of fermion PIDs and a few  
-                    # default values for SM input parameters and particle 
-                    # masses in case they are undefined by the user.
-                    
-    Basis.py        # Base basis class implementing internal methods 
-                    # such as reading/writing param cards and checking 
-                    # for required/calculated inputs. All basis classes 
-                    # are derived from this one.
+    __init__.py     # Stores the location of the local eHDECAY installation
+    internal/
+        --> Basis.py        # Base basis class implementing internal methods 
+                            # such as reading/writing param cards and checking 
+                            # for required/calculated inputs. All basis classes 
+                            # are derived from this one.
+        --> SLHA.py         # Machinery for reading, manipulating and writing 
+                            # SLHA style input cards. Implementation partly 
+                            # inspired by pySLHA (A. Buckley, arXiv:1305.4194).
+        --> eHDECAY.py      # Interface with eHDECAY program (arXiv:1403.3381)
+        --> relate.py       # Constructs translation paths between bases by 
+                            # walking through the translations dictionary in 
+                            # Rosetta/implemented.py, used by Basis.translate().
+        --> query.py        # Yes/no query function borrowed from 
+                            # http://code.activestate.com/recipes/577058/.
+
                                 
-    --> MassBasis.py        # Basis class corresponding to the target basis 
+    --> MassBasis.py        # Basis class for the  default target basis 
                             # for output parameter cards, corresponds to the 
                             # redundant set of operators defined in  
                             # HiggsBasis.py without imposing any dependency 
-                            # conditions. There are 183 coefficients.
+                            # conditions.
                             
     --> HiggsBasis.py       # Basis class corresponding to the Higgs Basis as 
                             # defined in the HXSWG draft. Using this basis as 
                             # input calculates the dependent coefficients.
-                            # There are 99 independent coefficients and 84 
-                            # dependent coefficients.
                             
     --> WarsawBasis.py      # Basis class corresponding to the Warsaw Basis
-                            # defined arXiv:1008.4884. Using this basis
-                            # input calculates the Mass Basis coefficients 
-                            # as per the formulae in the HXSWG draft. There are 
-                            # 99 independent coefficients.
+                            # defined in arXiv:1008.4884 and the HXSWG draft.
+    
+    --> SILHBasis.py        # Basis class corresponding to the SILH Basis
+                            # defined in e.g arXiv:1303.3876 and the HXSWG draft.
     
     --> TemplateBasis.py    # Template for a user-defined Basis class 
                             # implemented in the Rosetta package. Toy versions 
-                            # of the calculate_dependent() and translate() 
+                            # of the calculate_dependent() and translation
                             # methods are implemented.
                             
-    implemeted.py   # A file defining a dictionary that logs the set of 
-                    # implemented bases for the translate tool.
-    
-    eHDECAY.py      # Interface with eHDECAY program (arXiv:1403.3381),
-                    # discussed later.
-    
-    query.py        # Yes/no query function borrowed from 
-                    # http://code.activestate.com/recipes/577058/
-    
+    --> implemeted.py       # A file defining a dictionary that logs the set of 
+                            # implemented bases and the available translations 
+                            # to other bases.
+
 Cards/    # Sample MG5-style parameter cards to be used as input.
 
     param_card_HiggsBasis.dat       # Sample HiggsBasis input parameter card
@@ -111,70 +111,53 @@ translate   # Command line tool to perform basis translation based on the
 ################################################################################
 The translate command line tool takes an SLHA-style param card (see sample 
 cards provided in Cards/ directory) in a particular basis and outputs a new 
-card in the specified basis (default is Mass Basis). So far, only the Mass 
-Basis can be taken as the target basis. 
-
-The options BLOCKIN and BLOCKOUT allow the user to specify the name of the SLHA 
-block that contains the new couplings. The names of these couplings, specified 
-as the first non-whitespace characters following a hash ("#") character after 
-the numerical value of the parameter, should match those defined in the 
-'independent' list of the specified input basis implementation.
+card in the specified basis (default is Mass Basis).  
 
     Command line documentation:
     
-    >> ./translate --help
+    >> usage: translate [-h] [-o OUTPUT] [-t TARGETBASIS] [-w] [-e] PARAMCARD
     >> 
-    >> usage: translate [-h] [-o OUTPUT] [-b BLOCKIN] [-B BLOCKOUT] 
-    >>                  [-t TARGETBASIS] [-w] [-e]
-    >>                  PARAMCARD BASIS
-    >> 
-    >> Read in an LHA format parameter card in a particular basis and write a
-    >> new param card in the mass basis.
+    >> Read in an SLHA format parameter card in a particular basis and write a 
+    >> new card in another implemented basis.
     >> 
     >> positional arguments:
     >>   PARAMCARD             Input parameter card.
-    >>   BASIS                 Basis of coefficients in parameter card (one of:
-    >>                         higgs, mass, template, warsaw).
     >> 
     >> optional arguments:
     >>   -h, --help            show this help message and exit
     >>   -o OUTPUT, --output OUTPUT
     >>                         Output file name. Default: [PARAMCARD]_new
-    >>   -b BLOCKIN, --blockin BLOCKIN
-    >>                         New coupling block to be read in. Default: 
-    >>                         newcoup
-    >>   -B BLOCKOUT, --blockout BLOCKOUT
-    >>                         New coupling block to be written out. Default: 
-    >>                         newcoup
     >>   -t TARGETBASIS, --target TARGETBASIS
-    >>                         Basis into which to translate (one of: higgs,
-    >>                         mass, template, warsaw). Default: mass
+    >>                         Basis into which to translate (one of: silh, 
+    >>                         higgs, mass, template, warsaw). Default: mass
     >>   -w, --overwrite       Overwrite any pre-existing output file.
-    >>   -e, --ehdecay         Interface with eHDECAY
+    >>   -e, --ehdecay         Interface with eHDECAY for Higgs branching 
+    >>                         fractions.
+
       
 ################################################################################
 4) Input cards
 ################################################################################
 Rosetta is designed to read input cards in a format similar to the SUSY Les 
-Houches Accord (SLHA) detailed in http://arxiv.org/abs/hep-ph/0311123. It 
-coincides with the input format read in by Madgraph5_aMC@NLO. Sample cards can 
-be found in the Cards/ directory. 
+Houches Accord (SLHA) detailed in http://arxiv.org/abs/hep-ph/0311123. 
+Sample cards can be found in the Cards/ directory. 
 
-The reader looks for block structures in a case insensitive way i.e.
+The SHLA reader looks for block structures in a case insensitive way i.e.
 
->>BLOCK MYBLOCK
+>> BLOCK MYBLOCK
 
-Specifically it will search for blocks MASS, SMINPUTS and BASIS. For the 
-Higgs Effective Theory couplings, it will also search for a block 'newcoup' or 
-any other string BLOCKIN specified by the '-b BLOCKIN' option of translate.
+Specifically it will search for blocks MASS, SMINPUTS and BASIS. The basis into 
+which the card is read is taken from the 0 entry in the BASIS block. This name 
+should match a basis declared in implemented.py (see next section).
+Block elements should be named by placing a comment alongside each 
+entry. The parameter name will be tken as the first non-whitespace characters 
+following the '#' character.
 
 The main difference between the input format of Rosetta and SLHA is that names 
-of parameters are required as this is what the translator uses to identify them 
-in applying the translation formulae. This was deemed to be clearer than the 
-usual numerical ordering that would be more suitable for automatically 
-generated input cards. Therefore each parameter in blocks SMINPUTS and BLOCKIN 
-should be accompanied by a name following a '#' character (usually reserved for 
-comments describing the parameter).
+of parameters are required for new physics parameter blocks. Parameters can 
+then be referenced by name or number in the corresponding block or, 
+alternatively, by name only from the SHLA.Card instance stored in as self.card 
+in the basis instance.
 
 >>BLOCK MYBLOCK
 >>  0 3.14159E+00 # pi
@@ -183,12 +166,31 @@ comments describing the parameter).
 >>      1   1.325070e+02       #    aEWM1  (white space doesn't matter)
 ETC.
 
+The block structure of the new physics couplings is basis dependent and should 
+be declared in the `blocks` data member of the basis class. This should be a 
+python dictionary with block names as keys and lists of parameter names as 
+values. The ordering of the list determines the entry number of each parameter.
+For example,
+
+>> blocks = {'ONE':['A','B','C'], 'TWO':['D','E','F']}
+
+will generate the following block structure:
+
+>> block one
+>>     0 0.0 # A
+>>     1 0.0 # B
+>>     2 0.0 # C
+>>
+>> block two
+>>     0 0.0 # D
+>>     1 0.0 # E
+>>     2 0.0 # F
+
 The reader reads all lines until the next occurrence of 'BLOCK' or 'DECAY', 
 ignoring leading and trailing white space and all lines beginning with a '#' as 
 well as lines that do not match the expected pattern detailed above. For blocks 
-BLOCKIN and SMINPUTS, the reader stores a name:value pair in the ordered 
-dictionaries self.par_dict and self.input respectively. For block MASS, a 
-PID:mass pair is stored in self.mass
+BLOCKIN and SMINPUTS, the reader stores special SLHA.Block instances as 
+self.mass and self.inputs data member of the basis instace.
 
 >> block mass 
 >>     5 4.700000e+00 # MB 
@@ -197,16 +199,13 @@ PID:mass pair is stored in self.mass
 >>    23 9.118800e+01 # MZ 
 >>    25 1.250000e+02 # MH 
 
-Block basis should have one element and is simply a label for the users input 
-basis, it is not essential but is used when writing out the new to remind the 
-user from which basis they translated.
+Block basis should have one element corresponding to an existing implementation 
+of a basis, defined in implemeted.py.
 
 >> block BASIS
 >> 0 MyBasis # name of basis
 
-If the reader can't find block basis, it will print a warning and ask to 
-continue with the default value which is the input basis class name.
-
+REWRITE FROM HERE ON
 ################################################################################
 5) Implementing your own basis
 ################################################################################
