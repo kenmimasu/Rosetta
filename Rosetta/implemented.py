@@ -18,12 +18,16 @@ translations = {
     'mass':{'mass':MB.MassBasis.translate},
     # Also a trivial translation, here HiggsBasis.calculate_dependent() does
     # everything needed
-    'higgs': {'mass':HB.HiggsBasis.translate},
+    'higgs': {'mass':HB.HiggsBasis.translate,
+              'silh':HB.HiggsBasis.to_silh,
+              'warsaw':HB.HiggsBasis.to_warsaw},
     # to_mass implemented in WarsawBasis
     'warsaw': {'mass':WB.WarsawBasis.to_mass,
+               'higgs':WB.WarsawBasis.to_mass,
                'silh':WB.WarsawBasis.to_silh},
     # to_mass, to_warsaw implemented in SILHBasis
     'silh': {'mass':SB.SILHBasis.to_mass,
+             'higgs':SB.SILHBasis.to_mass,
              'warsaw':SB.SILHBasis.to_warsaw},
     # toy translations
     'template':{'mass':TB.TemplateBasis.to_mass,

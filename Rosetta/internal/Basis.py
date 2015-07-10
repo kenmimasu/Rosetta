@@ -93,7 +93,7 @@ class Basis(object):
     translate_to = {'mass'}
     
     def __init__(self, param_card=None, output_basis='mass', 
-                 ehdecay=False, silent=False):
+                 ehdecay=False, silent=False, translate=True):
         '''
         Keyword arguments:
             param_card - SLHA formatted card conforming to the definitions in 
@@ -124,38 +124,37 @@ class Basis(object):
             self.read_param_card() 
             # various input checks 
             self.check_sminputs(self.required_inputs) 
-            self.check_masses(self.required_masses,silent=silent) 
+            self.check_masses(self.required_masses, silent=silent) 
             self.check_param_data(silent=silent)
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
-            # (User defined function)
+            # user defined function
             self.calculate_dependent()
-            # eHDECAY interface BROKEN!!
-            # translate to new basis (User defined) 
-            # return an instance of a class derived from Basis
-            newbasis = self.translate() 
-            # set new SLHA card
-            self.newcard = newbasis.card 
+            if translate:
+                # translate to new basis (User defined) 
+                # return an instance of a class derived from Basis
+                newbasis = self.translate() 
+                # set new SLHA card
+                self.newcard = newbasis.card 
             
-            preamble = ('###################################\n'
-                      + '## DECAY INFORMATION\n'
-                      + '###################################')
-            for i,decay in enumerate(self.card.decays.values()):
-                decay.preamble=preamble
-                break
+                preamble = ('###################################\n'
+                          + '## DECAY INFORMATION\n'
+                          + '###################################')
+                for i,decay in enumerate(self.card.decays.values()):
+                    decay.preamble=preamble
+                    break
             
-            try: 
-                if ehdecay: 
-                    self.run_eHDECAY()
-            except TranslationError as e:
-                print e
-                print 'Translation to SILH Basis required, skipping eHDECAY.'
+                try: 
+                    if ehdecay: 
+                        self.run_eHDECAY()
+                except TranslationError as e:
+                    print e
+                    print 'Translation to SILH Basis required, skipping eHDECAY.'
                 
         # if param_card option not given, instantiate with class name 
         # and all coeffs set to 0 (used for creating an empty basis 
         # instance for use in translate() method)
         else: 
-            self.name=self.__class__.__name__
             self.card = SLHA.Card(name=self.name)
             self.card.add_entry('basis', 0, self.name, name = 'translated basis')
             
@@ -208,7 +207,7 @@ class Basis(object):
                     self.blocks[name].append(par)
             # default behaviour, create new block for dependent parameters
             self.blocks['dependent']=self.dependent
-            
+
         self.inputs = self.card.blocks.get('sminputs',None)
         self.mass = self.card.blocks.get('mass',None)
         try:
@@ -322,7 +321,7 @@ class Basis(object):
                                  )
                 if carry_on:
                     theblock = SLHA.NamedBlock(name='mass')
-                    for m in required_massses: 
+                    for m in required_masses: 
                         theblock.new_entry(m, default_masses[m], 
                                            name='M%s' % particle_names[m])
                     self.card.add_block(theblock)
@@ -331,6 +330,24 @@ class Basis(object):
                     print 'Exit'
                     sys.exit()
             else:
+                if self.inputs:
+                    for k,v in [(i,j) for i,j in self.inputs.iteritems() 
+                                if i in (4,8)]:
+                        i = input_to_PID[k]
+                        if i in self.mass:
+                            v2 = float(self.mass[i])
+                            if v!=v2:
+                                print ('Warning: M{} '.format(particle_names[i])
+                                + 'specified in block sminput[{}] '.format(k)
+                                + '({:.5e}) not consistent with '.format(v)
+                                + 'value specified in block mass '
+                                + '[{}] ({:.5e}).\n'.format(i,float(v2))
+                                + 'Rosetta will keep value from sminputs.')
+                                self.mass[k]=v
+                        else:
+                            mstring = 'M{}'.format(particle_names[i])
+                            self.mass.new_entry(i, v,name=mstring)
+                            
                 masses = set(self.mass.keys())
                 required = set(required_masses)
                 missing_masses = required.difference(masses)
@@ -354,6 +371,7 @@ class Basis(object):
                         for m in missing_masses: 
                             self.mass.new_entry(m, default_masses[m], 
                                                 name='M%s' % particle_names[m])
+                            
                     else:
                         print 'Exit'
                         sys.exit()
@@ -554,14 +572,19 @@ class Basis(object):
             target - target basis, must be defined in implemented.bases.
             verbose - print some status messages.
         '''
+        
         from .. import implemented
         from relate import get_path
         
         # default target
         target = target if target is not None else self.output_basis
+        
+        if target == self.name: return self
+        
         # find the chain of bases and translation functions 
         # to get from self.name to target
         chain = get_path(self.name.lower(), target, implemented.relationships)
+
         if not chain: # no translation possible
             inputbasis = self.__class__.__name__
             outputbasis = implemented.bases[target].__name__
@@ -579,14 +602,17 @@ class Basis(object):
         # required SM inputs along the way
         current = self
         required_inputs = current.required_inputs
-        
+        required_masses = current.required_masses
         for target, function in chain:
+            # new target basis instance
             instance = implemented.bases[target]()
+            # ensure required inputs are present
             message = 'translation ({} -> {})'.format(current.name, 
                                                       instance.name)
             current.check_sminputs(required_inputs, message=message)
-            
-            # call transaltion function
+            current.check_masses(required_masses, message=message)
+
+            # call translation function
             new = function(current, instance)
             # update new basis instance with non-EFT blocks, decays
             new.inputs, new.mass = current.inputs, current.mass
@@ -600,8 +626,12 @@ class Basis(object):
             
             for i,decay in enumerate(current.card.decays.values()):
                 new.card.add_decay(decay, preamble = decay.preamble)
+            
+            # new.calculate_dependent()
+            current.newname=new.name
             # prepare for next step
             required_inputs = set(instance.required_inputs)
+            required_masses = set(instance.required_masses)
             current = new
         if verbose:
             print 'Translation successful.'

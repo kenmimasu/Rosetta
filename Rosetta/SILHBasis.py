@@ -8,6 +8,7 @@ from internal import PID
 flavmat = Basis.flavour_matrix
 # SILH basis class
 class SILHBasis(Basis.Basis):
+    name = 'silh'
     ##### declare blocks
     SBNOTWARSAW = ['sW','sB','sHW','sHB','stHW','stHB','s2W','s2B','s2G']
     # [Tab. 1]
@@ -52,10 +53,6 @@ class SILHBasis(Basis.Basis):
     
     required_masses = set([y for x in PID.values() for y in x.values()])
     required_inputs = {1, 2, 3, 4, 8} # aEWM1, Gf, aS, MZ, MH
-
-
-
-    translate_to={'mass','warsaw','higgs'}
     
     def calculate_dependent(self):
         # These coefficients are implictly set to zero
@@ -71,26 +68,7 @@ class SILHBasis(Basis.Basis):
         gp2 = gw2*s2w/c2w # Hypercharge coupling squared
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
-    #
-    # def translate(self):
-    #     if self.target_basis=='mass':
-    #         from MassBasis import MassBasis
-    #         self.newname='Mass'
-    #         instance = MassBasis()
-    #         return self.translate_to_mass(instance)
-    #     elif self.target_basis=='higgs':
-    #         from HiggsBasis import HiggsBasis
-    #         self.newname='Higgs'
-    #         instance = HiggsBasis()
-    #         return self.translate_to_mass(instance)
-    #     elif self.target_basis=='warsaw':
-    #         from WarsawBasis import WarsawBasis
-    #         self.newname='Warsaw'
-    #         instance = WarsawBasis()
-    #         return self.translate_to_warsaw(instance)
-    #     else:
-    #         raise NotImplementedError
-                
+
     def to_mass(self,instance):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
@@ -189,37 +167,36 @@ class SILHBasis(Basis.Basis):
         # dy*cos(phi) == X
         # dy*sin(phi) == Y
         def dy_sf(X,Y): 
-            R = math.sqrt(X**2+Y**2)
-            sf = -Y/R # solution is +-Y/R 
-            dy = (-Y**2 + X*abs(X))/R
-            return dy,sf
+            R = sqrt(X**2+Y**2)
+            if R==0: 
+                return 0., 0.
+            elif Y==0.:
+                return X, 0.
+            else:
+                signY = Y/abs(Y)
+                if X*Y > 0.:
+                    return R*signY, abs(Y)/R
+                else:
+                    return -R*signY, -abs(Y)/R
         
-        # Yukawa type interaction coefficients [eqn. (4.16)]
-        for i,j in comb((1,2,3),2): 
+        # Yukawa type interaction coefficients [eqns. (5.16) & (4.17)]
+        for i,j in product((1,2,3),(1,2,3)): 
+            diag = delta(i,j)*(A['sH'] + A['spHl22']/2.)
+            diag2 = 2.*delta(i,j)*(A['sH'])
             for f in ('u','d','e'):
                 mi, mj = self.mass[ PID[f][i] ],self.mass[ PID[f][j] ] 
                 name = '{}{}{}'.format(f,i,j)
                 if mi and mj:
-                    dy_cosphi = (vev*A['s'+name+'Re']/sqrt(2.*mi*mj) -
-                                 delta(i,j)*(A['sH'] + A['spHl22']/2.))
-                    dy_sinphi = vev*A['s'+name+'Im']/sqrt(2.*mi*mj)
-                    if (dy_cosphi == 0.) and (dy_sinphi == 0.): # check this consistency
-                        B['dY'+name], B['S'+name] = 0., 0. 
-                    else:
-                        B['dY'+name], B['S'+name]  = dy_sf(dy_cosphi, dy_sinphi)
-        
-        # Double Higgs Yukawa type interaction coefficients [eqn. (4.17)]
-        for i,j in comb((1,2,3),2):
-            for f in ('u','d','e'):
-                name = '{}{}{}'.format(f,i,j)
-                Yij   = B['dY' + name]
-                sinij = B['S' + name] 
-                cosij = sqrt(1. - sinij**2)
-                B['Y2{}Re'.format(name)] = (3.*Yij*cosij + delta(i,j)*(
-                                                  A['sH'] + 3./2.*A['spHl22']))
-                B['Y2{}Im'.format(name)] =  3.*Yij*sinij
-        
-        # Triple gauge couplings [eqn. (4.18)]
+                    s_Re, s_Im = A['s'+name+'Re'], A['s'+name+'Im']
+                    dy_cosphi = vev*s_Re/sqrt(2.*mi*mj) - diag
+                    dy_sinphi = vev*s_Im/sqrt(2.*mi*mj)
+                    
+                    B['dY'+name], B['S'+name]  = dy_sf(dy_cosphi, dy_sinphi)
+                    
+                    B['Y2{}Re'.format(name)] = 3.*vev*s_Re/sqrt(2.*mi*mj) - diag2
+                    B['Y2{}Im'.format(name)] = 3.*vev*s_Im/sqrt(2.*mi*mj)
+                    
+        # Triple gauge couplings [eqn. (5.18)]
         B['dG1z'] = -(gw2+gp2)/(gw2-gp2)/4.*( (gw2-gp2)*A['sHW'] 
                         + gw2*(A['sW'] + A['s2W']) + gp2*(A['sB'] + A['s2B']) 
                         - 4.*A['sT'] + 2.*A['spHl22'] )
@@ -237,6 +214,8 @@ class SILHBasis(Basis.Basis):
         B['KTz'] = gp2/4.*(A['stHW']+A['stHB'])
         B['LTa'] = -A['st3W']*3./2.*gw2**2
         B['LTz'] =  B['LTa']
+        B['C3g']  = A['s3G']
+        B['CT3g']  = A['st3G']
 
         # Quartic gauge couplings [Sec 3.7] [eqn (3.23)] 
         B['dGw4'] = 2.*c2w*B['dG1z']
@@ -246,16 +225,16 @@ class SILHBasis(Basis.Basis):
         # two derivative quartic gauge couplings [Sec 3.7] [eqn (3.24)] 
         B['Ldw4'] = -gw2/2./MW**2*B['Lz']
         B['LTdw4'] = -gw2/2./MW**2*B['LTz']
-        B['Ldzdw_zw'] = -gw2*c2w/MW**2*B['Lz']
-        B['LTdzdw_zw'] = -gw2*c2w/MW**2*B['LTz']
-        B['Ldzdw_aw'] = -ee2/MW**2*B['Lz']
-        B['LTdzdw_aw'] = -ee2/MW**2*B['LTz']
-        B['Ldadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
-        B['LTdadw_aw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
-        B['Ldadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
-        B['LTdadw_zw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
-        B['Ldg_g3'] = 3.*sqrt(gs2)**3/vev**2*B['C3G']
-        B['LTdg_g3'] = 3.*sqrt(gs2)**3/vev**2*B['CT3G']
+        B['Ldzdwzw'] = -gw2*c2w/MW**2*B['Lz']
+        B['LTdzdwzw'] = -gw2*c2w/MW**2*B['LTz']
+        B['Ldzdwaw'] = -ee2/MW**2*B['Lz']
+        B['LTdzdwaw'] = -ee2/MW**2*B['LTz']
+        B['Ldadwaw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
+        B['LTdadwaw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
+        B['Ldadwzw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
+        B['LTdadwzw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
+        B['Ldgg3'] = 3.*sqrt(gs2)**3/vev**2*B['C3g']
+        B['LTdgg3'] = 3.*sqrt(gs2)**3/vev**2*B['CT3g']
 
         # Higgs cubic interaction [eqn. (4.19)]
         B['dL3']  =  -MH**2/(2.*vev**2)*(3.*A['sH'] + A['spHl22']/2.) - A['s6H']
@@ -264,8 +243,8 @@ class SILHBasis(Basis.Basis):
         # [eqn (3.27)] copied from HiggsBasis implemetation
         B['Cgg2'], B['CTgg2'] = B['Cgg'], B['CTgg']
         
-        B['cll1122']=(gw2*A['s2W']+gp2*A['s2B'])/2.
-        B['cll1221']=gw2*A['s2W']
+        B['cll1122'] = (gp2*A['s2B'] - gw2*A['s2W'])/2.
+        B['cll1221'] = gw2*A['s2W']
         B['cpuu3333'] = (1./3.)*gs2*A['s2G']
         
         self.mass[24] = MW + B['dM']
@@ -273,7 +252,7 @@ class SILHBasis(Basis.Basis):
         return B
         
     def to_warsaw(self, instance):
-        self.newname = 'warsaw'
+        # self.newname = 'warsaw'
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
         lam = -MH**2/(2.*vev**2) # Higgs self-coupling     
@@ -322,25 +301,27 @@ class SILHBasis(Basis.Basis):
                 B['cpHl'+t] = cpHf('spHl'+t, i, j)
                 B['cpHq'+t] = cpHf('spHq'+t, i, j)
 
+        def cf(sc, i, j):
+            mass = self.mass[ PID[f][i] ]
+            yuk = sqrt(2.)*mass/vev
+            if 'Im'!=sc[-2:]:
+                return A[sc] - delta(i,j)*gw2*yuk*(
+                                      A['sW'] + A['sHW'] + A['s2W'])/2.
+            else:
+                return A[sc]
+            
         # [eqn (5.9)]
-        # self.mass[ PID[f][i] ],self.mass[ PID[f][j] ]
-        for i,j in comb((1,2,3),2):
+        for i,j in product((1,2,3),(1,2,3)): # flavour loop
             ind = ['{}{}{}'.format(i,j,cplx) for cplx in ('Re','Im')]
-            for t in ind:
-                for f in ('u','d','e'):
-                    mass = self.mass[ PID[f][i] ]
-                    yuk = sqrt(2.)*mass/vev
+            for t in ind: # Re, Im loop
+                for f in ('u','d','e'): # fermion loop
                     wcoeff, scoeff = 'c{}{}'.format(f,t),'s{}{}'.format(f,t)
-                    if 'Im'!=scoeff[-2:]:
-                        B[wcoeff] = A[scoeff] - delta(i,j)*gw2*yuk*(
-                                              A['sW'] + A['sHW'] + A['s2W'])/2.
-                    else:
-                        B[wcoeff] = A[scoeff] 
+                    B[wcoeff] = cf(scoeff, i, j)
 
         # [eqn (5.10)]
         B['cll1221'] = gw2*A['s2W'] # cll1221==0 in SILH
         # derived from [eqn (5.4)]
-        B['cll1122']=(gw2*A['s2W']+gp2*A['s2B'])/2.
+        B['cll1122']=( gp2*A['s2B'] - gw2*A['s2W'] )/2.
         B['cpuu3333'] = (1./3.)*gs2*A['s2G']
         
         # trivial translation, cX==sX

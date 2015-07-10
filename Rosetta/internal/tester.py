@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-import HiggsBasis as HB
-import WarsawBasis as WB
-import SILHBasis as SB
-import MassBasis as MB
-import TemplateBasis as TB
+from Rosetta import HiggsBasis as HB
+from Rosetta import WarsawBasis as WB
+from Rosetta import SILHBasis as SB
+from Rosetta import MassBasis as MB
+from Rosetta import TemplateBasis as TB
 import SLHA
 import tempfile
 import os
@@ -35,7 +35,7 @@ def compare_coeffs(basis1, basis2, tolerance=1e-4):
     wrong_coeffs = []
     for coeff in basis1.all_coeffs:
         c1, c2 = basis1[coeff], basis2[coeff]
-        if abs(c1 - c2) > tolerance*abs(c1):
+        if abs(c1 - c2) > tolerance*abs(c1) and abs(c1 - c2) > 1e-15:
             wrong_coeffs.append([coeff,
                                  ('{}:'.format(basis1.__class__.__name__), c1,
                                   '{}:'.format(basis2.__class__.__name__), c2)
@@ -49,63 +49,62 @@ def compare_coeffs(basis1, basis2, tolerance=1e-4):
         print 'Coeffs are OK!'
 
 def higgs_basis_check(MyBasis,param_card,tolerance=1e-4):
+    
     tmpdir = tempfile.mkdtemp(prefix = 'rosetta_temp_', dir=os.getcwd())
     out_card = '{}/output_card.dat'.format(tmpdir)
+    
     myinstance = MyBasis(param_card=param_card, 
-                         output_basis='higgs',silent=True)
-
+                         output_basis='mass',silent=True)
     myinstance.write_param_card(out_card)
-    try:
-        HB_instance = HB.HiggsBasis(param_card=out_card, 
-                             output_basis='mass',silent=True)
-        MB_instance = MB.MassBasis(param_card=out_card, silent=True)
-        compare_inputs(HB_instance, MB_instance, tolerance=tolerance)
-        compare_coeffs(HB_instance, MB_instance, tolerance=tolerance)
-
-    except Exception as e:
-        print 'Error!!!'
-        print e
-    finally:
-        os.remove(out_card)
-        os.rmdir(tmpdir)
-    
-def SILH_Warsaw_triangle(param_card,tolerance=1e-4, keep=False):
-    tmpdir = tempfile.mkdtemp(prefix = 'rosetta_temp_', dir=os.getcwd())
-    SB2MB_out = '{}/SB2MB.dat'.format(tmpdir)
-    SB2WB_out = '{}/SB2WB.dat'.format(tmpdir)
-    WB2MB_out = '{}/WB2MB.dat'.format(tmpdir)
-    try:
-        # translate directly to Mass Basis
-        SB2MB = SB.SILHBasis(param_card=param_card, 
-                             output_basis='mass')
-        SB2MB.write_param_card(SB2MB_out)
         
-        # translate to Warsaw Basis    
-        SB2WB = SB.SILHBasis(param_card=param_card, 
-                             output_basis='warsaw')
-        SB2WB.write_param_card(SB2WB_out)
-        # translate to Mass basis  
-        WB2MB = WB.WarsawBasis(param_card=SB2WB_out, 
-                             output_basis='mass')
-        WB2MB.write_param_card(WB2MB_out)
-
-        # read & compare both Mass Basis translations
-        from_SB = MB.MassBasis(param_card=SB2MB_out)
-        via_WB = MBMassBasis(param_card=WB2MB_out)
-
-        compare_inputs(from_SB, via_WB, tolerance=tolerance)
-        compare_coeffs(from_SB, via_WB, tolerance=tolerance)
-    except Exception as e:
-        print 'Error!!!'
-        print e
-    finally:
-        if not keep:
-            os.remove(SB2WB_out)
-            os.remove(SB2MB_out)
-            os.remove(WB2MB_out)
-            os.rmdir(tmpdir)
+    HB_instance = HB.HiggsBasis(param_card=out_card,silent=True,translate=False)
+    MB_instance = MB.MassBasis(param_card=out_card, silent=True)
     
+    compare_inputs(HB_instance, MB_instance, tolerance=tolerance)
+    compare_coeffs(HB_instance, MB_instance, tolerance=tolerance)
     
+    os.remove(out_card)
+    os.rmdir(tmpdir)
+
+def two_way_test(basis, card ,target,tolerance=1e-4):
+    first = basis(param_card=card, silent=True, translate = False)
+
+    intermediate = first.translate(target=target)
+        
+    second = intermediate.translate(target=basis.name)
+    
+    compare_coeffs(first , second, tolerance=tolerance)
+    compare_inputs(first , second, tolerance=tolerance)
+    
+    # print second.card.blocks['wbh6']
+    # print first.card.blocks['wbh6']
+
+def circle_test(basis, card, tolerance=1e-4, reverse=False):
+    others = [x for x in ('silh','warsaw', 'higgs') if x is not basis.name]
+    
+    one = basis(param_card=card, silent=True, translate=False)
+    if not reverse:
+        two = one.translate(target=others[0])
+        three = two.translate(target=others[1])
+    else:
+        two = one.translate(target=others[1])
+        three = two.translate(target=others[0])
+        
+    four = three.translate(target=basis.name)
+    compare_inputs(one , four, tolerance=tolerance)
+    compare_coeffs(one , four, tolerance=tolerance)
+    
+def triangle_test(basis, card, target, tolerance=1e-4):
+    other = [x for x in ('silh','warsaw', 'higgs') 
+             if x not in (basis.name,target)][0]
+    
+    one = basis(param_card=card, silent=True, translate=False)
+    two = one.translate(target=target)
+    three = one.translate(target=other)
+    four = three.translate(target=target)
+    
+    compare_coeffs(two , four, tolerance=tolerance)
+
 def generate_coeffs(basis_class, val, rand=False):
     myinstance = basis_class()
     SLHA_card = myinstance.card
@@ -157,20 +156,45 @@ def generate_frdef(basis_class,filename):
                 out.write('{} == {{ ParameterType -> Internal,\n'.format(name))
                 out.write('   ComplexParamter -> True,\n')
                 out.write('   Value -> {{{}+I*{}}},\n'.format(real,imag))
+                out.write('   InteractionOrder -> {QNP, 1},\n')
                 out.write('   Description -> "{} coupling parameter"}},\n'.format(name))
                 out.write('\n')
                 
     print 'wrote ',filename
 
 if __name__=='__main__':
+    os.chdir('/Users/Ken/GoogleDrive/Work/Rosetta')
+    # two_way_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','higgs')
+    # two_way_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','warsaw')
+    #
+    # two_way_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','silh')
+    # two_way_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat','warsaw')
+    #
+    # two_way_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat','higgs')
+    # two_way_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','silh')
+    
+    # circle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat')
+    # circle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat',reverse=True)
+    # circle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat')
+    # circle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat',reverse=True)
+    # circle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat')
+    # circle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat',reverse=True)
+    triangle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','silh')
+    triangle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','warsaw')
+    triangle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat','higgs')
+    triangle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat','warsaw')
+    triangle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','higgs')
+    triangle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','silh')
+    
+    
     # generate_coeffs(WB.WarsawBasis,0.,rand=True)
     # generate_coeffs(SB.SILHBasis,0.,rand=True)
     # generate_coeffs(HB.HiggsBasis,0.,rand=True)
     # generate_coeffs(TB.TemplateBasis,0.,rand=True)
     # generate_coeffs(MassBasis,1.,rand=True)
     # generate_frdef(HiggsBasis,'HB_definitions.fr')
-    generate_frdef(MB.MassBasis,'MB_definitions.fr')
-    # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis_blocks.dat',tolerance=1e-4)
+    # generate_frdef(MB.MassBasis,'MB_definitions.fr')
+    # higgs_basis_check(SB.SILHBasis,'Cards/param_card_SILHBasis.dat',tolerance=1e-3)
     # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat')
-    # SILH_Warsaw_triangle('../Cards/param_card_SILHBasis_blocks.dat', tolerance=1e-4, keep=True)
+    # SILH_Warsaw_triangle('Cards/param_card_SILHBasis.dat', tolerance=1e-4)
 

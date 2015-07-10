@@ -9,6 +9,7 @@ from internal import PID
 flavmat = Basis.flavour_matrix
 # Warsaw basis class
 class WarsawBasis(Basis.Basis):
+    name = 'warsaw'
     ###### declare blocks
     # [Tab. 1]
     WBV2H2 = ['cGG','ctGG','cWW','ctWW','cBB','ctBB','cWB','ctWB']
@@ -45,9 +46,7 @@ class WarsawBasis(Basis.Basis):
     
     required_masses = set([y for x in PID.values() for y in x.values()])
     required_inputs = {1, 2, 4, 8} # aEWM1, Gf, MZ, MH
-    
-    translate_to={'mass', 'higgs'}
-    
+        
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
         ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared
         gs2 = 4.*math.pi*self.inputs['aS'] # strong coupling squared
@@ -163,34 +162,35 @@ class WarsawBasis(Basis.Basis):
         # dy*cos(phi) == X
         # dy*sin(phi) == Y
         def dy_sf(X,Y): 
-            R = math.sqrt(X**2+Y**2)
-            sf = -Y/R # solution is +-Y/R 
-            dy = (-Y**2 + X*abs(X))/R
-            return dy,sf
-        # Yukawa type interaction coefficients [eqn. (4.16)]
-        for i,j in comb((1,2,3),2): 
+            R = sqrt(X**2+Y**2)
+            if R==0: 
+                return 0., 0.
+            elif Y==0.:
+                return X, 0.
+            else:
+                signY = Y/abs(Y)
+                if X*Y > 0.:
+                    return R*signY, abs(Y)/R
+                else:
+                    return -R*signY, -abs(Y)/R
+
+        # Yukawa type interaction coefficients [eqns. (4.16) & (4.17)]
+        for i,j in product((1,2,3),(1,2,3)): 
+            diag = delta(i,j)*(A['cH']+dv)
+            diag2 = 2.*delta(i,j)*A['cH']
             for f in ('u','d','e'):
                 mi, mj = self.mass[ PID[f][i] ],self.mass[ PID[f][j] ] 
                 name = '{}{}{}'.format(f,i,j)
                 if (mi and mj):
-                    dy_cosphi = (vev*A['c'+name+'Re']/sqrt(2.*mi*mj) -
-                                                       delta(i,j)*(A['cH']+dv))
-                    dy_sinphi = vev*A['c'+name+'Im']/sqrt(2.*mi*mj) 
-                    if (dy_cosphi == 0.) and (dy_sinphi == 0.): # check this consistency
-                        B['dY'+name], B['S'+name] = 0., 0.
-                    else:
-                        B['dY'+name], B['S'+name] = dy_sf(dy_cosphi, dy_sinphi)
-        
-        # Double Higgs Yukawa type interaction coefficients [eqn. (4.17)]
-        for i,j in comb((1,2,3),2):
-            for f in ('u','d','e'):
-                name = '{}{}{}'.format(f,i,j)
-                Yij   = B['dY' + name]
-                sinij = B['S' + name] 
-                cosij = sqrt(1. - sinij**2)
-                B['Y2{}Re'.format(name)] = (3.*Yij*cosij 
-                                             + delta(i,j)*(A['cH'] + 3.*dv))
-                B['Y2{}Im'.format(name)] = 3.*Yij*sinij
+                    c_Re, c_Im = A['c'+name+'Re'], A['c'+name+'Im']
+                    
+                    dy_cosphi = vev*c_Re/sqrt(2.*mi*mj) - diag
+                    dy_sinphi = vev*c_Im/sqrt(2.*mi*mj)
+                    
+                    B['dY'+name], B['S'+name]  = dy_sf(dy_cosphi, dy_sinphi)
+                    
+                    B['Y2{}Re'.format(name)] = 3.*vev*c_Re/sqrt(2.*mi*mj) - diag2
+                    B['Y2{}Im'.format(name)] = 3.*vev*c_Im/sqrt(2.*mi*mj)
         
         # Triple gauge couplings [eqn. (4.18)]
         B['dG1z'] = (gw2+gp2)/(gw2-gp2)*( -A['cWB']*gp2 + A['cT'] - dv )
@@ -243,15 +243,85 @@ class WarsawBasis(Basis.Basis):
         return B
         
     def to_silh(self, instance):
-        A = self
-        B = instance
-        # set all values of silh basis coeffs to 0.0001:
-        for k in B.all_coeffs: 
-            B[k] = 0.0
-        # self.mass[23]=91.19 # MZ in newmass
-        # self.inputs[8]=126. # MH in newinput
-        self.newname = 'SILH'
+        s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
+        MH = self.mass[25]
+        lam = -MH**2/(2.*vev**2) # Higgs self-coupling
         
-        return B
+        W = self
+        S = instance
+        
+        def delta(i,j):
+            return 1. if i==j else 0.
+        
+        S['sBB'] = W['cBB'] - 4.*W['cWB'] + W['cWW']
+        S['stBB'] = W['ctBB'] - 4.*W['ctWB'] + W['ctWW']
+        S['s2W'] = W['cll1221']/gw2
+        S['s2B'] = (2.*W['cll1122'] + W['cll1221'])/gp2
+        S['s2G'] = 3.*W['cpuu3333']/gs2
+        
+        S['sB'] = (4.*W['cWB'] - W['cWW'] 
+                  - (4.*W['cHl11'] + 4.*W['cll1122'] + 2.*W['cll1221'])/gp2)
+        S['sW'] = W['cWW'] - (2.*W['cll1221'] - 4.*W['cpHl11'])/gw2        
+        S['sHW'] = - W['cWW']
+        S['stHW'] = - W['ctWW']
+        S['sHB'] = W['cWW'] - 4.*W['cWB']
+        S['stHB'] = W['ctWW'] - 4.*W['ctWB']
+        S['sH'] = W['cH'] - 3./4.*W['cll1221'] + 3.*W['cpHl11']
+        S['sT'] = W['cT'] - W['cHl11'] - W['cll1122']/2. - W['cll1221']/4.
+    
+        S['s6H'] = W['c6H'] - 2.*lam*(W['cll1221'] - 4.*W['cpHl11'])
+        
+        def sHf(wc, Yf, i, j):
+            if 'Im'!=wc[-2:]:
+                return W[wc] + delta(i,j)*2.*Yf*W['cHl11'] 
+            else:
+                return W[wc]
+
+        def spHf(wc, i, j):
+            if 'Im'!=wc[-2:]:
+                return W[wc] - delta(i,j)*W['cpHl11']
+            else:
+                return W[wc]
+            
+        for i,j in comb((1,2,3),2):
+            ind = '{}{}'.format(i,j)
+            tail = [ind] if i==j else [ind+'Re', ind+'Im']
+            for t in tail:
+                S['sHl'+t] = sHf('cHl'+t, -1./2., i, j)
+                S['sHe'+t] = sHf('cHe'+t, -1., i, j)
+                S['sHq'+t] = sHf('cHq'+t, 1./6., i, j)
+                S['sHu'+t] = sHf('cHu'+t, 2./3., i, j)
+                S['sHd'+t] = sHf('cHd'+t, -1./3., i, j)
+                S['spHl'+t] = spHf('cpHl'+t, i, j)
+                S['spHq'+t] = spHf('cpHq'+t, i, j)
+                if i==j==1:
+                    S['sHl'+t] = 0.
+                    S['spHl'+t] = 0.
+        
+        def sf(wc, i, j):
+            mass = self.mass[ PID[f][i] ]
+            yuk = mass/vev/sqrt(2.)
+            if 'Im'!=wc[-2:]:
+                return W[wc] - delta(i,j)*yuk*(W['cll1221'] - 4.*W['cpHl11'])
+            else:
+                return W[wc]
+            
+        # [eqn (5.9)]
+        for i,j in product((1,2,3),(1,2,3)): # flavour loop
+            ind = ['{}{}{}'.format(i,j,cplx) for cplx in ('Re','Im')]
+            for t in ind: # Re, Im loop
+                for f in ('u','d','e'): # fermion loop
+                    scoeff, wcoeff = 's{}{}'.format(f,t),'c{}{}'.format(f,t)
+                    S[scoeff] = sf(wcoeff, i, j)
+        
+        # trivial translation, sX==cX
+        sHud = flavmat('sHud', kind='general', domain='complex')
+        others = ['sGG','stGG','s3W','st3W','s3G','st3G']
+        trivial = sHud+others
+        for coeff in trivial:
+            wcoeff = 'c'+coeff[1:]
+            S[coeff] = W[wcoeff]
+        
+        return S
 
 ################################################################################
