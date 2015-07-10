@@ -33,18 +33,7 @@ translations = {
     'template':{'mass':TB.TemplateBasis.to_mass,
                 'silh':TB.TemplateBasis.to_silh},
 }
-# translations = {
-#          'A':{'B':'A.Bfunc','C':'A.Cfunc'},
-#          'B':{'C':'B.Cfunc','D':'B.Dfunc'},
-#          'C':{'A':'C.Afunc','D':'C.Dfunc','B':'CBfunc'},
-#          'D':{'A':'D.Afunc'},
-#          'E':{'D':'E.Dfunc'},
-#          'F':{'C':'F.Cfunc','E':'F.Efunc'},
-#          'G':{'E':'G.Efunc'}
-#          }
-
 
 relationships= relate(translations)
-# for k,v in rels.items():
-#     print k,v# print relations
+
 

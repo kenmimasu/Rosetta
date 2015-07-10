@@ -57,20 +57,6 @@ class WarsawBasis(Basis.Basis):
         gp2 = gw2*s2w/c2w # Hypercharge coupling squared
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
-        
-    # def translate(self):
-    #     if self.target_basis=='mass':
-    #         from MassBasis import MassBasis
-    #         self.newname='Mass'
-    #         instance = MassBasis()
-    #         return self.translate_to_mass(instance)
-    #     elif self.target_basis=='higgs':
-    #         from HiggsBasis import HiggsBasis
-    #         self.newname='Higgs'
-    #         instance = HiggsBasis()
-    #         return self.translate_to_mass(instance)
-    #     else:
-    #         raise NotImplementedError
             
     def to_mass(self, instance):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
