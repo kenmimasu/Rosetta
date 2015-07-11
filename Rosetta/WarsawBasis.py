@@ -4,7 +4,6 @@ from math import sqrt
 from itertools import combinations_with_replacement as comb
 from itertools import product
 from internal import PID
-# from internal.machinery import translation
 ################################################################################
 flavmat = Basis.flavour_matrix
 ################################################################################

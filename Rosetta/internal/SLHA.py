@@ -497,7 +497,7 @@ def read(card):
     try:
         while True:
             counter+=1 # keep track of line number
-        
+            stop=False
             try: ll=(last_line.strip()).lower()
             except NameError: ll = (lines.next()).strip().lower()
         
@@ -521,7 +521,7 @@ def read(card):
             
                 theblock = NamedBlock(name=bname.lower(), comment=comment)
             
-                block_data, last_line = read_until(lines,'block','decay')
+                block_data, last_line, stop = read_until(lines,'block','decay')
                 
                 for datum in block_data:
                     counter +=1                    
@@ -568,7 +568,7 @@ def read(card):
                 thedecay = Decay(PID=int(PID), total=float(total), 
                                  comment=comment)
                 
-                decay_data, last_line = read_until(lines,'block','decay')
+                decay_data, last_line, stop = read_until(lines,'block','decay')
                 
                 for datum in decay_data:
                     counter +=1                    
@@ -604,6 +604,8 @@ def read(card):
                     
                 thecard.add_decay(thedecay)
                 
+            if stop: raise StopIteration
+            
     except StopIteration:
         # print 'Finished reading "{}".'.format(card)
         pcard.close()
@@ -629,11 +631,15 @@ def read_until(lines, here, *args):
     end_strings = [here.lower()]+[a.lower() for a in args]
     lines_read = []
     line = ''
-    while not any([line.strip().lower().startswith(x) 
-                   for x in end_strings]): 
-        line = lines.next()
-        lines_read.append(line.strip('\n'))
-    return lines_read[:-1],lines_read[-1]
+    stopiter = False
+    while not any([line.strip().lower().startswith(x) for x in end_strings]):
+        try:
+            line = lines.next()
+            lines_read.append(line.strip('\n'))
+        except StopIteration:
+            stopiter=True
+            break
+    return lines_read[:-1],lines_read[-1], stopiter
 
 if __name__=='__main__':
     pass

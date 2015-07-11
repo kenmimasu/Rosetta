@@ -48,14 +48,13 @@ class Basis(object):
     and required_inputs respectively. A number of checks related to these 
     definitions are performed by check_param_data(), check_mass() and 
     check_sminputs() on the data read in from the parameter card. An example is 
-    shown below where the data members are defined outside the class construtor 
-    so as to instrinsically belong to all instances of the class.
+    shown below where the required data members are defined outside the class 
+    construtor so as to instrinsically belong to all instances of the class.
     
         >> from internal import Basis
         >> class MyBasis(Basis.Basis):
         >>    name = 'mybasis'
         >>    independent = {'A','B','C','1','2','3'}
-        >>    dependent = {'D','4'}
         >>    required_inputs = {1,2,4}   # a_{EW}^{-1}, Gf and MZ required
         >>    required_masses = {24,25,6} # Z, Higgs and top masses required
         >>    blocks = {'letters':['A','B','C','D']
@@ -79,38 +78,32 @@ class Basis(object):
         >> instance.card.blocks['letters']['A'] = 0.5 # from block by name 
         >> instance.card.blocks['letters'][3] = 0.5 # from block by entry 
         
-    The user can define calculate_dependent() to set any dependent 
-    parameters (those listed in in self.blocks but not in self.independent) and 
-    any number of additional functions, usually to translate the coefficients 
-    into a given basis which sets the SLHA.Card object, self.newcard. Below 
-    would be an example of a translation function to the Warsaw Basis.
-        
+    The user can define calculate_dependent() to set any dependent parameters 
+    (those listed in in self.blocks but not in self.independent) and any number 
+    of additional functions, usually to translate the coefficients into a given 
+    basis which sets the SLHA.Card object, self.newcard. Rosetta differentiaties 
+    from general utility functions and translation functions using the 
+    "translation" decorator. Any function designed to take you to another 
+    existing basis implemenation should be decorated with the "translation" 
+    decorator with an argument corresponding to the name of the target basis. 
+    This name should match the unique name of an existing basis implementation 
+    also contained in the Rosetta root directory. Below would be example of a 
+    translation function from our example to the Warsaw Basis.
+    
+        >> @Basis.translation('warsaw') # identifies as translator to warsaw 
         >> def mytranslation(self, instance):
         >>     instance['cWW'] = 10.
         >>     instance['cpHl11'] = self['myparam']
         >>     return instance
     
-    In order for Rosetta to know about user implemented bases and translations 
-    to other existing basis implementations, the user must book their 
-    implementation in implemented.py by appending the `bases` dictionary with a 
-    name:class pair where name is the unique string identifier of your basis 
-    set in self.name and class is the class object of your basis. In addition, 
-    any translation functions to existing bases should be appended to the 
-    `translations` dictionary by creating an extry with a key corresponding to 
-    the unique basis identifier and a dictionary of translation functions with 
-    name:function pairs where name is the identifier of the target basis of the 
-    translation function. The following should be added to implemented.py for 
-    the example case detailed in this documentation.
-    
-        >> import MyBasis 
-        >> bases = {..., 'mybasis':MyBasis.MyBasis} # MyBasis class 
-        >> translations = {..., 
-        >>                'mybasis': {'warsaw':MyBasis.MyBasis.mytranslation},
-        >>                } # translation to Warsaw Basis
-        
-    Any derived class can then be used by the command line script "translate". 
-    Rosetta will be able to figure out possible multi-step translations using 
-    the information in implemented.py.
+    Any python module saved in the root directory of the Rosetta package is 
+    assumed to be a basis implementation. Furthermore, the class name of the 
+    basis implementation should be the same as the file name of the python 
+    module. In our example above, the class `MyBasis` would have to be saved in 
+    a file named MyBasis.py. This is to help Rosetta automatically identify the 
+    possible translation paths between bases. Any such class can then be used 
+    by the command line script "translate". For example, Rosetta should be able 
+    to figure out all possible multi-step translations.
     '''
     
     blocks = dict()
@@ -137,7 +130,6 @@ class Basis(object):
         self.all_coeffs = [c for v in self.blocks.values() for c in v ]
         self.dependent = [c for c in self.all_coeffs 
                           if c not in self.independent]
-        
         # make blocks case insensitive
         self.blocks = {k.lower():v for k,v in self.blocks.iteritems()} 
         # read param card (sets self.inputs, self.mass, self.name, self.card)
@@ -169,7 +161,7 @@ class Basis(object):
                 newbasis = self.translate() 
                 # set new SLHA card
                 self.newcard = newbasis.card 
-            
+                self.newname = newbasis.name
                 preamble = ('###################################\n'
                           + '## DECAY INFORMATION\n'
                           + '###################################')
@@ -265,8 +257,8 @@ class Basis(object):
                     self.blocks[name] = [par]
                 else:
                     self.blocks[name].append(par)
-            # default behaviour, create new block for all dependent parameters
-            self.blocks['dependent']=self.dependent
+            # # default behaviour, create new block for all dependent parameters
+            # self.blocks['dependent']=self.dependent
 
         self.inputs = self.card.blocks.get('sminputs',None)
         self.mass = self.card.blocks.get('mass',None)
@@ -544,12 +536,12 @@ class Basis(object):
     def write_param_card(self, filename, overwrite=False):
         '''Write contents of self.newcard to filename'''
         preamble = ('\n###################################\n'
-                    + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
+                    + '## INFORMATION FOR {} BASIS\n'.format(self.newname.upper())
                     + '###################################\n')
         if 'basis' in self.newcard.blocks:
             self.newcard.blocks['basis'].preamble = preamble
             self.newcard.blocks['basis'][0] = self.newname
-            
+        
         dec_preamble = ('\n###################################\n'
                     + '## DECAY INFORMATION\n'
                     + '###################################\n')
@@ -707,7 +699,7 @@ class Basis(object):
             target - target basis, must be defined in implemented.bases.
             verbose - print some status messages.
         '''
-        from __machinery__ import get_path, relationships, bases
+        from machinery import get_path, relationships, bases
         
         # from .. import implemented
         
@@ -764,11 +756,12 @@ class Basis(object):
                 new.card.add_decay(decay, preamble = decay.preamble)
             
             # new.calculate_dependent()
-            current.newname=new.name
+
             # prepare for next step
             required_inputs = set(instance.required_inputs)
             required_masses = set(instance.required_masses)
             current = new
+            # print current
         if verbose:
             print 'Translation successful.'
 
@@ -804,13 +797,16 @@ class Basis(object):
         # sometimes eHDECAY gives negative branching fractions. 
         # print warning and leave out that channel.
         for channel, BR in BRs.iteritems(): 
-            n1, n2 = particle_names[channel[0]], particle_names[channel[1]]
-            comment = 'H -> {}{}'.format(n1,n2)
-            if BR < 0.: 
-                print ('eHDECAY: Negative branching fraction encountered ' +
-                      'for {}. Rosetta will ignore it.'.format(comment))
-                continue
-            elif BR == 0.:
+            # n1, n2 = particle_names[channel[0]], particle_names[channel[1]]
+            # comment = 'H -> {}{}'.format(n1,n2)
+            # if BR < 0.:
+            #     print ('eHDECAY: Negative branching fraction encountered ' +
+            #           'for {}. Rosetta will ignore it.'.format(comment))
+            #     totalwidth -= BR # adjust total width
+            #     continue
+            # elif BR == 0.:
+            #     continue
+            if BR==0.:
                 continue
             else:
                 hdecays[channel] = BR

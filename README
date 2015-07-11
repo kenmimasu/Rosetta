@@ -19,11 +19,11 @@ derived inputs and finally write out a new parameter card in the target basis.
 The SHLA output for the default target, MassBasis, can be used as input to the 
 associated UFO model in a compatible event generator. 
 
-The tool consists of a Python package containing implementations of 
-Higgs Effective Theory bases and a command line tool 'translate' that performs 
-the task of mapping a given basis to a target output basis. The core of the 
-package is based on the contents of the LHCHiggs Cross Section Working Group 
-(HXSWG) draft.
+The tool consists of a Python package containing implementations of Higgs 
+Effective Theory bases and a command line tool 'translate' that performs the 
+task of mapping a given basis to a target output basis. The core of the package 
+is based on the contents of the LHCHiggs Cross Section Working Group (HXSWG) 
+draft.
 
 ################################################################################
    Contents
@@ -53,22 +53,11 @@ Python 2.7 or above
 Rosetta/    # Python package containing implementation of the basis 
             # translation machinery.
             
-    __init__.py     # Stores the location of the local eHDECAY installation
-    internal/
-        --> Basis.py        # Base basis class implementing internal methods 
-                            # such as reading/writing param cards and checking 
-                            # for required/calculated inputs. All basis classes 
-                            # are derived from this one.
-        --> SLHA.py         # Machinery for reading, manipulating and writing 
-                            # SLHA style input cards. Implementation partly 
-                            # inspired by pySLHA (A. Buckley, arXiv:1305.4194).
-        --> eHDECAY.py      # Interface with eHDECAY program (arXiv:1403.3381)
-        --> relate.py       # Constructs translation paths between bases by 
-                            # walking through the translations dictionary in 
-                            # Rosetta/implemented.py, used by Basis.translate().
-        --> query.py        # Yes/no query function borrowed from 
-                            # http://code.activestate.com/recipes/577058/.
-
+    --> __init__.py         # Assumes all files in the top directory other than 
+                            # itself are basis implementations and includes them
+                            # in Rosetta's translation 'database'.
+    
+    --> config.txt          # file storing configuration variables
                                 
     --> MassBasis.py        # Basis class for the  default target basis 
                             # for output parameter cards, corresponds to the 
@@ -90,10 +79,26 @@ Rosetta/    # Python package containing implementation of the basis
                             # implemented in the Rosetta package. Toy versions 
                             # of the calculate_dependent() and translation
                             # methods are implemented.
-                            
-    --> implemeted.py       # A file defining a dictionary that logs the set of 
-                            # implemented bases and the available translations 
-                            # to other bases.
+    internal/
+        --> __init__.py     # Stores a number of useful dictionaries mapping PDG
+                            # particle IDs and SLHA input numbers to names, 
+                            # default values for SM inputs and particle masses
+                            # etc.
+        --> Basis.py        # Base basis class implementing internal methods 
+                            # such as reading/writing param cards and checking 
+                            # for required/calculated inputs. All basis classes 
+                            # are derived from this one.
+        --> SLHA.py         # Machinery for reading, manipulating and writing 
+                            # SLHA style input cards. Implementation partly 
+                            # inspired by pySLHA (A. Buckley, arXiv:1305.4194).
+        --> eHDECAY.py      # Interface with eHDECAY program (arXiv:1403.3381)
+        --> machinery.py    # Constructs translation paths between bases.
+        --> settings.py     # Reader for config.txt
+        --> decorators.py   # the @translation decorator used to identify 
+                            # translation functions and their target basis in 
+                            # basis implementations.
+        --> query.py        # Yes/no query function borrowed from 
+                            # http://code.activestate.com/recipes/577058/.
 
 Cards/    # Sample MG5-style parameter cards to be used as input.
 
@@ -104,7 +109,7 @@ Cards/    # Sample MG5-style parameter cards to be used as input.
     param_card_WarsawBasis.dat      # Sample WarsawBasis input parameter card
     
 translate   # Command line tool to perform basis translation based on the
-            # implementations in Rosetta.py
+            # implementations in Rosetta
 
 ################################################################################
 3) Usage
@@ -113,7 +118,7 @@ The translate command line tool takes an SLHA-style param card (see sample
 cards provided in Cards/ directory) in a particular basis and outputs a new 
 card in the specified basis (default is Mass Basis).  
 
-    Command line documentation:
+Command line documentation:
     
     >> usage: translate [-h] [-o OUTPUT] [-t TARGETBASIS] [-w] [-e] PARAMCARD
     >> 
@@ -134,7 +139,18 @@ card in the specified basis (default is Mass Basis).
     >>   -e, --ehdecay         Interface with eHDECAY for Higgs branching 
     >>                         fractions.
 
-      
+Rosetta will read the SLHA card, look for the 0th element of block "basis", and 
+see if any implemented basis classes have this unique identifier. If so, Rosetta 
+will fill an instance of this class with the values of the parameters specified 
+in the parameter card and perform certain consistency checks, making sure all 
+required parameters are defined etc. Any dependent parameters are then 
+calculated and the translation is performed between the input basis and the 
+target basis (mass basis by default), provided the right translation path 
+exists. An SLHA style parameter card wil then written out in the new basis. 
+Rosetta can optionally interface with eHDECAY provided a translation path 
+between the input basis and the SILH basis exists. The results of eHDECAY 
+are also written to the SLHA card in the form of a decay block for the Higgs. 
+
 ################################################################################
 4) Input cards
 ################################################################################
@@ -199,191 +215,178 @@ self.mass and self.inputs data member of the basis instace.
 >>    23 9.118800e+01 # MZ 
 >>    25 1.250000e+02 # MH 
 
-Block basis should have one element corresponding to an existing implementation 
-of a basis, defined in implemeted.py.
+Block basis should have one element corresponding to the "name" attribute of an 
+existing basis implementation.
 
 >> block BASIS
 >> 0 MyBasis # name of basis
+
 ################################################################################
 5) The basis class
 ################################################################################
 Each implemented basis in Rosetta is a python class inheriting from the `Basis` 
-class in Rosetta/Internal/Basis.py. 
+class in Rosetta/internal/Basis.py. They are designed to be instantiated with 
+an SLHA format parameter card using read_param_card(). The contents of the card 
+are stored as an SLHA.Card object and the special blocks "mass" and "sminputs" 
+are stored as SLHA.NamedBlock instances in self.mass and self.input 
+respectively. Some of the key data members are:
 
-REWRITE FROM HERE ON
+self.name   
+            - Unique basis identifier. This will be compared to the 0th element 
+              of the block basis in the SLHA parameter card to ensure that 
+              right basis class is being instantiated for a given input card.
+              
+self.card   
+            - SLHA.Card instance containing SLHA.NamedBlock and SLHA.Decay 
+              instances corresponding to those specified in the parameter card. 
+              Object names taken to be the first non-whitespace characters 
+              after a "#" character in a block or parameter definition are also 
+              stored.
+              
+self.mass  
+            - SLHA.NamedBlock instance for the "mass" block
+            
+self.inputs 
+            - SLHA.NamedBlock instance for the "sminputs" block
+
+self.name   - Unique basis identifier
+
+self.required_inputs
+            - A set of SLHA input IDs denoting those required to be defined in  
+              the SLHA input card in order to perform implemented translations. 
+              
+self.required_masses
+            - A set of PDG particle IDs denoting particles whose mass is 
+              required to be defined in the SLHA input card in order to perform 
+              implemented translations. 
+              
+self.independent
+            - A list of coefficients deemed to be input parameters to the basis 
+              implementation. 
+              
+self.blocks (optional but strongly recommended)
+            - A dictionary of name:coefficients pairs where name is the SLHA 
+              block name desired and coefficients is a list of coefficient 
+              names associated to that block.
+
+self.blocks, self.required_inputs and self.required_masses should be defined in 
+accordance with block structure of the input SLHA parameter card, Blocks 
+"sminput" and "mass" respectively (the Z ahd Higgs masses are also stored in 
+self.inputs). Specifically, the block names specified as keys in self.blocks 
+should match block names in the SLHA card as well as the names and indices of 
+their elements (taken to be the order in which the appear in the list 
+associated the the block in self.blocks). The blocks "mass" and "sminputs" of 
+the SLHA card should minimally contain the entries specified in required_masses 
+and required_inputs respectively. A number of checks related to these 
+definitions are performed by check_param_data(), check_mass() and 
+check_sminputs() on the data read in from the parameter card.
+
+Basis and any of its subclasses are designed to work similarly to a 
+dictionary in that parameter values can be referenced by name (duplicate 
+names in different blocks are not handled properly so try to avoid them). 
+A value can be referenced in various ways, see below example where the 
+parameter named 'D' is stored as entry 3 in the block 'letters' written in 
+'mycard.dat':
+    
+    >> instance = MyBasis(param_card='mycard.dat')
+    >> instance['A'] = 0.5 # set value according to name in SLHA card
+    >> instance.card['A'] = 0.5 # equivalent to the above
+    >> instance.card.blocks['letters']['A'] = 0.5 # from block by name 
+    >> instance.card.blocks['letters'][3] = 0.5 # from block by entry 
+
+A number of other container methods are defined for easy of manipulation:
+
+    >> print len(instance) # number of EFT coefficients
+    >> for i in instance: # iterator methods also defined
+    >>     print i
+    >> for k, v in instance.items(): # name, value pairs
+    >>     print k, v
+
+write_param_card() writes the contents of the self.newcard into a new SLHA 
+formatted file. Another useful method write_template_card() generates and empty 
+parameter card according to the block definitions and required inputs of a 
+given basis class.
+
 ################################################################################
-5) Implementing your own basis
+6) Implementing your own basis
 ################################################################################
-Users who wish to implement their own basis should have a minimal understanding 
-of implementing formulae and assigning variables in python dictionaries. The 
-TemplateBasis.py class illustrates a toy implementation of a basis containing 
-the main ingredients necessary.
+Implementing ones own basis involves creating a file inside the root directory 
+of Rosetta, alongside HiggsBasis etc., containing a subclass of Basis. The 
+only required data member to be defined is self.name. However, users will 
+mostly likely want to define self.independent, self.required_inputs and 
+self.required_masses as well as structure their basis into blocks using 
+self.blocks (Rosetta will create one block named "newcoup" if self.blocks is 
+not defined). An example is shown below where the required data members are 
+defined outside the class construtor so as to instrinsically belong to all 
+instances of the class. This code would be saved in Rosetta/MyBasis.py. It is 
+essential that the file name match the class name.
 
-The base class Basis.py implements a number of reading and writing functions 
-designed to remain 'under the hood'.These include reading and writing parameter 
-cards, cross checking inputs read in against required inputs, storing the old 
-parameter card and writing out a new one with the coefficients of the target 
-basis. In general, the only variables needed in a derived class will be the 
-following useful data members:
+    >> from internal import Basis
+    >> class MyBasis(Basis.Basis):
+    >>    name = 'mybasis'
+    >>    independent = {'A','B','C','1','2','3'}
+    >>    dependent = {'D','4'}
+    >>    required_inputs = {1,2,4}   # a_{EW}^{-1}, Gf and MZ required
+    >>    required_masses = {24,25,6} # Z, Higgs and top masses required
+    >>    blocks = {'letters':['A','B','C','D']
+    >>              'numbers':['1','2','3','4']} # Expected block structure
 
-    self.independent        # A list of coefficients required to be defined 
-                            # in the input parameter card.
+The list self.independent stores the basis parameters which should be read 
+in from the SLHA card. Any other parameters declared in self.blocks are assumed 
+to be set by the user in the calculate_dependent() method. The user can define 
+calculate_dependent() to set any dependent parameters (those listed in in 
+self.blocks but not in self.independent) and any number of additional 
+functions, usually to translate the coefficients into a given basis which sets 
+the SLHA.Card object, self.newcard. 
 
-    self.dependent          # A list of dependent coefficients to be assigned 
-                            # by the calculate_dependent() function. These 
-                            # should not be declared in the input parameter
-                            # card.
+Rosetta differentiaties from general utility functions and translation 
+functions using the "translation" decorator. Any function designed to take you 
+to another existing basis implemenation should be decorated with the 
+"translation" decorator with an argument corresponding to the name of the 
+target basis. This name should match the unique name of an existing basis 
+implementation also contained in the Rosetta root directory. Below would be 
+example of a translation function from our example to the Warsaw Basis.
 
-    self.required_inputs    # A set of required input parameters in block 
-                            # SMINPUTS
+    >> @Basis.translation('warsaw') # identifies as translator to warsaw 
+    >> def mytranslation(self, instance):
+    >>     instance['cWW'] = 10.
+    >>     instance['cpHl11'] = self['myparam']
+    >>     return instance
 
-    self.required_masses    # A set of required article masses in block MASS
+The translating function must ONLY take an instance of the target class as its 
+second argument alongside the default "self" argument for a class method. In 
+this way, Rosetta can universally and automatically detect and use intended 
+translation functions.
 
-    self.par_dict           # dictionary with keys defined by self.independent 
-                            # and self.dependent. The parameters in  
-                            # self.independent will be read in from the 
-                            # input parameter card while those in self.dependent
-                            # should be calculated and assigned by the user in 
-                            # calculate_dependent().
-                            
-    self.input              # dictionary with names and values of parameters 
-                            # defined in block SMINPUTS.
-                            
-    self.SHLA_sminputs      # dictionary with SLHA IDs and values of parameters 
-                            # defined in block SMINPUTS. Cross checked with 
-                            # self.required_inputs
-                            
-    self.mass               # dictionary with PIDs and particle masses defined 
-                            # in block MASS. Cross checked with elements of
-                            # self.required_masses
+Any python module saved in the root directory of the Rosetta package is 
+assumed to be a basis implementation. Furthermore, the class name of the 
+basis implementation MUST be the same as the file name of the python 
+module. In our example above, the class `MyBasis` would have to be saved in 
+a file named MyBasis.py. This is to help Rosetta automatically identify the 
+possible translation paths between bases. Any such class can then be used 
+by the command line script "translate". For example, Rosetta should be able 
+to figure out all possible multi-step translations.
 
-    self.newpar             # dictionary of coefficients to be filled in  
-                            # translate() function. The contents of this 
-                            # dictionary are written out to the output parameter
-                            # card in place of the old basis coefficients of the
-                            # input parameter card.
+The user is referred to Rosetta/TemplateBasis.py for a toy working example of a 
+user defined basis.
 
-    self.newmass            # dictionary of modified masses to be filled in
-                            # translate() function
-    self.newinput           # dictionary of modified SM inputs to be filled in
-                            # translate() function
-
-The basic steps are as follows:
-
-1)  Create a new file MyBasis.py declaring a class MyBasis inheriting from the 
-    Basis class (these names need not coincide). The target basis class can 
-    also be imported in order to initialise an empty container to fill in the 
-    translate function.
-    
-    >>from Basis import Basis # base class
-    >>from MassBasis import MassBasis # target basis
-    >>
-    >>class TemplateBasis(Basis):
-
-2)  Minimally, a list of strings called 'independent' should be declared 
-    containing the names of the coefficients to be read in the input parameter 
-    card and used to calculate the coefficients in the target basis. 
-    Additionally, a list named 'dependent' can also optionally be defined 
-    containing the names of coefficients to calculate internally before 
-    translating to the target basis.
-    The set, 'transalte_to' can also be declared to list the existing bases to
-    which the implementation provides a translation. The default is {'mass'},
-    assuming that the translation is implemented to the mass basis.
-    For more consistency, the sets 'required_inputs' and 'required_masses' 
-    can also be declared. These tell the basis class to check that the masses 
-    of particles with certain PIDs and certain SM input parameters are defined 
-    in the blocks MASS and SMINPUTS respectively. If default values exist for 
-    these parameters in __init__.py, the user is asked if they wish to continue 
-    using those when calling ./translate.
-    
-    >>class MyBasis(Basis):
-    >>    independent = ['a','b','c',...] # list of required parameters
-    >>    dependent = ['d','e','f',...]   # list of derived parameters
-    >>    required_masses = {1,2,3,4,5,6,...} # PIDs of required particle masses
-    >>    required_inputs = {'aEWM1','MZ',...} # required SMINPUT parameters
-    >>    translate_to = {'mass','my_other_basis'} # available translations
-    
-3)  At least the function translate() should be defined that applies the map 
-    from the input coefficients to those in the output basis. This can be done 
-    by creating and instance of the target basis class and filling its par_dict 
-    data member. The function should ultimately assign the dictionary to 
-    self.newpar. self.newname can also be assigned.
-    The function calculate_dependent() can also be defined which to calculate 
-    values of the coefficients declared in 'dependent' and assign them in 
-    self.par_dict.The dictionary self.newmass can also be modified at any 
-    stage if modifications to particle masses occur. This should be a 
-    dictionary of PID:mass pairs that will replace the entries in self.mass.
-    
-    >>    def calculate_dependent(self):
-    >>        '''
-    >>        Calculate dependent parameters here by assigning values 
-    >>        to self.par_dict corresponding to the keys in self.dependent.
-    >>        '''
-    >>        p = self.par_dict
-    >>        p['d'] = p['a']+ p['b']*p['c'] # set a value for 'd' coefficient
-    >>
-    >>    def translate(self):
-    >>        '''
-    >>        Translate to the mass basis by creating an empty MassBasis 
-    >>        and modifying its par_dict or coeffs._asdict().
-    >>        Set self.newpar with resulting dictionary
-    >>        '''
-    >>        A = self.coeffs._asdict()
-    >>        # initialise empty par_dict of the target basis instance
-    >>        B = MassBasis().coeffs._asdict() 
-    >>        # set all values of coeffs according to nonsense formula: 
-    >>        # C = coeff_d * m_top / a_EW
-    >>        for k in B.keys(): 
-    >>            B[k]=A['d']*self.mass[6]/self.input['aEWM1']
-    >>        self.newpar = B
-    >>        self.newname = 'Mass'
-
-4)  Once the translate() function has been defined, the implementation is 
-    complete and can be tested with the translate tool. The new basis should be 
-    added to the dictionary 'bases' in implemented.py in order to make the tool 
-    aware of its existence. This is done by importing the new module and 
-    appending it to the dictionary.
-    
-    In implemented.py:
-    
-    >> import WarsawBasis, HiggsBasis, MassBasis, TemplateBasis
-    >> import MyBasis
-    
-    >> bases['mybasis'] = MyBasis.MyBasis
-    
-    The options for ./translate -h should now include "mybasis" as a possible
-    BASIS argument.
-    
 ################################################################################
-6) eHDECAY interface
+7) eHDECAY interface
 ################################################################################
 A useful program based on HDECAY (arXiv:hep-ph/9704448) for calculating the 
 Higgs total width was developed in 2014 and is described in arXiv:1403.3381. 
 The program takes as input a number of parameters in the SILH basis to calculate
 the width and branching ratios to SM particles optionally including Electroweak 
-corrections. In order to have this working correctly the user must:
-
-1)  Modify the variable eHDECAY_dir in __init__.py to have it pointing to the 
-    location of your installation of eHDECAY
-    
-    In __init__.py:
-    
-    >> eHDECAY_dir = '/PATH/TO/eHDECAY'
-
-2)  Define the member function eHDECAY_inputs() in their basis implementation.
-
-    In MyBasis.py:
-    
-    >> def eHDECAY_inputs(self):
-    >>     inputs = dict() # populate with values for inputs defined below
-    >>     ..
-    >>     ..
-    >>     return inputs
-
-    Currently, the translations to and from SILH basis have not yet been implemented
-    and so the user will be required to provide the necessary inputs via the 
-    definition of the eHDECAY_inputs() function. The required SM and SILH basis 
-    inputs are listed in eHDECAY.py and are as follows:
+corrections. In order to have this working correctly the user must modify 
+Rosetta/config.txt, putting the absolute path to the base directory of a local 
+eHDECAY installation. It goes without saying that there must exist a possible 
+translation path between the input basis and the SILH basis. The 
+internal/eHDECAY.py module then performs this translation, rescales the 
+relevant parameters of the Rosetta SILH basis implementation to match the 
+conventions of arXiv:1403.3381 and executes a run of eHDECAY. The results are 
+stored and a copy of the input file "ehdecay.in" is saved locally. The results 
+are then written to and SLHA decay block in the output card. The relevant 
+input parameters are:
 
     SM inputs: # ALL masses must be nonzero for eHDECAY to give a finite result
     'MC', 'MB', 'MT', 'MMU', 'MTAU, # SM fermion masses
@@ -398,15 +401,10 @@ corrections. In order to have this working correctly the user must:
     eHDECAY option:
     'IELW' # Electroweak corrections switch (1:on, 0:off)
 
-An example of a toy implementation is given in TemplateBasis.py which uses the 
-default values for the SM inputs and sets the SILH coefficients. 
-eHDECAY_inputs() should return a dictionary of name:value pairs for the 
-parameters listed above.
-
-Rosetta will take the inputs and run eHDECAY in a temporary directory and read
-the relevant branching ratios, updating or creating the DECAY block in the 
-output card. 
-
+eHDECAY can potentially give negative branching fractions and even a negative 
+total Higgs width for unreasonable choices of EFT parameters. A negative total 
+width is currently not allowed while negative branching fractions are not 
+handled and will be written to the parameter card.
 ################################################################################
 Rosetta: A Higgs Effective Field Theory basis translator
 ################################################################################

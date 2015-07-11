@@ -165,7 +165,7 @@ def generate_frdef(basis_class,filename):
 if __name__=='__main__':
     os.chdir('/Users/Ken/GoogleDrive/Work/Rosetta')
     instance = TB.TemplateBasis()
-    instance.write_template_card('TB_template.dat')
+    instance.write_template_card('Cards/param_card_TemplateBasis.dat')
     # two_way_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','higgs')
     # two_way_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','warsaw')
     #

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 ################################################################################
-import Rosetta.internal.__machinery__ as implemented
+import Rosetta.internal.machinery as implemented
 from Rosetta.internal import RosettaError
 from Rosetta.internal import SLHA
 import StringIO, os, argparse, sys
@@ -63,7 +63,7 @@ if not args.output: # output file name
 else:
     new_param_card = args.output
 
-print 'Basis class used to read in param card: {}'.format(mybasis)
+print 'Basis class used to read in param card:\n\t{}'.format(mybasis)
 # create instance of mybasis
 basis_instance = mybasis(param_card=args.param_card, 
                          output_basis=args.target,

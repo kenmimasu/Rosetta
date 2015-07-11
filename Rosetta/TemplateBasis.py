@@ -25,6 +25,7 @@ class TemplateBasis(Basis.Basis):
     blocks = {'newcoup':['a','b','c'],
               'dep':['d'],
               'flavoured':flavoured }
+              
     ##########################
     # This can be overridden if you want but is typically unneccesary. Exclude 
     # it entirely and the class will inherit the  constructor from the parent 
