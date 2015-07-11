@@ -4,6 +4,7 @@ from math import sqrt
 from itertools import combinations_with_replacement as comb
 from itertools import product
 from internal import PID
+# from internal.machinery import translation
 ################################################################################
 flavmat = Basis.flavour_matrix
 ################################################################################
@@ -66,7 +67,8 @@ class WarsawBasis(Basis.Basis):
         gp2 = gw2*s2w/c2w # Hypercharge coupling squared
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
-            
+
+    @Basis.translation('mass')        
     def to_mass(self, instance):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
@@ -236,7 +238,13 @@ class WarsawBasis(Basis.Basis):
         # W mass shift
         self.mass[24] = MW + B['dM']
         return B
-        
+    
+    @Basis.translation('higgs')        
+    def to_higgs(self, instance):
+        H = self.to_mass(instance)
+        return H
+    
+    @Basis.translation('silh')
     def to_silh(self, instance):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]

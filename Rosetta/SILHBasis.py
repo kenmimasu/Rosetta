@@ -84,7 +84,8 @@ class SILHBasis(Basis.Basis):
         gp2 = gw2*s2w/c2w # Hypercharge coupling squared
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
-
+    
+    @Basis.translation('mass')
     def to_mass(self,instance):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
@@ -267,7 +268,13 @@ class SILHBasis(Basis.Basis):
         self.mass[24] = MW + B['dM']
 
         return B
-        
+    
+    @Basis.translation('higgs')        
+    def to_higgs(self, instance):
+        H = self.to_mass(instance)
+        return H
+    
+    @Basis.translation('warsaw')    
     def to_warsaw(self, instance):
 
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 

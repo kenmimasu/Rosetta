@@ -229,7 +229,14 @@ class HiggsBasis(Basis.Basis):
         A['cll1221'] = 2.*(A['dGLwl11'] + A['dGLwl22'] - 2.*A['dM']) 
         
         self.mass[24] = MW + A['dM']
-
+        
+    @Basis.translation('mass')        
+    def to_mass(self, instance):
+        for k, v in self.iteritems():
+            instance[k] = v
+        return instance
+        
+    @Basis.translation('warsaw')
     def to_warsaw(self, wbinstance):
 
         def delta(i,j):
@@ -324,7 +331,8 @@ class HiggsBasis(Basis.Basis):
         W['cll1122'], W['cpuu3333'] = H['cll1122'], H['cpuu3333']
 
         return W
-    
+        
+    @Basis.translation('silh')
     def to_silh(self,instance):
         
         H = self

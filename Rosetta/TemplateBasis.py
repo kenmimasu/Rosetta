@@ -44,7 +44,8 @@ class TemplateBasis(Basis.Basis):
         '''
         p = self
         p['d'] = p['a']+ p['b']*p['c']
-        
+    
+    @Basis.translation('silh')
     def to_silh(self, instance):
         '''
         Toy translation to the SILH basis setting all coefficients to 1e-3, and 
@@ -61,6 +62,7 @@ class TemplateBasis(Basis.Basis):
         
         return B
         
+    @Basis.translation('mass')        
     def to_mass(self, instance):
         '''
         Toy translation to the Mass basis setting all coefficients according to 

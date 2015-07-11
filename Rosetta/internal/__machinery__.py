@@ -1,3 +1,7 @@
+# Imports all modules in the Rosetta bas directory
+from Rosetta import __all__ as basisnames
+from Rosetta import *
+import inspect
 ################################################################################
 def relate(mydict):
     '''build the relations tree for implemented.py'''
@@ -7,7 +11,6 @@ def relate(mydict):
                   if (x!=k and x not in state)]
                   
         for ele in subset: 
-            # state[ele[0]] = [(base,ele[1])]
             state[ele[0]] = chain
 
         for ele in subset:
@@ -42,6 +45,28 @@ def get_path(start,end,rels):
         step = intermediate[-1][0]
     return path
 ################################################################################
+# Constructs the relationship dictionary from all .py files in
+modules = {b:v for b,v in globals().iteritems() if b in basisnames}
+bases = {}
+for bname, module in modules.iteritems():
+    try:
+        bclass = module.__dict__[bname]
+        if not inspect.isclass(bclass):
+            raise KeyError
+        bases[bclass.name] = bclass
+    except KeyError:
+        print ('Warning: Rosetta did not find a class named ' +
+               '{0} in {0}.py. File ignored.'.format(bname) )
+
+translations = {}
+
+for bas,inst in bases.iteritems():
+    functions = [i for i in inst.__dict__.values() if hasattr(i,'_target')]
+    tmap = {f._target:f for f in functions}
+    translations[bas] = tmap
+
+relationships = relate(translations)
+################################################################################
 if __name__=='__main__':
     mydict = {
              'A':{'B':'A.Bfunc','C':'A.Cfunc'},
@@ -58,5 +83,3 @@ if __name__=='__main__':
         print k,v
     print '\n\n'
     print get_path('A','C',relations)
-    
-    

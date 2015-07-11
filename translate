@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 ################################################################################
-from Rosetta.implemented import bases
+import Rosetta.internal.__machinery__ as implemented
 from Rosetta.internal import RosettaError
 from Rosetta.internal import SLHA
 import StringIO, os, argparse, sys
 import subprocess as sub
 ################################################################################
-existing = bases.keys()
+existing = implemented.bases.keys()
 ################################################################################
 parser = argparse.ArgumentParser(
                   description=(
@@ -47,7 +47,7 @@ else:
         raise RosettaError('\n\tParameter card {} '.format(args.param_card) + 
                            'does not have a block "basis".')
 try:
-    mybasis = bases[basis.lower()] 
+    mybasis = implemented.bases[basis.lower()] 
 except KeyError:
     err = ('\n\tElement 0 of block "BASIS", "{}", not recognised. '.format(basis)
            + 'Rosetta accepts one of: {}.'.format(', '.join(bases.keys())))

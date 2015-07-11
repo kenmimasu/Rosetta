@@ -1,17 +1,20 @@
+################################################################################
 import StringIO
 import re
 import sys
 import os
 import math
 import datetime
-from collections import namedtuple,OrderedDict
+from collections import namedtuple, OrderedDict
 from itertools import product, combinations
 from itertools import combinations_with_replacement as combinations2
+################################################################################
 import SLHA
 from query import query_yes_no as Y_or_N
+from decorators import translation
 from __init__ import (PID, default_inputs, default_masses, input_names, 
                       particle_names, input_to_PID, PID_to_input, RosettaError)
-########################################################################
+################################################################################
 # Base Basis class
 class Basis(object):
     '''
@@ -27,10 +30,10 @@ class Basis(object):
                   ensure that right basis class is being instantiated for a 
                   given input card.
     self.card   - SLHA.Card instance containing SLHA.NamedBlock and SLHA.Decay 
-                  instances corresponding to those specified in the parameter card. 
-                  Object names taken to be the first non-whitespace characters 
-                  after a "#" character in a block or parameter definition are 
-                  also stored.
+                  instances corresponding to those specified in the parameter 
+                  card. Object names taken to be the first non-whitespace 
+                  characters after a "#" character in a block or parameter 
+                  definition are also stored.
     self.mass   - SLHA.NamedBlock instance for the "mass" block
     self.inputs - SLHA.NamedBlock instance for the "sminputs" block
 
@@ -152,6 +155,14 @@ class Basis(object):
             self.init_dependent()
             # user defined function
             self.calculate_dependent()
+            
+            thedict = OrderedDict()
+            for name, blk in self.card.blocks.iteritems():
+                if name in self.blocks:
+                    for k, v in blk.iteritems():
+                        thedict[blk.get_name(k)] = v
+            self._thedict = thedict
+            
             if translate:
                 # translate to new basis (User defined) 
                 # return an instance of a class derived from Basis
@@ -200,6 +211,7 @@ class Basis(object):
                     self.card.add_block(theblock)
 
     # overloaded container (dict) methods for indexing etc.
+    
     def __getitem__(self, key):
         return self.card.__getitem__(key)
 
@@ -211,7 +223,19 @@ class Basis(object):
         
     def __delitem__(self, key):
         return self.card.__delitem__(key)
+    
+    def __len__(self):
+        return self._thedict.__len__()
         
+    def __iter__(self):
+        return self._thedict.__iter__()
+    
+    def items(self):
+        return self._thedict.items()
+    
+    def iteritems(self):
+        return self._thedict.iteritems()
+         
     def read_param_card(self):
         '''
         Call SLHA.read() and set up the Basis instance accordingly.
@@ -520,20 +544,33 @@ class Basis(object):
     def write_param_card(self, filename, overwrite=False):
         '''Write contents of self.newcard to filename'''
         preamble = ('\n###################################\n'
-                    + '## INFORMATION FOR {}\n'.format(self.name.upper())
+                    + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
                     + '###################################\n')
         if 'basis' in self.newcard.blocks:
-            self.newcard.blocks['basis'].preamble=preamble
-            self.newcard.blocks['basis'][0]=self.newname
+            self.newcard.blocks['basis'].preamble = preamble
+            self.newcard.blocks['basis'][0] = self.newname
             
-        preamble_2 = ('\n###################################\n'
+        dec_preamble = ('\n###################################\n'
                     + '## DECAY INFORMATION\n'
                     + '###################################\n')
         for decay in self.newcard.decays.values():
-            decay.preamble=preamble_2
+            decay.preamble = dec_preamble
             break
+        mass_preamble = ('\n###################################\n'
+                       + '## INFORMATION FOR MASS\n'
+                       + '###################################\n')
+
+        if 'mass' in self.newcard.blocks:
+            self.newcard.blocks['mass'].preamble = mass_preamble
+                    
+        sm_preamble = ('\n###################################\n'
+                     + '## INFORMATION FOR SMINPUTS\n'
+                     + '###################################\n')
         
-        preamble = ( '################################################'
+        if 'sminputs' in self.newcard.blocks:
+            self.newcard.blocks['sminputs'].preamble = sm_preamble
+        
+        card_preamble = ( '################################################'
                     +'######################\n'
                     +'############# COEFFICIENTS TRANSLATED BY ROSETTA'
                     +' MODULE  #############\n'
@@ -548,7 +585,8 @@ class Basis(object):
             carry_on=True
         if carry_on:
             order = ['loop','mass','sminputs','yukawa','basis']
-            self.newcard.write(filename, blockorder=order, preamble=preamble)
+            self.newcard.write(filename, blockorder=order, 
+                                         preamble=card_preamble)
             print 'Wrote "{}".'.format(filename)
             return True
         else: 
@@ -657,7 +695,8 @@ class Basis(object):
         '''
         print 'Nothing done for {}.calculate_'\
               'dependent()'.format(self.__class__.__name__)
-    
+              
+    @translation('mass')
     def translate(self, target=None, verbose=True): 
         '''
         Translation function. Makes use of known translations in implemented.py 
@@ -668,9 +707,9 @@ class Basis(object):
             target - target basis, must be defined in implemented.bases.
             verbose - print some status messages.
         '''
+        from __machinery__ import get_path, relationships, bases
         
-        from .. import implemented
-        from relate import get_path
+        # from .. import implemented
         
         # default target
         target = target if target is not None else self.output_basis
@@ -679,11 +718,12 @@ class Basis(object):
         
         # find the chain of bases and translation functions 
         # to get from self.name to target
-        chain = get_path(self.name.lower(), target, implemented.relationships)
+        # chain = get_path(self.name.lower(), target, implemented.relationships)
+        chain = get_path(self.name.lower(), target, relationships)
 
         if not chain: # no translation possible
             inputbasis = self.__class__.__name__
-            outputbasis = implemented.bases[target].__name__
+            outputbasis = bases[target].__name__
             err = ('Sorry, Rosetta cannot translate from ' +
                   '{} to {}'.format(inputbasis, outputbasis))
             raise TranslationError(err)
@@ -691,7 +731,7 @@ class Basis(object):
         names = [self.name.lower()]+[x[0] for x in chain]
         if verbose:
             print 'Rosetta will be performing the translation:'
-            print '\t'+' -> '.join([implemented.bases[x].__name__ 
+            print '\t'+' -> '.join([bases[x].__name__ 
                                                     for x in names])
         
         # perform succesive translations, checking for  
@@ -701,7 +741,7 @@ class Basis(object):
         required_masses = current.required_masses
         for target, function in chain:
             # new target basis instance
-            instance = implemented.bases[target]()
+            instance = bases[target]()
             # ensure required inputs are present
             message = 'translation ({} -> {})'.format(current.name, 
                                                       instance.name)
@@ -788,11 +828,11 @@ class Basis(object):
             self.newcard.decays[25] = decayblock
         print '#############################\n'
         
-########################################################################
+################################################################################
 class TranslationError(Exception):
     '''Fancy error name.'''
     pass
-    
+################################################################################
 def flavour_matrix(name, kind='hermitian', domain='real', dimension=3):
     '''
     Function to declare flavour components of a coefficient according to its 

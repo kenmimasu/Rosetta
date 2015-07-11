@@ -5,23 +5,14 @@ import os
 from tempfile import mkdtemp
 import subprocess as sub
 from collections import namedtuple
+from settings import eHDECAY_dir
 ################################################################################
-
+# required info
 masses = {25,3,4,5,6,15,13,24,23} # H, c, b, t, tau, mu, Z, W masses
 inputs = {1,2,3} # aEWM1, Gf, aS@MZ
-eHDECAY_inputs = ['MH','aSMZ','MC','MB','MT','MTAU',
-                  'MMU','aEWM1','Gf','GAMW','GAMZ','MZ','MW','IELW']
-SILH_inputs = ['CHbar','CTbar','Ctaubar','Cmubar','Ctbar',
-               'Cbbar','Ccbar','Csbar','CWbar','CBbar',
-               'CHWbar','CHBbar','Cgambar','Cgbar']
 
-# SILH_inputs = ['cH','cT','se33Re','se22Re','su33Re','sd33Re',
-#                'su22Re','sd22Re','cW','cB','cHW','cHB','cgam','cg']
-
-eHDECAY_dir = '/Users/Ken/Work/Packages/Higgs/eHDECAY'
-executable = '{}/run'.format(eHDECAY_dir) # eHDECAY executable
-# Required inputs for eHDECAY
-eHDECAY_SILH = namedtuple('eHDECAY_SILH', eHDECAY_inputs+SILH_inputs) 
+# eHDECAY executable
+executable = '{}/run'.format(eHDECAY_dir) 
 ################################################################################
 __doc__='''
 Interface with eHDECAY program (arXiv:1403.3381) to calculate new Higgs width 
@@ -40,8 +31,11 @@ Required SM inputs are:
     
 The widths of the W and Z are also looked for in the Decay blocks of the silh 
 instance and are set to default PDG values if not found. 
-The path to the local eHDECAY directory should be specified in 
-Rosetta/__init__.py.
+The absolute path to the local eHDECAY directory containing the executable 
+should be specified in config.txt as:
+
+eHDECAY_dir /PATH/TO/eHDECAY
+ 
 '''
 ################################################################################
 def run(basis, electroweak=True):
@@ -51,35 +45,49 @@ def run(basis, electroweak=True):
     Keyword arguments:  
         electroweak - switch for electroweak corrections, IELW
     '''
+    if not os.path.exists(executable):
+        print ('Rosetta: could not find eHDECAY executable in {}'.format(
+        eHDECAY_dir
+        ))
+    
     print ('########## eHDECAY ##########\n'
            'If you use this feature, please cite:\n'
            'R. Contino et al., Comput.Phys.Commun. 185 (2014) 3412\n'
-           'A. Djouadi, J. Kalinowski, M. Spira et al., Comput.Phys.Commun. 108 (1998) 56 \n')
+           'A. Djouadi, J. Kalinowski, M. Spira et al., '
+           'Comput.Phys.Commun. 108 (1998) 56 \n')
     
     # ensure required masses & inputs
     basis.check_masses(masses, message='eHDECAY interface')
     basis.check_sminputs(inputs, message='eHDECAY interface')
+    
     # translate to silh instance
     thesilh = basis.translate(target='silh',verbose=False)
     # instance of eHDECAY_SILH namedtuple
+    
     inp = from_silh(thesilh, ew = electroweak) 
         
-    
     # create temporary directory
     tmpdir = mkdtemp(prefix='eHDECAY_',dir = os.getcwd())
+    
     # write out eHDECAY input file
     with open('{}/ehdecay.in'.format(tmpdir),'w') as infile:
         infile.write( create_input(inp) )
-    process = sub.Popen(executable, stdout = sub.PIPE, stderr = sub.PIPE, cwd = tmpdir)
+        
+    process = sub.Popen(executable, stdout = sub.PIPE, 
+                        stderr = sub.PIPE, cwd = tmpdir)
     out, err = process.communicate()
+    
     if err: 
         raise RuntimeError('eHDECAY error: {}'.format(err))
-    print '\neHDECAY output:\n{}'.format(out)
+    print 'eHDECAY output:\n{}'.format(out)
+    
     # read BRs and total width
     result = read_output(tmpdir)
+    
     # clean up temp directory
     sub.call(['cp','{}/ehdecay.in'.format(tmpdir),'.'])
     sub.call(['rm','-r',tmpdir])
+    
     return result
     
 def from_silh(silh_instance, ew=True):
@@ -124,15 +132,24 @@ def from_silh(silh_instance, ew=True):
     SILH['Cgambar'] = gw2/16.*si['sBB']
     SILH['Cgbar'] = gw2/16.*si['sGG']
     # yukawa coefficients... dodgy translation? they might be huge...
-    vrt = vev/sqrt(2.)
-    SILH['Ctaubar'] = si['se33Re']*vrt/mass[15]
-    SILH['Cmubar'] = si['se22Re']*vrt/mass[13]
-    SILH['Ctbar'] = si['su33Re']*vrt/mass[6]
-    SILH['Ccbar'] = si['su22Re']*vrt/mass[4]
-    SILH['Cbbar'] = si['sd33Re']*vrt/mass[5]
-    SILH['Csbar'] = si['sd22Re']*vrt/mass[3]
-
-    return eHDECAY_SILH(**SILH)
+    def conv(cf,PID):
+        yuk = sqrt(2)*mass[PID]/vev
+        return 2.*cf/(2.*yuk - cf)
+        
+    SILH['Ctaubar'] = conv(si['se33Re'],15)
+    SILH['Cmubar'] = conv(si['se22Re'],13)
+    SILH['Ctbar'] = conv(si['su33Re'],6)
+    SILH['Ccbar'] = conv(si['su22Re'],4)
+    SILH['Cbbar'] = conv(si['sd33Re'],5)
+    SILH['Csbar'] = conv(si['sd22Re'],3)
+    
+    # print SILH['Ctaubar'],si['se33Re']
+    # print SILH['Cmubar'],si['se22Re']
+    # print SILH['Ctbar'],si['su33Re']
+    # print SILH['Ccbar'],si['su22Re']
+    # print SILH['Cbbar'],si['sd33Re']
+    # print SILH['Csbar'],si['sd22Re']
+    return SILH
 
 def nonzero_mass(basis,PID):
     '''
@@ -165,11 +182,13 @@ def read_output(workdir):
            
     return BR
 
+
 def create_input(inp):
     '''
     Write out input file for eHDECAY.
     '''
-    values = inp._asdict().values()
+    # '{MH}'.format(inp)
+    # values = inp._asdict().values()
     return \
 '''SLHAIN   = 0
 SLHAOUT  = 0
@@ -179,22 +198,22 @@ SM4      = 0
 FERMPHOB = 0
 MODEL    = 1
 TGBET    = 1.D0
-MABEG    = {}
+MABEG    = {MH}
 MAEND    = 1000.D0
 NMA      = 1
-ALS(MZ)  = {}
+ALS(MZ)  = {aSMZ}
 MSBAR(2) = 0.100D0
-MC       = {}
-MB       = {}
-MT       = {}
-MTAU     = {}
-MMUON    = {}
-1/ALPHA  = {}
-GF       = {}
-GAMW     = {}
-GAMZ     = {}
-MZ       = {}
-MW       = {}
+MC       = {MC}
+MB       = {MB}
+MT       = {MT}
+MTAU     = {MTAU}
+MMUON    = {MMU}
+1/ALPHA  = {aEWM1}
+GF       = {Gf}
+GAMW     = {GAMW}
+GAMZ     = {GAMZ}
+MZ       = {MZ}
+MW       = {MW}
 VUS      = 0.2253D0
 VCB      = 0.0410D0
 VUB/VCB  = 0.0846D0
@@ -239,7 +258,7 @@ MGOLD    = 1.D-13
 ************** LAGRANGIAN 0 - chiral  1 - SILH  2 - MCHM4/5 **************
 LAGPARAM = 1
 **** Turn off (0) or on (1) the elw corrections for LAGPARAM = 1 or 2 ****
-IELW     = {}
+IELW     = {IELW}
 ******************* VARIATION OF HIGGS COUPLINGS *************************
 CW       = 0D0
 CZ       = 0D0
@@ -257,24 +276,143 @@ CZZ      = 0D0
 CWdW     = 0D0
 CZdZ     = 0D0
 **************************** SILH Lagrangian *****************************
-CHbar    = {}
-CTbar    = {}
-Ctaubar  = {}
-Cmubar   = {}
-Ctbar    = {}
-Cbbar    = {}
-Ccbar    = {}
-Csbar    = {}
-CWbar    = {}
-CBbar    = {}
-CHWbar   = {}
-CHBbar   = {}
-Cgambar  = {}
-Cgbar    = {}
+CHbar    = {CHbar}
+CTbar    = {CTbar}
+Ctaubar  = {Ctaubar}
+Cmubar   = {Cmubar}
+Ctbar    = {Ctbar}
+Cbbar    = {Cbbar}
+Ccbar    = {Ccbar}
+Csbar    = {Csbar}
+CWbar    = {CWbar}
+CBbar    = {CBbar}
+CHWbar   = {CHWbar}
+CHBbar   = {CHBbar}
+Cgambar  = {Cgambar}
+Cgbar    = {Cgbar}
 ******** MCHM4 (fermrepr=1), MCHM5 (fermrepr=2) parametrisation ********
 fermrepr = 2
 xi       = 0.D0
-'''.format(*values)
+'''.format(**inp)
 
 
 
+
+
+
+
+
+
+# def create_input(inp):
+#     '''
+#     Write out input file for eHDECAY.
+#     '''
+#     values = inp._asdict().values()
+#     return \
+# '''SLHAIN   = 0
+# SLHAOUT  = 0
+# COUPVAR  = 1
+# HIGGS    = 0
+# SM4      = 0
+# FERMPHOB = 0
+# MODEL    = 1
+# TGBET    = 1.D0
+# MABEG    = {}
+# MAEND    = 1000.D0
+# NMA      = 1
+# ALS(MZ)  = {}
+# MSBAR(2) = 0.100D0
+# MC       = {}
+# MB       = {}
+# MT       = {}
+# MTAU     = {}
+# MMUON    = {}
+# 1/ALPHA  = {}
+# GF       = {}
+# GAMW     = {}
+# GAMZ     = {}
+# MZ       = {}
+# MW       = {}
+# VUS      = 0.2253D0
+# VCB      = 0.0410D0
+# VUB/VCB  = 0.0846D0
+# ********************* 4TH GENERATION *************************************
+#   SCENARIO FOR ELW. CORRECTIONS TO H -> GG (EVERYTHING IN GEV):
+#   GG_ELW = 1: MTP = 500    MBP = 450    MNUP = 375    MEP = 450
+#   GG_ELW = 2: MBP = MNUP = MEP = 600    MTP = MBP+50*(1+LOG(M_H/115)/5)
+#
+# GG_ELW   = 1
+# MTP      = 500.D0
+# MBP      = 450.D0
+# MNUP     = 375.D0
+# MEP      = 450.D0
+# **************************************************************************
+# SUSYSCALE= 1000.D0
+# MU       = 1000.D0
+# M2       = 1000.D0
+# MGLUINO  = 1000.D0
+# MSL1     = 1000.D0
+# MER1     = 1000.D0
+# MQL1     = 1000.D0
+# MUR1     = 1000.D0
+# MDR1     = 1000.D0
+# MSL      = 1000.D0
+# MER      = 1000.D0
+# MSQ      = 1000.D0
+# MUR      = 1000.D0
+# MDR      = 1000.D0
+# AL       = 1000.D0
+# AU       = 1000.D0
+# AD       = 1000.D0
+# NNLO (M) = 0
+# ON-SHELL = 0
+# ON-SH-WZ = 0
+# IPOLE    = 0
+# OFF-SUSY = 0
+# INDIDEC  = 0
+# NF-GG    = 5
+# IGOLD    = 0
+# MPLANCK  = 2.4D18
+# MGOLD    = 1.D-13
+# ************** LAGRANGIAN 0 - chiral  1 - SILH  2 - MCHM4/5 **************
+# LAGPARAM = 1
+# **** Turn off (0) or on (1) the elw corrections for LAGPARAM = 1 or 2 ****
+# IELW     = {}
+# ******************* VARIATION OF HIGGS COUPLINGS *************************
+# CW       = 0D0
+# CZ       = 0D0
+# Ctau     = 0D0
+# Cmu      = 0D0
+# Ct       = 0D0
+# Cb       = 0D0
+# Cc       = 0D0
+# Cs       = 0D0
+# Cgaga    = 0D0
+# Cgg      = 0D0
+# CZga     = 0D0
+# CWW      = 0D0
+# CZZ      = 0D0
+# CWdW     = 0D0
+# CZdZ     = 0D0
+# **************************** SILH Lagrangian *****************************
+# CHbar    = {}
+# CTbar    = {}
+# Ctaubar  = {}
+# Cmubar   = {}
+# Ctbar    = {}
+# Cbbar    = {}
+# Ccbar    = {}
+# Csbar    = {}
+# CWbar    = {}
+# CBbar    = {}
+# CHWbar   = {}
+# CHBbar   = {}
+# Cgambar  = {}
+# Cgbar    = {}
+# ******** MCHM4 (fermrepr=1), MCHM5 (fermrepr=2) parametrisation ********
+# fermrepr = 2
+# xi       = 0.D0
+# '''.format(*values)
+#
+#
+#
