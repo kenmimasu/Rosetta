@@ -22,13 +22,15 @@ class Basis(object):
     object and the special blocks "mass" and "sminputs" are stored as 
     SLHA.NamedBlock instances in self.mass and self.input respectively.
     
-    self.name   - string storing the value of the 0th element of 
-                     "block" basis.
+    self.name   - Unique basis identifier. This will be compared to the 0th 
+                  element of the block basis in the SLHA parameter card to 
+                  ensure that right basis class is being instantiated for a 
+                  given input card.
     self.card   - SLHA.Card instance containing SLHA.NamedBlock and SLHA.Decay 
-                 instances corresponding to those specified in the parameter card. 
-                 Object names taken to be the first non-whitespace characters 
-                 after a "#" character in a block or parameter definition are 
-                 also stored.
+                  instances corresponding to those specified in the parameter card. 
+                  Object names taken to be the first non-whitespace characters 
+                  after a "#" character in a block or parameter definition are 
+                  also stored.
     self.mass   - SLHA.NamedBlock instance for the "mass" block
     self.inputs - SLHA.NamedBlock instance for the "sminputs" block
 
@@ -40,57 +42,77 @@ class Basis(object):
     indices of the elements (taken to be the order in which the appear in the 
     list associated the the block in self.blocks). The blocks "mass" and 
     "sminputs" should minimally contain the entries specified in required_masses 
-    and required_inputs respectively.A number of checks related to these 
+    and required_inputs respectively. A number of checks related to these 
     definitions are performed by check_param_data(), check_mass() and 
-    check_inputs() on the data read in from the parameter card. An example is 
+    check_sminputs() on the data read in from the parameter card. An example is 
     shown below where the data members are defined outside the class construtor 
     so as to instrinsically belong to all instances of the class.
     
-        >> independent = {'A','B','C','1','2','3'}
-        >> dependent = {'D','4'}
-        >> required_inputs = {1,2,4}   # a_{EW}^{-1}, Gf and MZ required
-        >> required_masses = {24,25,6} # Z, Higgs and top masses required
-        >> translate_to = {'mass'}     # translation to mass basis implemented
-        >> blocks = {'letters':['A','B','C','D]
-                  'number':['1','2','3','4']} # Expected block structure
+        >> from internal import Basis
+        >> class MyBasis(Basis.Basis):
+        >>    name = 'mybasis'
+        >>    independent = {'A','B','C','1','2','3'}
+        >>    dependent = {'D','4'}
+        >>    required_inputs = {1,2,4}   # a_{EW}^{-1}, Gf and MZ required
+        >>    required_masses = {24,25,6} # Z, Higgs and top masses required
+        >>    blocks = {'letters':['A','B','C','D']
+        >>              'numbers':['1','2','3','4']} # Expected block structure
     
-    The lists self.independent and self.dependent classify the basis parameters 
-    into those which should be read in and those which should be derived by 
-    calling the calculate_dependent() method. The set of parameters read in 
-    can then by translated into a different basis using the translate() method.
+    The list self.independent stored the basis parameters which should be read 
+    in. Any other parameters declared in self.blocks are assumed to be set by 
+    the user in the calculate_dependent() method. write_param_card() writes the 
+    contents of the self.newcard into a new SLHA formatted file.
     
-    Basis is designed to work similarly to a dictionary in that parameter values
-    can be referenced by name (duplicate names are not handled properly so try 
-    to avoid them). A value can be referenced in various ways, see below example
-    where the parameter named 'myparam' is stored as entry 16 in the block 
-    'myblock' written in 'mycard.dat':
+    Basis and any of its subclasses are designed to work similarly to a 
+    dictionary in that parameter values can be referenced by name (duplicate 
+    names in different blocks are not handled properly so try to avoid them). 
+    A value can be referenced in various ways, see below example where the 
+    parameter named 'D' is stored as entry 3 in the block 'letters' written in 
+    'mycard.dat':
         
         >> instance = MyBasis(param_card='mycard.dat')
-        >> instance['myparam'] = 0.5 # set value according to name in SLHA card
-        >> instance.card['myparam'] = 0.5 # equivalent to the above
-        >> instance.card.blocks['myblock']['myparam'] = 0.5 # from block by name 
-        >> instance.card.blocks['myblock'][16] = 0.5 # from block by entry 
+        >> instance['A'] = 0.5 # set value according to name in SLHA card
+        >> instance.card['A'] = 0.5 # equivalent to the above
+        >> instance.card.blocks['letters']['A'] = 0.5 # from block by name 
+        >> instance.card.blocks['letters'][3] = 0.5 # from block by entry 
         
-    The user can define methods calculate_dependent() and translate() 
-    to calculate any dependent parameters and then translate the 
-    coefficients into a given basis (MassBasis by default) which sets
-    the SHLA.Card object, self.newcard.
+    The user can define calculate_dependent() to set any dependent 
+    parameters (those listed in in self.blocks but not in self.independent) and 
+    any number of additional functions, usually to translate the coefficients 
+    into a given basis which sets the SLHA.Card object, self.newcard. Below 
+    would be an example of a translation function to the Warsaw Basis.
         
-        from MassBasis import MassBasis
-        def translate():
-            instance = MassBasis() # Empty instance with all coeffs 0
-            instance['myparam'] = 10.
-            return instance
+        >> def mytranslation(self, instance):
+        >>     instance['cWW'] = 10.
+        >>     instance['cpHl11'] = self['myparam']
+        >>     return instance
     
-    write_param_card() writes the contents of the self.newcard into a new SLHA 
-    formatted file. Any derived class can then be used by the command line 
-    script "translate", provided Rosetta knows about it by including it in the 
-    bases dict of implemented.py.
+    In order for Rosetta to know about user implemented bases and translations 
+    to other existing basis implementations, the user must book their 
+    implementation in implemented.py by appending the `bases` dictionary with a 
+    name:class pair where name is the unique string identifier of your basis 
+    set in self.name and class is the class object of your basis. In addition, 
+    any translation functions to existing bases should be appended to the 
+    `translations` dictionary by creating an extry with a key corresponding to 
+    the unique basis identifier and a dictionary of translation functions with 
+    name:function pairs where name is the identifier of the target basis of the 
+    translation function. The following should be added to implemented.py for 
+    the example case detailed in this documentation.
+    
+        >> import MyBasis 
+        >> bases = {..., 'mybasis':MyBasis.MyBasis} # MyBasis class 
+        >> translations = {..., 
+        >>                'mybasis': {'warsaw':MyBasis.MyBasis.mytranslation},
+        >>                } # translation to Warsaw Basis
+        
+    Any derived class can then be used by the command line script "translate". 
+    Rosetta will be able to figure out possible multi-step translations using 
+    the information in implemented.py.
     '''
+    
     blocks = dict()
     independent = []
     required_inputs, required_masses = set(),set()
-    translate_to = {'mass'}
     
     def __init__(self, param_card=None, output_basis='mass', 
                  ehdecay=False, silent=False, translate=True):
@@ -122,7 +144,7 @@ class Basis(object):
                    '{} does not exist!'.format(self.param_card)
             
             self.read_param_card() 
-            # various input checks 
+            # various input checks
             self.check_sminputs(self.required_inputs) 
             self.check_masses(self.required_masses, silent=silent) 
             self.check_param_data(silent=silent)
@@ -158,9 +180,9 @@ class Basis(object):
             self.card = SLHA.Card(name=self.name)
             self.card.add_entry('basis', 0, self.name, name = 'translated basis')
             
-            preamble = ('###################################\n'
-                        + '## INFORMATION FOR {}\n'.format(self.name.upper())
-                        + '###################################')
+            preamble = ('\n###################################\n'
+                + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
+                + '###################################\n')
             self.card.blocks['basis'].preamble=preamble
             
             # default behaviour: create one 'newcoup' block
@@ -184,19 +206,33 @@ class Basis(object):
     def __setitem__(self, key, value):
         return self.card.__setitem__(key, value)
     
-    def __contains__(self,key):
+    def __contains__(self, key):
         return self.card.__contains__(key)
         
-    def __delitem__(self,key):
+    def __delitem__(self, key):
         return self.card.__delitem__(key)
         
     def read_param_card(self):
         '''
-        Call SHLA.read() and set up the Basis instance accordingly.
+        Call SLHA.read() and set up the Basis instance accordingly.
         '''
         self.card = SLHA.read(self.param_card)
         
+        try:
+            card_name = self.card.blocks.get('basis',[''])[0].lower()
+            if self.name.lower()!=card_name.lower():
+                err = ('Rosetta was expecting to read an instance of ' 
+                     + '{}, named "{}", '.format(self.__class__.name, self.name)
+                     + 'but read the name '
+                     + '"{}" in block "basis" of {}.'.format(card_name,
+                                                             self.param_card))
+                raise RosettaError(err)
+        except KeyError:
+            raise RosettaError('Formatting error for block basis. '
+                               'Check input card, {}.'.format(self.param_card))
+        
         if not self.blocks:
+            # if self.blocks not defined, default behaviour is to automatically
             # create self.blocks structure for independent parameters
             for par in self.independent:
                 block = self.card._parent_block(par)
@@ -205,16 +241,11 @@ class Basis(object):
                     self.blocks[name] = [par]
                 else:
                     self.blocks[name].append(par)
-            # default behaviour, create new block for dependent parameters
+            # default behaviour, create new block for all dependent parameters
             self.blocks['dependent']=self.dependent
 
         self.inputs = self.card.blocks.get('sminputs',None)
         self.mass = self.card.blocks.get('mass',None)
-        try:
-            self.name = self.card.blocks.get('basis',[''])[0].lower()
-        except KeyError:
-            raise RosettaError('Formatting error for block basis.'
-                                'Check input card.')
         
     def check_sminputs(self, required_inputs, message='Rosetta'):
         '''
@@ -270,7 +301,8 @@ class Basis(object):
                 required = set(required_inputs)
                 inputs = set(self.inputs.keys())
                 missing_inputs = required.difference(inputs)
-                missing_values = {k:default_inputs.get(k,0.) for k in missing_inputs}
+                missing_values = {k:default_inputs.get(k,0.) 
+                                  for k in missing_inputs}
                 repr_default = ['{}={: .5e}'.format(input_names[k], 
                                  default_inputs.get(k,0.)) for 
                                  k in missing_inputs]
@@ -439,8 +471,9 @@ class Basis(object):
                       'in {}, block "{}".'.format(self.__class__,
                                                           bname)
                 for index, name, input_name in mismatched:
-                    print ('    Coefficient {}, named {} '.format(index, input_name) +
-                          'will be renamed to {}'.format(name))
+                    print ('    Coefficient ' +
+                           '{}, named {} '.format(index, input_name) +
+                           'will be renamed to {}'.format(name))
                     inputblock._names[index] = name
                     inputblock._numbers[name] = index
             
@@ -484,7 +517,7 @@ class Basis(object):
                     print 'Exit'
                     sys.exit()
         
-    def write_param_card(self,filename,overwrite=False):
+    def write_param_card(self, filename, overwrite=False):
         '''Write contents of self.newcard to filename'''
         preamble = ('\n###################################\n'
                     + '## INFORMATION FOR {}\n'.format(self.name.upper())
@@ -520,7 +553,70 @@ class Basis(object):
             return True
         else: 
             return False
+    
+    def write_template_card(self, filename, value=0.):
+        try: 
+            val = float(value)
+            rand = False
+        except ValueError:
+            if value.lower() != 'random':
+                import random
+                rand = True
+            else:
+                print ('In write_template_card: "value" kewrord argument '
+                       'must either be a number or the string, "random".')            
+        
+        newinstance = self.__class__()
 
+        SLHA_card = newinstance.card
+        # remove non independent coefficeints and set values
+        for name, blk in SLHA_card.blocks.iteritems():
+            if name.lower()=='basis': continue
+            for coeff in blk:
+                if blk.get_name(coeff) not in newinstance.independent:
+                    del blk[coeff]
+                else:
+                    blk[coeff]=val if not rand else random.uniform(-1.,1.)
+                    
+        # delete any empty blocks that contained only dependent coefficients
+        for name, blk in SLHA_card.blocks.iteritems():
+            if len(blk)==0:
+                del SLHA_card.blocks[name]
+        
+        mass_preamble = ('\n###################################\n'
+                       + '## INFORMATION FOR MASS\n'
+                       + '###################################\n')
+
+        massblock = SLHA.NamedBlock(name='mass', preamble=mass_preamble)
+        for m in self.required_masses: 
+            massblock.new_entry(m, default_masses[m], 
+                               name='M%s' % particle_names[m])
+        SLHA_card.add_block(massblock)
+        
+                    
+        sm_preamble = ('\n###################################\n'
+                     + '## INFORMATION FOR SMINPUTS\n'
+                     + '###################################\n')
+                    
+        inputblock = SLHA.NamedBlock(name='sminputs', preamble=sm_preamble)
+        for m in self.required_inputs: 
+            inputblock.new_entry(m, default_inputs[m], 
+                               name='%s' % input_names[m])
+        SLHA_card.add_block(inputblock)
+        
+        title = ' ROSETTA: {} BASIS INPUT CARD '.format(self.name.upper())
+        time = ' GENERATED {} '.format(datetime.datetime.now().ctime().upper())
+        nleft = int((80-len(title))/2.)
+        nright = 80-len(title)-nleft
+        preamble = ( '#'*80 + '\n'
+                    +'#'*nleft + title + '#'*nright +'\n'
+                    +'#'*22 + time + '#'*22 + '\n'
+                    +'#'*80 +'\n')
+        
+        SLHA_card.write(filename, blockorder=['mass','sminputs'], 
+                        preamble = preamble, postamble = ('\n'+'#'*80)*2)
+        print ('wrote {}'.format(filename))
+        
     def init_dependent(self):
         '''
         Adds entries defined as dependent to the corresponding block of 
@@ -658,6 +754,11 @@ class Basis(object):
                         BRs[channel] = BR/sum_BRs
                 
         totalwidth = BRs.pop('WTOT')
+        
+        if totalwidth < 0.:
+            print ('eHDECAY: Negative total Higgs width. Check your EFT inputs.')
+            return
+        
         hdecays = {}
         
         # sometimes eHDECAY gives negative branching fractions. 
@@ -673,6 +774,7 @@ class Basis(object):
                 continue
             else:
                 hdecays[channel] = BR
+
         # credit
         preamble = ('# Higgs widths and branching fractions '
                     'calculated by eHDECAY.\n# Please cite '
@@ -691,8 +793,7 @@ class TranslationError(Exception):
     '''Fancy error name.'''
     pass
     
-def flavour_matrix(name, kind='hermitian', domain='real', 
-                   dimension=3):
+def flavour_matrix(name, kind='hermitian', domain='real', dimension=3):
     '''
     Function to declare flavour components of a coefficient according to its 
     properties. Takes a parameter name as an arguement and returns a list of 

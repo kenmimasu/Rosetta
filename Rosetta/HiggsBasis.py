@@ -5,13 +5,34 @@ from math import sqrt
 from itertools import combinations_with_replacement as comb
 from itertools import product
 from internal import PID
-########################################################################
+################################################################################
 flavmat = Basis.flavour_matrix
-# Higgs basis class
+################################################################################
 class HiggsBasis(Basis.Basis):
+    '''
+    Main basis class for Rosetta, based on the reccomendation for the 
+    parametrisation of Higgs Effective Field theory in the LHC Higgs cross 
+    section working group note (LHCHXSWG-INT-2015-001). Part of the three 
+    intrinsic basis implementations in Rosetta along with the Warsaw and SILH 
+    bases. This implementation includes all operators listed in the note apart 
+    from the dipole-type Lorentz structures (\sigma^{\mu\nu}). The 
+    implementation only includes the minimal set (3) of four-fermion operators 
+    required to consistently map between the three intrinsic bases as defined 
+    in the note. A number of structures involving more than two Higgs fields 
+    (apart from the triple Higgs vertex) or interactions between a single higgs 
+    field and 3 or more gauge bosons are not currently included. Besides this, 
+    the Higgs Basis encodes relations between certain parameters to ensure 
+    SU(2)xU(1) invariance such that it is consistent with a dimension six 
+    operator basis for an effective field theory with linearly realised 
+    electroweak symmetry breaking (in unitary gauge) and a general flavour 
+    structure. These relations are implemented in calculate_dependent().
+    '''
+    
     name='higgs'
-    ##### declare blocks
-    # Kinetic terms
+    ##########################
+    # declare coefficients
+    
+    # kinetic terms
     KIN_ind =['dM']
     HBKIN = KIN_ind
     
@@ -33,13 +54,13 @@ class HiggsBasis(Basis.Basis):
     VERTEX_dep = dGLzv + dGLwq
     HBVERTEX = VERTEX_ind + VERTEX_dep
     
-    # Single Higgs couplings to gauge bosons
+    # single Higgs couplings to gauge bosons
     HVV_ind = ['dCz','Cgg','Czz','Caa','Cza','Czbx',
                        'CTgg','CTzz','CTaa','CTza']
-    HVV_dep = ['dCw','Cww','CTww','Cwbx','Cabx']
+    HVV_dep = ['dCw','Cww','CTww','CwbxRe','CwbxIm','Cabx']
     HBHVV = HVV_ind + HVV_dep
     
-    # Single Higgs couplings to fermions
+    # single Higgs couplings to fermions
     dYu = flavmat('dYu', kind='general', domain='real')
     dYd = flavmat('dYd', kind='general', domain='real')
     dYe = flavmat('dYe', kind='general', domain='real')
@@ -66,7 +87,7 @@ class HiggsBasis(Basis.Basis):
               + CLzd + CRzd + CLwl + CLwq + CRwq)
     HBHVFF = HVFF_dep
     
-    # Triple and quartic gauge couplings [Sec. 3.7]
+    # triple and quartic gauge couplings [Sec. 3.7]
     
     V3_ind = [ 'Lz','C3g','LTz','CT3g' ]
     V3_dep = [ 'dG1z','dKa','dKz','La','KTa','KTz','LTa' ]
@@ -81,7 +102,7 @@ class HiggsBasis(Basis.Basis):
                 'LTdadwaw', 'LTdadwzw', 'LTdgg3']
     HBD2V4 = D2V4_dep
     
-    # Couplings of two Higgs bosons [Sec. 3.8]
+    # couplings of two Higgs bosons [Sec. 3.8]
     H3_ind = ['dL3']
     HBH3 = H3_ind
     
@@ -98,7 +119,7 @@ class HiggsBasis(Basis.Basis):
     fourfermi_ind = ['cll1122','cpuu3333'] # needed for SILH <-> Warsaw
     fourfermi_dep = ['cll1221'] # affects Gf input
     HB4F = fourfermi_ind + fourfermi_dep
-    
+    ##########################
     # block structure
     blocks = {'HBKIN':HBKIN,'HBVERTEX':HBVERTEX, 'HBHVV':HBHVV, 'HBHFF':HBHFF,
               'HBHVFF':HBHVFF, 'HBV3':HBV3, 'HBV4':HBV4,'HBD2V4':HBD2V4,
@@ -111,7 +132,8 @@ class HiggsBasis(Basis.Basis):
     # Required inputs/masses             
     required_masses = {1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 25}
     required_inputs = {1, 2, 3, 4} # aEWM1, Gf, aS, MZ
-        
+    ########################## 
+    
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
         ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared
         gs2 = 4.*math.pi*self.inputs['aS'] # strong coupling squared
@@ -124,7 +146,6 @@ class HiggsBasis(Basis.Basis):
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
 
     def calculate_dependent(self):
-        self.newname = 'Mass'
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         A = self
         MW = MZ*sqrt(c2w)
@@ -136,8 +157,9 @@ class HiggsBasis(Basis.Basis):
         A['dCw']  = A['dCz']  + A['dM']*4. 
         A['Cww']  = A['Czz']  + A['Cza']*2.*s2w  + A['Caa'] *s2w**2
         A['CTww'] = A['CTzz'] + A['CTza']*2.*s2w + A['CTaa']*s2w**2 
-        A['Cwbx'] = (A['Czbx']*gw2 + A['Czz']*gp2 - A['Caa']*ee2*s2w 
+        A['CwbxRe'] = (A['Czbx']*gw2 + A['Czz']*gp2 - A['Caa']*ee2*s2w 
                     - A['Cza']*(gw2-gp2)*s2w )/(gw2-gp2)
+        A['CwbxIm'] = 0.
         A['Cabx'] = (A['Czbx']*2.*gw2 + A['Czz']*(gw2+gp2) 
                     - A['Caa']*ee2 - A['Cza']*(gw2-gp2))/(gw2-gp2)
         
@@ -209,7 +231,7 @@ class HiggsBasis(Basis.Basis):
         self.mass[24] = MW + A['dM']
 
     def to_warsaw(self, wbinstance):
-        self.newname = 'warsaw'
+
         def delta(i,j):
             return 1. if i==j else 0.
         
@@ -410,5 +432,4 @@ class HiggsBasis(Basis.Basis):
                 S[recoeff] = ( yuk*cos - diag )*sqrt(2.*mi*mj)/vev
         
         return S
-########################################################################
-# 
+################################################################################ 

@@ -1,5 +1,4 @@
 from internal import Basis
-import SILHBasis as SB
 import math
 from math import sqrt
 from itertools import combinations_with_replacement as comb
@@ -7,10 +6,20 @@ from itertools import product
 from internal import PID
 ################################################################################
 flavmat = Basis.flavour_matrix
-# Warsaw basis class
+################################################################################
 class WarsawBasis(Basis.Basis):
+    '''
+    Basis class for Rosetta based on [Grzadkowski et al., JHEP 1010 (2010) 085]. 
+    Part of the three intrinsic basis implementations in Rosetta along with the 
+    Higgs and SILH bases. The exact list of operators included as well as the 
+    equations for the translation to the Higgs basis can be found in the HXSWG 
+    note, for which all references to tables and equations are in this 
+    implementation. Table 1 of the note shows full list of operators. The block 
+    structure of the basis implementation maps to this table.
+    '''
+    
     name = 'warsaw'
-    ###### declare blocks
+    ###### 
     # [Tab. 1]
     WBV2H2 = ['cGG','ctGG','cWW','ctWW','cBB','ctBB','cWB','ctWB']
     
@@ -133,8 +142,8 @@ class WarsawBasis(Basis.Basis):
                       - 2.*(gw2-gp2)*A['cWB'] )/(gw2+gp2)
         B['Cabx'] =  2./(gw2-gp2)*((gw2+gp2)*A['cWB'] - 2.*A['cT'] + 2.*dv) 
         B['Cww']  =  A['cWW']
-        B['Cwbx'] =  2./(gw2-gp2)*(gp2*A['cWB'] - A['cT'] + dv) 
-        
+        B['CwbxRe'] =  2./(gw2-gp2)*(gp2*A['cWB'] - A['cT'] + dv) 
+        B['CwbxIm'] = 0. 
         B['CTgg'] = A['ctGG'] 
         B['CTaa'] =  A['ctWW'] + A['ctBB'] - 4.*A['ctWB']
         B['CTzz'] = ( gw2**2*A['ctWW'] + gp2**2*A['ctBB'] 

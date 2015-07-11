@@ -6,13 +6,30 @@ from itertools import product
 from internal import PID
 ################################################################################
 flavmat = Basis.flavour_matrix
-# SILH basis class
+################################################################################
 class SILHBasis(Basis.Basis):
+    '''
+    Basis class for Rosetta based on [Giudice et al., JHEP 0706 (2007) 045 ] 
+    and a number of succesive publications. Part of the three intrinsic basis 
+    implementations in Rosetta along with the Higgs and Warsaw bases. The exact 
+    list of operators included as well as the equations for the translation to 
+    the Higgs and Warsaw bases can be found in the HXSWG note, for which all 
+    references to tables and equations are in this implementation. The basis 
+    differs slightly to the versions defined in the original publications. 
+    Please refer to the HXSWG note for further details. Table 1 contains the 
+    majority of the operators included, with the remaining structure described 
+    in section 5.
+    '''
+
     name = 'silh'
-    ##### declare blocks
+    ##########################
+    # declare coefficients
+    
+    # operators present in SILH but not Warsaw, see [Sec. 5].
+    # cWW, ctWW, cWB, ctWB, cHl11, cpHl11, cll1221, cll1122, cpuu3333 
+    # absent compared to Warsaw.
     SBNOTWARSAW = ['sW','sB','sHW','sHB','stHW','stHB','s2W','s2B','s2G']
     # [Tab. 1]
-    # cWW, ctWW, sWB, stWB absent compared to Warsaw
     SBV2H2 = ['sGG','stGG','sBB', 'stBB']
     
     SBH4D2 = ['sH','sT']
@@ -35,11 +52,10 @@ class SILHBasis(Basis.Basis):
     cHu  = flavmat('sHu' ,kind='hermitian',domain='complex')
     cHd  = flavmat('sHd' ,kind='hermitian',domain='complex')
     cHud = flavmat('sHud',kind='general',domain='complex')
-    
-    # Two vertex operators absent also
-    
+        
     SBF2H2D = cHl + cpHl + cHe + cHq + cpHq + cHu + cHd + cHud
-    #####
+    ##########################
+    # block structure
     blocks = {'SBV2H2':SBV2H2, 'SBH4D2':SBH4D2, 'SBH6':SBH6,
               'SBV3D3':SBV3D3, 'SBF2H3':SBF2H3, 
               'SBF2H2D':SBF2H2D, 'SBNOTWARSAW':SBNOTWARSAW}    
@@ -53,7 +69,7 @@ class SILHBasis(Basis.Basis):
     
     required_masses = set([y for x in PID.values() for y in x.values()])
     required_inputs = {1, 2, 3, 4, 8} # aEWM1, Gf, aS, MZ, MH
-    
+    ##########################
     def calculate_dependent(self):
         # These coefficients are implictly set to zero
         self['sHl11'], self['spHl11']=0.,0.
@@ -152,9 +168,10 @@ class SILHBasis(Basis.Basis):
                          - 4.*A['sT'] + 2.*A['spHl22'] )
         B['Cww']  =  -A['sHW']
         # factor 2 wrong in note here 
-        B['Cwbx'] =  A['sHW']/2. + 1./2./(gw2-gp2)*(
+        B['CwbxRe'] =  A['sHW']/2. + 1./2./(gw2-gp2)*(
                            gw2*(A['sW']+A['s2W']) + gp2*(A['sB']+A['s2B'])
-                         - 4.*A['sT'] + 2.*A['spHl22'] ) 
+                         - 4.*A['sT'] + 2.*A['spHl22'] )
+        B['CwbxIm'] = 0. 
         B['CTgg'] = A['stGG'] 
         B['CTaa'] = A['stBB']
         B['CTzz'] = -1./(gw2+gp2)*( gw2*A['stHW'] + gp2*A['stHB'] 
@@ -252,7 +269,7 @@ class SILHBasis(Basis.Basis):
         return B
         
     def to_warsaw(self, instance):
-        # self.newname = 'warsaw'
+
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
         lam = -MH**2/(2.*vev**2) # Higgs self-coupling     

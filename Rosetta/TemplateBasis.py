@@ -1,30 +1,55 @@
 from internal import Basis
-from MassBasis import MassBasis
-# from eHDECAY import eHDECAY
-from internal import default_masses, default_inputs
-import os
-####################################################################################################
-# Template basis class
+from internal import default_masses, default_inputs, PID
+################################################################################
+flavmat = Basis.flavour_matrix
+################################################################################
 class TemplateBasis(Basis.Basis):
+    '''
+    Toy implementation of a user defined basis class. Makes use of the internal 
+    function flavour_matrix to generate indexed coefficients e11,e12,...,e33. A 
+    template input card can be fond in the Cards directory or can be generated 
+    with write_template_card().
+    '''
     
-    independent = ['a','b','c']
-    required_masses = {1,2,3,4,5,6}
+    name = 'template'
+    ##########################
+    # declare coefficients
+    flavoured = flavmat('e', kind='symmetric', domain='real')
+    ########################## 
+    independent = ['a','b','c'] + flavoured
+    
+    required_masses = {1,2,3,4,5,6} # quark masses rquired
+    
     required_inputs = {1, 4} # aEWM1, MZ
-    blocks = {'newcoup':['a','b','c'],'dep':'d'}
     
-    def __init__(self,*args,**kwargs): # This can be overridden if you want
-        super(TemplateBasis, self).__init__(*args,**kwargs) # ensure a call to the base class constructor is made as so
+    blocks = {'newcoup':['a','b','c'],
+              'dep':['d'],
+              'flavoured':flavoured }
+    ##########################
+    # This can be overridden if you want but is typically unneccesary. Exclude 
+    # it entirely and the class will inherit the  constructor from the parent 
+    # class, Basis.Basis.
+    def __init__(self,*args,**kwargs): 
+        # If you want to add additional behaviour by redefining the 
+        # constructor, ensure a call to the base class constructor is made 
+        # like so:
+        super(TemplateBasis, self).__init__(*args,**kwargs) 
+
         # additional instructions can live here
         
     def calculate_dependent(self):
         '''
-        Calculate dependent parameters here by assigning values to self.par_dict 
-        corresponding to the keys in self.dependent.
+        Calculate dependent parameters here by assigning values to parameters 
+        not listed in self.independent.
         '''
         p = self
         p['d'] = p['a']+ p['b']*p['c']
         
     def to_silh(self, instance):
+        '''
+        Toy translation to the SILH basis setting all coefficients to 1e-3, and 
+        modifying the Z and Higgs masses.
+        '''
         A = self
         B = instance
         # set all values of silh basis coeffs to 0.01:
@@ -33,96 +58,27 @@ class TemplateBasis(Basis.Basis):
             B[k] = 0.001
         self.mass[23]=91.19 # MZ in newmass
         self.inputs[8]=126. # MH in newinput
-        self.newname = 'SILH'
         
         return B
-    
-    # def to_silh(self, instance):
-    #     A = self
-    #     B = instance
-    #     # set all values of silh basis coeffs according to nonsense formula:
-    #     # coeff_d*m_top*a_EW
-    #     for k in B.all_coeffs:
-    #         B[k] = self.myfunc( A['d'], self.mass[6], self.inputs['aEWM1'] )
-    #     self.mass[24]=91.19 # MZ in newmass
-    #     self.inputs[8]=126. # MH in newinput
-    #     self.newname = 'SILH'
-    #
-    #     return B
         
     def to_mass(self, instance):
         '''
-        Translate to the mass basis by creating an empty MassBasis and modifying its par_dict or coeffs._asdict()
-        set self.newpar with resulting par_dict
+        Toy translation to the Mass basis setting all coefficients according to 
+        a nonsense formula, myfunc, defined below. Also modifies the Z and 
+        Higgs masses.
         '''
         A = self
         B = instance
-        for k in B.all_coeffs: # set all values of mass basis coeffs according to nonsense formula coeff_d*m_top*a_EW
+        
+        # set all values of mass basis coeffs according to nonsense formula 
+        # y = d*m_top*a_EW
+        for k in B.all_coeffs: 
             B[k] = self.myfunc( A['d'], self.mass[6], self.inputs['aEWM1'] )
         self.mass[24]=91.19 # MZ in newmass
         self.inputs[8]=126. # MH in newinput
-        self.newname = 'Mass'
-        
-        return B
-    
-    def to_warsaw(self, instance):
-        '''
-        Translate to the mass basis by creating an empty MassBasis and modifying its par_dict or coeffs._asdict()
-        set self.newpar with resulting par_dict
-        '''
-        A = self
-        B = instance
-        for k in B.all_coeffs: # set all values of warsaw basis coeffs according to nonsense formula coeff_d*m_top*a_EW
-            B[k] = self.myfunc( A['d'], self.mass[6], self.inputs['aEWM1'] )
-        self.mass[24]=91.19 # MZ in newmass
-        self.inputs[8]=126. # MH in newinput
-        self.newname = 'Mass'
         
         return B
         
-    # def eHDECAY_inputs(self):
-    #
-    #     def try_default_mass(PID):
-    #         try:
-    #             if self.newmass[PID] > 0.:
-    #                 return self.newmass[PID]
-    #             elif self.mass[PID] > 0.:
-    #                 return self.mass[PID]
-    #             else:
-    #                 raise KeyError
-    #         except KeyError:
-    #             return default_masses[PID]
-    #
-    #     def try_default_inpt(ID):
-    #         try:
-    #             return self.newinput[ID]
-    #         except KeyError:
-    #             try:
-    #                 return self.SLHA_sminputs[ID]
-    #             except KeyError:
-    #                 return default_inputs[ID]
-    #
-    #     inputs = dict()
-    #     inputs['MH']    = try_default_mass(25)
-    #     inputs['MZ']    = try_default_mass(24)
-    #     inputs['MW']    = try_default_mass(23)
-    #     inputs['MC']    = try_default_mass(4)
-    #     inputs['MB']    = try_default_mass(5)
-    #     inputs['MT']    = try_default_mass(6)
-    #     inputs['MMU']   = try_default_mass(13)
-    #     inputs['MTAU']  = try_default_mass(15)
-    #     inputs['aEWM1'] = try_default_inpt(1)
-    #     inputs['Gf']    = try_default_inpt(2)
-    #     inputs['aSMZ']  = try_default_inpt(3)
-    #
-    #     inputs['IELW'] = 1 # electroweak corrections on
-    #
-    #     SILH_coeffs = ['CHbar','CTbar','Ctaubar','Cmubar',
-    #                    'Ctbar','Cbbar','Ccbar','Csbar','CWbar',
-    #                    'CBbar','CHWbar','CHBbar','Cgambar','Cgbar']
-    #     inputs.update({ci:0.001 for ci in SILH_coeffs}) # all input SILH coeffs set to 0.001
-    #     return inputs
-    
     @staticmethod # pure function, no access to class instance
     def myfunc(x,y,z):
         return x*y/z
@@ -133,6 +89,7 @@ class TemplateBasis(Basis.Basis):
 
 ################################################################################
 if __name__=='__main__':
+    # Testing area which can be executed when running `python TemplateBasis.py` 
     instance = TemplateBasis(param_card='../Cards/param_card_TemplateBasis.dat')
     instance.write_param_card('test_template.dat')
     # inputs = instance.eHDECAY_inputs()

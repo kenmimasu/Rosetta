@@ -109,9 +109,10 @@ class NamedBlock(Block):
             self._names, self._numbers = {}, {}
         self.cast=dtype
         self.comment=comment
-        self.preamble = preamble
+
         return super(NamedBlock, self).__init__(name=name, data=data, 
-                                                decimal=decimal, dtype=dtype)
+                                                decimal=decimal, dtype=dtype,
+                                                preamble = preamble)
     def __setitem__(self, key, value):
         super(NamedBlock,self).__setitem__(self.__parse__(key),
                                              self.cast(value))
@@ -270,8 +271,8 @@ class Decay(OrderedDict):
             for k,v in data.iteritems():
                 self[k]=v
                 
-    def __setitem__(self,key,value):
-        super(Decay,self).__setitem__(self.__checkkey__( key ),
+    def __setitem__(self, key, value):
+        super(Decay,self).__setitem__(self.__checkkey__(key),
                                       self.__checkval__(value))
         self._BRtot+=self.__checkval__(value)
         if self._BRtot > 1.:

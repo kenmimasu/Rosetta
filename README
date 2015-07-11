@@ -204,6 +204,11 @@ of a basis, defined in implemeted.py.
 
 >> block BASIS
 >> 0 MyBasis # name of basis
+################################################################################
+5) The basis class
+################################################################################
+Each implemented basis in Rosetta is a python class inheriting from the `Basis` 
+class in Rosetta/Internal/Basis.py. 
 
 REWRITE FROM HERE ON
 ################################################################################

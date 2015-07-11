@@ -164,6 +164,8 @@ def generate_frdef(basis_class,filename):
 
 if __name__=='__main__':
     os.chdir('/Users/Ken/GoogleDrive/Work/Rosetta')
+    instance = TB.TemplateBasis()
+    instance.write_template_card('TB_template.dat')
     # two_way_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','higgs')
     # two_way_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','warsaw')
     #
@@ -179,12 +181,12 @@ if __name__=='__main__':
     # circle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat',reverse=True)
     # circle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat')
     # circle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat',reverse=True)
-    triangle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','silh')
-    triangle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','warsaw')
-    triangle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat','higgs')
-    triangle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat','warsaw')
-    triangle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','higgs')
-    triangle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','silh')
+    # triangle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','silh')
+    # triangle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','warsaw')
+    # triangle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat','higgs')
+    # triangle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat','warsaw')
+    # triangle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','higgs')
+    # triangle_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','silh')
     
     
     # generate_coeffs(WB.WarsawBasis,0.,rand=True)
