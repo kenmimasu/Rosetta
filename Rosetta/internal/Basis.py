@@ -688,7 +688,6 @@ class Basis(object):
         print 'Nothing done for {}.calculate_'\
               'dependent()'.format(self.__class__.__name__)
               
-    @translation('mass')
     def translate(self, target=None, verbose=True): 
         '''
         Translation function. Makes use of known translations in implemented.py 

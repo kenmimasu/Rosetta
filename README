@@ -4,7 +4,7 @@ Rosetta: A Higgs Effective Field Theory basis translator
 Benjamin Fuks, Fabio Maltoni, Kentarou Mawatari, 
 Ken Mimasu, Veronica Sanz, Francesco Riva 
 
-Version 1, July 2015
+Version 1.0, July 2015
 ################################################################################
 Rosetta is a translation tool to aid in the Monte Carlo generation of events for
 Higgs Effective Field Theory. The idea is to provide a simple way to map 
@@ -22,8 +22,8 @@ associated UFO model in a compatible event generator.
 The tool consists of a Python package containing implementations of Higgs 
 Effective Theory bases and a command line tool 'translate' that performs the 
 task of mapping a given basis to a target output basis. The core of the package 
-is based on the contents of the LHCHiggs Cross Section Working Group (HXSWG) 
-draft.
+is based on the contents of the LHC Higgs Cross Section Working Group (HXSWG) 
+note (LHCHXSWG-INT-2015-001).
 
 ################################################################################
    Contents
@@ -32,9 +32,10 @@ draft.
 2) Prerequisites
 3) Usage
 4) Input cards
-5) The basis class
-6) Implementing your own basis
-7) eHDECAY interface
+5) The SLHA package
+6) The basis class
+7) Implementing your own basis
+8) eHDECAY interface
 
 ################################################################################
 1) Contact
@@ -222,7 +223,39 @@ existing basis implementation.
 >> 0 MyBasis # name of basis
 
 ################################################################################
-5) The basis class
+5) The SLHA package
+################################################################################
+Rosetta contains a basic SLHA card reader/writer that can parse and store the 
+contents of an SLHA formatted input card. Individual blocks and decays are 
+stored as SLHA.Block and SLHA.Decay instances which are subclasses of 
+`OrderedDict`, meaning they can be indexed and iterated over in the same way.
+ 
+    SLHA.Block is essentially a named OrderedDict storing index:value pairs 
+    corresponding to the elements of an SLHA block. SLHA.Block has a "name" 
+    attribute and forces keys to be of type `int` or to be castable via int().
+
+    SLHA.Decay is an OrderedDict with a "PID" attribute for the particle whose 
+    decay information it contains as well as a "total" attribute to store the 
+    total width of the particle. Each entry key is a tuple if PIDs corresponding 
+    to the decay products and the associated value is the branching fraction of 
+    that particular channel. 
+    
+    SLHA.NamedBlock is a subclass of SHLA.Block with the additional feature that
+    each block entry is associated to a name in accordance with the way Rosetta 
+    can read the input card. Each value can then be accessed either by key or 
+    by value.
+    
+    SLHA.Card is the object storing the various SLHA blocks and decays. Indexing 
+    such an object with an integer will look for a Decay object associated to 
+    that PID, while indexing with a string will look for a parameter with that 
+    name in one of its NamedBlock instances. SLHA.Card objects possess two 
+    OrderedDicts, "blocks" and "decays" storing the individual 
+    SLHA.(Named)Block and SLHA.Decay instances. 
+
+Each SLHA object can print itself out in the usual SLHA format, while the 
+SLHA.Card object has a write() function to write itself to a file.
+################################################################################
+6) The basis class
 ################################################################################
 Each implemented basis in Rosetta is a python class inheriting from the `Basis` 
 class in Rosetta/internal/Basis.py. They are designed to be instantiated with 
@@ -308,7 +341,7 @@ parameter card according to the block definitions and required inputs of a
 given basis class.
 
 ################################################################################
-6) Implementing your own basis
+7) Implementing your own basis
 ################################################################################
 Implementing ones own basis involves creating a file inside the root directory 
 of Rosetta, alongside HiggsBasis etc., containing a subclass of Basis. The 
@@ -371,7 +404,7 @@ The user is referred to Rosetta/TemplateBasis.py for a toy working example of a
 user defined basis.
 
 ################################################################################
-7) eHDECAY interface
+8) eHDECAY interface
 ################################################################################
 A useful program based on HDECAY (arXiv:hep-ph/9704448) for calculating the 
 Higgs total width was developed in 2014 and is described in arXiv:1403.3381. 
@@ -405,12 +438,8 @@ eHDECAY can potentially give negative branching fractions and even a negative
 total Higgs width for unreasonable choices of EFT parameters. A negative total 
 width is currently not allowed while negative branching fractions are not 
 handled and will be written to the parameter card.
+
 ################################################################################
 Rosetta: A Higgs Effective Field Theory basis translator
 ################################################################################
-
-
-
-
-
 
