@@ -111,7 +111,8 @@ class Basis(object):
     required_inputs, required_masses = set(),set()
     
     def __init__(self, param_card=None, output_basis='mass', 
-                 ehdecay=False, silent=False, translate=True):
+                 ehdecay=False, silent=False, translate=True,
+                 flavour = 'general'):
         '''
         Keyword arguments:
             param_card - SLHA formatted card conforming to the definitions in 
@@ -122,19 +123,22 @@ class Basis(object):
                       Higgs width and BRs.
             silent  - suppress all checks and warnings
         '''
-            
+
+        self.flavour = flavour
+
+        if self.flavour != 'general':
+            self.set_flavour()
+
         self.param_card = param_card
         self.output_basis = output_basis
         self.newname = 'Basis'
-        
-        self.all_coeffs = [c for v in self.blocks.values() for c in v ]
+        self.all_coeffs = [c for v in self.blocks.values() for c in v]
         self.dependent = [c for c in self.all_coeffs 
                           if c not in self.independent]
         # make blocks case insensitive
         self.blocks = {k.lower():v for k,v in self.blocks.iteritems()} 
         # read param card (sets self.inputs, self.mass, self.name, self.card)
         if param_card is not None: 
-            
             assert os.path.exists(self.param_card), \
                    '{} does not exist!'.format(self.param_card)
             
@@ -143,11 +147,15 @@ class Basis(object):
             self.check_sminputs(self.required_inputs) 
             self.check_masses(self.required_masses, silent=silent) 
             self.check_param_data(silent=silent)
+            
+            if self.flavour!='general':
+                self.generalise_flavour(self.flavour,self.old_blocks,
+                                        self.old_ind)
+
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
             # user defined function
             self.calculate_dependent()
-            
             thedict = OrderedDict()
             for name, blk in self.card.blocks.iteritems():
                 if name in self.blocks:
@@ -180,9 +188,10 @@ class Basis(object):
         # and all coeffs set to 0 (used for creating an empty basis 
         # instance for use in translate() method)
         else: 
+
             self.card = SLHA.Card(name=self.name)
             self.card.add_entry('basis', 0, self.name, name = 'translated basis')
-            
+
             preamble = ('\n###################################\n'
                 + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
                 + '###################################\n')
@@ -194,6 +203,7 @@ class Basis(object):
                 for i,fld in enumerate(self.all_coeffs):
                     theblock.new_entry(i,0., name=fld)
                 self.card.add_block(theblock)
+
             # otherwise follow self.blocks structure
             else: 
                 for blk, flds in self.blocks.iteritems():
@@ -227,7 +237,184 @@ class Basis(object):
     
     def iteritems(self):
         return self._thedict.iteritems()
-         
+    
+    def set_flavour(self):
+        def fix(clist):
+            new = []
+            for c in clist:
+                if re.match(r'.*\d{4}.*',c):
+                    new.append(c)
+                    continue
+                try:
+                    ind = re.match(r'.*(\d{2})(Re|Im|)$',c).group(1)
+                    ii, jj = ind[0], ind[1]
+                except AttributeError:
+                    new.append(c)
+                    continue
+                if self.flavour == 'diagonal':
+                    if ii==jj:
+                        new.append(c)
+                elif self.flavour == 'minimal':
+                    if not re.match(r'.*\d{2}(Re|Im)$',c):
+                        newc = c.replace(ind,'')
+                        if newc not in new:
+                            new.append(newc)
+                    elif re.match(r'.*\d{2}(Re|Im)',c):
+                        # only keep re and im parts if whole matrix is complex 
+                        comp = re.match(r'.*\d{2}((Re|Im))$',c).group(1)
+                        newc= c.replace(ind,'')
+                        name = newc.replace(comp,'')
+                        regexp = r'{}\d{{2}}$'.format(name)
+                        if not any( [re.match(regexp, x) for x in clist] ):
+                            if newc not in new:
+                                new.append(newc)                        
+            return new
+            
+        self.old_blocks = {k.lower():v[:] for k,v in self.blocks.iteritems()}
+        self.old_ind = self.independent[:]
+
+        for k, v in self.blocks.iteritems():
+            self.blocks[k] = fix(v)
+
+        self.independent = fix(self.independent)
+        
+        
+    def generalise_flavour(self, flavour, blocks, independent):
+
+        thecard = SLHA.Card(name=self.name)
+        thecard.add_entry('basis', 0, self.name, name = 'translated basis')
+
+        preamble = ('\n###################################\n'
+            + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
+            + '###################################\n')
+        thecard.blocks['basis'].preamble=preamble
+
+        for blk, flds in blocks.iteritems():
+            theblock = SLHA.NamedBlock(name=blk)
+            for i,fld in enumerate(flds):
+                theblock.new_entry(i,0., name=fld)
+            thecard.add_block(theblock)
+
+        for name, blk in thecard.blocks.iteritems():
+            if name in blocks:
+                for k in blk:
+                    key = blk._names[k]
+                    
+                    if key not in independent:
+                        continue
+                    
+                    if re.match(r'.*\d{4}.*',key):
+                        thecard[key] = self[key]
+                        continue
+                        
+                    has_flavour = re.match(r'.*(\d{2})(Re|Im|)',key)
+                    
+                    if has_flavour and flavour == 'diagonal':
+                        ind = has_flavour.group(1)
+                        ii, jj = ind[0], ind[1]
+                        if ii==jj:
+                            thecard[key] = self[key]
+                        else:
+                            thecard[key] = 0.
+            
+                    elif has_flavour and flavour == 'minimal':
+                        ind = has_flavour.group(1)
+                        ii, jj = ind[0], ind[1]
+                        if ii==jj:
+                            oldkey = key.replace(ind,'')
+                            thecard[key] = self[oldkey]
+                        else:
+                            thecard[key] = 0.
+                                        
+                    else:
+                        thecard[key] = self[key]
+                        continue                        
+        
+        self.card, self.old_card = thecard, self.card
+        self.blocks, self.old_blocks = blocks, self.blocks
+        self.independent, self.old_ind = independent, self.independent
+        
+        self.get_other_blocks(self.old_card, self.old_blocks.keys())
+        
+        
+    def reduce_flavour(self, flavour, blocks, independent):
+
+        thecard = SLHA.Card(name=self.name)
+        thecard.add_entry('basis', 0, self.name, name = 'translated basis')
+
+        preamble = ('\n###################################\n'
+            + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
+            + '###################################\n')
+        thecard.blocks['basis'].preamble=preamble
+
+        for blk, flds in blocks.iteritems():
+            theblock = SLHA.NamedBlock(name=blk)
+            for i,fld in enumerate(flds):
+                theblock.new_entry(i,0., name=fld)
+            thecard.add_block(theblock)
+
+        done = []
+        for blk, keys in self.old_blocks.iteritems():
+            for k in self.card.blocks[blk]:
+                key = self.card.blocks[blk]._names[k]
+                
+                if key not in self.old_ind:
+                    continue
+                    
+                if re.match(r'.*\d{4}.*',key):
+                    thecard[key] = self[key]
+                    continue
+                    
+                has_flavour = re.match(r'.*(\d{2})(Re|Im|)$',key)
+                
+                if has_flavour and flavour == 'diagonal':
+                    ind = has_flavour.group(1)
+                    ii, jj = ind[0], ind[1]
+                
+                    if ii==jj and key not in done: 
+                        thecard[key] = self[key]
+                        done.append(key)
+                        
+                        
+                if has_flavour and flavour == 'minimal':
+                    ind = has_flavour.group(1)
+                    ii, jj = ind[0], ind[1]
+                    if ii!=jj: continue
+                    newkey = key.replace(ind,'')
+                    cmplx = re.match(r'.*((Re|Im))$',newkey)
+                    if not cmplx and newkey not in done:
+                        thecard[newkey] = self[key]
+                        done.append(newkey)
+                    
+                    elif cmplx and newkey not in done:
+                        try:
+                            thecard[newkey] = self[key]
+                            done.append(newkey)
+                            
+                        except KeyError:
+                            part = cmplx.group(1)
+                            thecard[newkey.replace(part,'')] = self[key]
+                            done.append(newkey)
+                            
+        
+        self.card, self.old_card = thecard, self.card
+        self.blocks, self.old_blocks = blocks, self.blocks
+        self.independent, self.old_ind = independent, self.independent
+        
+        self.get_other_blocks(self.old_card, self.old_blocks.keys())
+        
+    
+    def get_other_blocks(self, card, ignore):
+        other_blocks = {k:v for k,v in card.blocks.iteritems() 
+                        if not (k in ignore or k.lower()=='basis')}
+                        
+        for block in other_blocks:
+            theblock = card.blocks[block]
+            self.card.add_block(theblock)
+        
+        for decay in card.decays.values():
+            self.card.add_decay(decay, preamble = decay.preamble)
+            
     def read_param_card(self):
         '''
         Call SLHA.read() and set up the Basis instance accordingly.
@@ -585,6 +772,7 @@ class Basis(object):
             return False
     
     def write_template_card(self, filename, value=0.):
+        from machinery import bases
         try: 
             val = float(value)
             rand = False
@@ -593,13 +781,13 @@ class Basis(object):
                 import random
                 rand = True
             else:
-                print ('In write_template_card: "value" kewrord argument '
+                print ('In write_template_card: "value" keyword argument '
                        'must either be a number or the string, "random".')            
-        
-        newinstance = self.__class__()
+
+        newinstance = bases[self.name](flavour=self.flavour)
 
         SLHA_card = newinstance.card
-        # remove non independent coefficeints and set values
+        # remove non independent coefficients and set values
         for name, blk in SLHA_card.blocks.iteritems():
             if name.lower()=='basis': continue
             for coeff in blk:
@@ -727,6 +915,9 @@ class Basis(object):
         
         # perform succesive translations, checking for  
         # required SM inputs along the way
+        # if a non-general flavour structure has be selected, create a new 
+        # instance of the input class with general flavour structure, since the 
+        # translations are written in a flavour general way.
         current = self
         required_inputs = current.required_inputs
         required_masses = current.required_masses
@@ -744,17 +935,7 @@ class Basis(object):
             # update new basis instance with non-EFT blocks, decays
             new.inputs, new.mass = current.inputs, current.mass
             
-            other_blocks = {k:v for k,v in current.card.blocks.iteritems() 
-                            if not (k in current.blocks or k.lower()=='basis')}
-                            
-            for block in other_blocks:
-                theblock = current.card.blocks[block]
-                new.card.add_block(theblock)
-            
-            for i,decay in enumerate(current.card.decays.values()):
-                new.card.add_decay(decay, preamble = decay.preamble)
-            
-            # new.calculate_dependent()
+            new.get_other_blocks(current.card, current.blocks.keys())
 
             # prepare for next step
             required_inputs = set(instance.required_inputs)
@@ -764,6 +945,13 @@ class Basis(object):
         if verbose:
             print 'Translation successful.'
 
+        if self.flavour!='general' and current.name!='mass':
+            current.flavour = self.flavour
+            current.set_flavour()
+            current.reduce_flavour(self.flavour, current.blocks, 
+                                                 current.independent)
+            current.newcard = self.card
+            
         return current
             
     def run_eHDECAY(self):
@@ -794,7 +982,6 @@ class Basis(object):
         hdecays = {}
         
         # sometimes eHDECAY gives negative branching fractions. 
-        # print warning and leave out that channel.
         for channel, BR in BRs.iteritems(): 
             # n1, n2 = particle_names[channel[0]], particle_names[channel[1]]
             # comment = 'H -> {}{}'.format(n1,n2)

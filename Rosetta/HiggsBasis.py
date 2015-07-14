@@ -232,6 +232,7 @@ class HiggsBasis(Basis.Basis):
         
     @Basis.translation('mass')        
     def to_mass(self, instance):
+        # trivial translation
         for k, v in self.iteritems():
             instance[k] = v
         return instance

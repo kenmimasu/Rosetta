@@ -639,7 +639,10 @@ def read_until(lines, here, *args):
         except StopIteration:
             stopiter=True
             break
-    return lines_read[:-1],lines_read[-1], stopiter
+    try:
+        return lines_read[:-1],lines_read[-1], stopiter
+    except IndexError:
+        return [],'',stopiter
 
 if __name__=='__main__':
     pass

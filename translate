@@ -29,6 +29,9 @@ parser.add_argument("-w", "--overwrite", action='store_true',
                     help="Overwrite any pre-existing output file.")
 parser.add_argument("-e", "--ehdecay", action='store_true', 
                     help="Interface with eHDECAY for Higgs branching fractions.")
+parser.add_argument("-f", "--flavour", type=str, default = "general", 
+                    help=("Specify flavour structure ('general', "
+                          "'diagonal', 'minimal'). Default : 'general'"))
 ################################################################################
 args = parser.parse_args()
 print ''
@@ -67,7 +70,8 @@ print 'Basis class used to read in param card:\n\t{}'.format(mybasis)
 # create instance of mybasis
 basis_instance = mybasis(param_card=args.param_card, 
                          output_basis=args.target,
-                         ehdecay=args.ehdecay)
+                         ehdecay=args.ehdecay,
+                         flavour=args.flavour)
 
 if basis_instance.write_param_card(new_param_card, overwrite=args.overwrite): # 
     print '#############################'
