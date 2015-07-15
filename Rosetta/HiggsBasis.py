@@ -14,8 +14,8 @@ class HiggsBasis(Basis.Basis):
     parametrisation of Higgs Effective Field theory in the LHC Higgs cross 
     section working group note (LHCHXSWG-INT-2015-001). Part of the three 
     intrinsic basis implementations in Rosetta along with the Warsaw and SILH 
-    bases. This implementation includes all operators listed in the note apart 
-    from the dipole-type Lorentz structures (\sigma^{\mu\nu}). The 
+    bases. This implementation includes almost all operators listed in the note 
+    apart from the dipole-type Lorentz structures (\sigma^{\mu\nu}). The 
     implementation only includes the minimal set (3) of four-fermion operators 
     required to consistently map between the three intrinsic bases as defined 
     in the note. A number of structures involving more than two Higgs fields 

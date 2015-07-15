@@ -165,15 +165,29 @@ def generate_frdef(basis_class,filename):
 if __name__=='__main__':
     os.chdir('/Users/Ken/GoogleDrive/Work/Rosetta')
     
-    for flav in ('diagonal',):
-        instance = HB.HiggsBasis(flavour=flav)
-        instance.write_template_card('Cards/HiggsBasis_{}.dat'.format(flav))
+    # for flav in ('diagonal','minimal'):
+    #     instance = HB.HiggsBasis(flavour=flav)
+    #     instance.write_template_card('Cards/HiggsBasis_{}.dat'.format(flav))
+    #
+    #     instance = WB.WarsawBasis(flavour=flav)
+    #     instance.write_template_card('Cards/WarsawsBasis_{}.dat'.format(flav))
+    #
+    #     instance = SB.SILHBasis(flavour=flav)
+    #     instance.write_template_card('Cards/SILHBasis_{}.dat'.format(flav))
+    
+    # instance = MB.MassBasis(flavour='general')
+    # instance.write_template_card('Cards/MassBasis.dat')
+    # print len(instance)
+    instance = HB.HiggsBasis(flavour='general')
+    instance.write_template_card('Cards/HiggsBasis.dat')
 
-        instance = WB.WarsawBasis(flavour=flav)
-        instance.write_template_card('Cards/WarsawsBasis_{}.dat'.format(flav))
+    instance = WB.WarsawBasis(flavour='general')
+    instance.write_template_card('Cards/WarsawBasis.dat')
 
-        instance = SB.SILHBasis(flavour=flav)
-        instance.write_template_card('Cards/SILHBasis_{}.dat'.format(flav))
+    instance = SB.SILHBasis(flavour='general')
+    instance.write_template_card('Cards/SILHBasis.dat')
+    
+    
     # two_way_test(WB.WarsawBasis,'Cards/param_card_WarsawBasis.dat','higgs')
     # two_way_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','warsaw')
     #

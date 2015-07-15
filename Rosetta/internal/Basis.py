@@ -156,13 +156,10 @@ class Basis(object):
             self.init_dependent()
             # user defined function
             self.calculate_dependent()
-            thedict = OrderedDict()
-            for name, blk in self.card.blocks.iteritems():
-                if name in self.blocks:
-                    for k, v in blk.iteritems():
-                        thedict[blk.get_name(k)] = v
-            self._thedict = thedict
-            
+            # generate internal OrderedDict() object for __len__, __iter__, 
+            # items() and iteritems() method
+            self._gen_thedict()
+
             if translate:
                 # translate to new basis (User defined) 
                 # return an instance of a class derived from Basis
@@ -196,7 +193,7 @@ class Basis(object):
                 + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
                 + '###################################\n')
             self.card.blocks['basis'].preamble=preamble
-            
+
             # default behaviour: create one 'newcoup' block
             if not self.blocks: 
                 theblock = SLHA.NamedBlock(name='newcoup')
@@ -211,19 +208,25 @@ class Basis(object):
                     for i,fld in enumerate(flds):
                         theblock.new_entry(i,0., name=fld)
                     self.card.add_block(theblock)
-
+            
+            self._gen_thedict()
+            
     # overloaded container (dict) methods for indexing etc.
     
     def __getitem__(self, key):
         return self.card.__getitem__(key)
 
     def __setitem__(self, key, value):
+        if hasattr(self,'_thedict'):
+            self._thedict[key]=value
         return self.card.__setitem__(key, value)
     
     def __contains__(self, key):
         return self.card.__contains__(key)
         
     def __delitem__(self, key):
+        if hasattr(self,'_thedict'):
+            del self._thedict[key]
         return self.card.__delitem__(key)
     
     def __len__(self):
@@ -238,6 +241,14 @@ class Basis(object):
     def iteritems(self):
         return self._thedict.iteritems()
     
+    def _gen_thedict(self):
+        thedict = OrderedDict()
+        for name, blk in self.card.blocks.iteritems():
+            if name in self.blocks:
+                for k, v in blk.iteritems():
+                    thedict[blk.get_name(k)] = v
+        self._thedict = thedict
+        
     def set_flavour(self):
         def fix(clist):
             new = []
@@ -402,7 +413,7 @@ class Basis(object):
         self.independent, self.old_ind = independent, self.independent
         
         self.get_other_blocks(self.old_card, self.old_blocks.keys())
-        
+
     
     def get_other_blocks(self, card, ignore):
         other_blocks = {k:v for k,v in card.blocks.iteritems() 
@@ -414,6 +425,11 @@ class Basis(object):
         
         for decay in card.decays.values():
             self.card.add_decay(decay, preamble = decay.preamble)
+        
+        if card.has_block('mass'):
+            self.mass=self.card.blocks['mass']
+        if card.has_block('sminputs'):
+            self.sminputs=self.card.blocks['sminputs']
             
     def read_param_card(self):
         '''

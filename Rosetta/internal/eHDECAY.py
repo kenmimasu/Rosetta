@@ -143,12 +143,6 @@ def from_silh(silh_instance, ew=True):
     SILH['Cbbar'] = conv(si['sd33Re'],5)
     SILH['Csbar'] = conv(si['sd22Re'],3)
     
-    # print SILH['Ctaubar'],si['se33Re']
-    # print SILH['Cmubar'],si['se22Re']
-    # print SILH['Ctbar'],si['su33Re']
-    # print SILH['Ccbar'],si['su22Re']
-    # print SILH['Cbbar'],si['sd33Re']
-    # print SILH['Csbar'],si['sd22Re']
     return SILH
 
 def nonzero_mass(basis,PID):
