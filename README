@@ -151,6 +151,67 @@ exists. An SLHA style parameter card wil then written out in the new basis.
 Rosetta can optionally interface with eHDECAY provided a translation path 
 between the input basis and the SILH basis exists. The results of eHDECAY 
 are also written to the SLHA card in the form of a decay block for the Higgs. 
+See section 8 for more details on this.
+
+Example basic usage:
+
+To translate from the SILH basis to the Mass basis one could take 
+Cards/SILHBasis.dat as a template input card and run:
+
+./translate -o my_out.dat my_input.dat
+
+To translate to the Warsaw basis instead, one should use the -t option and 
+specify 'warsaw' as the target basis:
+ 
+./translate -o my_out_warsaw.dat -t warsaw my_input.dat
+
+Example usage with the flavour option:
+
+The flavour option '-f' currently accepts the arguments 'general', 'diagonal' 
+and 'minimal'. It tells Rosetta to assume a particular flavour structure in the 
+input file. When a translation to a basis which is NOT the mass basis is 
+specified via the '-t' option, the output file block structure also reflects 
+this choice on the flavour structure. 
+
+- 'general' : The default setting corresponding to the full flavour structure.
+- 'diagonal': Keep only the diagonal terms in the flavour matrices i.e. the 
+              11,22,33 entries.
+- 'minimal' : Suppress all flavour indices. Coefficients are all flavour 
+              diagonal and universal.
+
+Thsi has been implemented in a simple way that relies on a particular naming 
+convention for the flavoured coefficients. Namely, entries of a coefficient 
+'XXX' should be appended to the name i.e. 'XXX11', 'XXX23' etc. If the 
+coefficient is complex, the real and imaginary components should be labelled 
+AFTER the flavour indices e.g.'XXX12Re', 'XXX12Im'. 
+The function 'flavour_matrix' defined in Rosetta/internal/Basis.py is meant to 
+help one generate flavour indices of a given coefficient according to the naming 
+convention by specifying its properties such as 'hermitian' or 'symmetric' 
+etc. It is used in the implementations of HiggsBasis, SILHBasis and WarsawBasis.
+
+As an example, taking Cards/WarsawBasis_diagonal.dat as a template input, the 
+command:
+
+./translate -f diagonal -o my_out_diag.dat my_input_diagonal.dat
+
+Will generate a Mass basis param card with only the diagonal flavour 
+components non-zero. On the other hand,
+
+./translate -t silh -f diagonal -o my_out_diag_silh.dat my_input_diagonal.dat
+
+Will generate a SILH basis parameter card respecting the original flavour 
+structure, i.e. that of Cards/SILHBasis_diagonal.dat.
+
+In general, one should ensure that the block structure of the input card 
+respects the flavour option specified, otherwise, Rosetta will crash.
+
+Example usage with the eHDECAY option:
+
+./translate -t silh -e -o my_out_ehdecay_silh.dat my_input.dat
+
+This command will generate the same output as the basic usage example with the 
+addition of an SLHA decay block for the Higgs with the results of the eHDECAY 
+run. It will also save theeHDECAY input file fed to the program as 'ehdecay.in'.
 
 ################################################################################
 4) Input cards

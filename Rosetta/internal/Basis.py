@@ -309,8 +309,8 @@ class Basis(object):
         for name, blk in thecard.blocks.iteritems():
             if name in blocks:
                 for k in blk:
+
                     key = blk._names[k]
-                    
                     if key not in independent:
                         continue
                     
@@ -368,7 +368,7 @@ class Basis(object):
         for blk, keys in self.old_blocks.iteritems():
             for k in self.card.blocks[blk]:
                 key = self.card.blocks[blk]._names[k]
-                
+
                 if key not in self.old_ind:
                     continue
                     
@@ -387,7 +387,7 @@ class Basis(object):
                         done.append(key)
                         
                         
-                if has_flavour and flavour == 'minimal':
+                elif has_flavour and flavour == 'minimal':
                     ind = has_flavour.group(1)
                     ii, jj = ind[0], ind[1]
                     if ii!=jj: continue
@@ -406,6 +406,9 @@ class Basis(object):
                             part = cmplx.group(1)
                             thecard[newkey.replace(part,'')] = self[key]
                             done.append(newkey)
+                else:
+                    thecard[key] = self[key]
+                    done.append(key)
                             
         
         self.card, self.old_card = thecard, self.card
@@ -960,7 +963,7 @@ class Basis(object):
             # print current
         if verbose:
             print 'Translation successful.'
-
+        
         if self.flavour!='general' and current.name!='mass':
             current.flavour = self.flavour
             current.set_flavour()
