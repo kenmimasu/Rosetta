@@ -38,22 +38,24 @@ class SILHBasis(Basis.Basis):
     
     SBV3D3 = ['s3W','s3G','st3W','st3G']
     
-    cu = flavmat('su',kind='general',domain='complex')
-    cd = flavmat('sd',kind='general',domain='complex')
-    ce = flavmat('se',kind='general',domain='complex')
+    su = flavmat('su',kind='general',domain='complex')
+    sd = flavmat('sd',kind='general',domain='complex')
+    se = flavmat('se',kind='general',domain='complex')
 
-    SBF2H3 = cu + cd + ce
+    SBF2H3 = su + sd + se
     
-    cHl  = flavmat('sHl' ,kind='hermitian',domain='complex')
-    cpHl = flavmat('spHl',kind='hermitian',domain='complex')
-    cHe  = flavmat('sHe' ,kind='hermitian',domain='complex')
-    cHq  = flavmat('sHq' ,kind='hermitian',domain='complex')
-    cpHq = flavmat('spHq',kind='hermitian',domain='complex')
-    cHu  = flavmat('sHu' ,kind='hermitian',domain='complex')
-    cHd  = flavmat('sHd' ,kind='hermitian',domain='complex')
-    cHud = flavmat('sHud',kind='general',domain='complex')
-        
-    SBF2H2D = cHl + cpHl + cHe + cHq + cpHq + cHu + cHd + cHud
+    sHl  = flavmat('sHl' ,kind='hermitian',domain='complex')
+    spHl = flavmat('spHl',kind='hermitian',domain='complex')
+    sHe  = flavmat('sHe' ,kind='hermitian',domain='complex')
+    sHq  = flavmat('sHq' ,kind='hermitian',domain='complex')
+    spHq = flavmat('spHq',kind='hermitian',domain='complex')
+    sHu  = flavmat('sHu' ,kind='hermitian',domain='complex')
+    sHd  = flavmat('sHd' ,kind='hermitian',domain='complex')
+    sHud = flavmat('sHud',kind='general',domain='complex')
+
+    
+    SBF2H2D = sHl + spHl + sHe + sHq + spHq + sHu + sHd + sHud
+
     ##########################
     # block structure
     blocks = {'SBV2H2':SBV2H2, 'SBH4D2':SBH4D2, 'SBH6':SBH6,
@@ -68,7 +70,7 @@ class SILHBasis(Basis.Basis):
     independent.remove('spHl11')
     
     required_masses = set([y for x in PID.values() for y in x.values()])
-    required_inputs = {1, 2, 3, 4, 8} # aEWM1, Gf, aS, MZ, MH
+    required_inputs = {1, 2, 3, 4, 25} # aEWM1, Gf, aS, MZ, MH
     ##########################
     def calculate_dependent(self):
         # These coefficients are implictly set to zero
@@ -143,7 +145,7 @@ class SILHBasis(Basis.Basis):
         
         # Treat dGRwq separately as it has more flavour components
         dGRwq = flavmat('dGRwq', kind='general', domain='complex')
-        for coeffW, coeffM in zip(self.cHud, dGRwq):
+        for coeffW, coeffM in zip(self.sHud, dGRwq):
             B[coeffM] = -1./2.*A[coeffW]
             cvff = coeffM.replace('dG','C')
             B[cvff] = B[coeffM]
@@ -349,12 +351,11 @@ class SILHBasis(Basis.Basis):
         B['cpuu3333'] = (1./3.)*gs2*A['s2G']
         
         # trivial translation, cX==sX
-        cHud = flavmat('cHud', kind='general', domain='complex')
-        others = ['cGG','ctGG','c3W','ct3W','c3G','ct3G']
-        trivial = cHud+others
+        others = ['sGG','stGG','s3W','st3W','s3G','st3G']
+        trivial = self.sHud + others
         for coeff in trivial:
-            scoeff = 's'+coeff[1:]
-            B[coeff] = A[scoeff]
+            wcoeff = 'c'+coeff[1:]
+            B[wcoeff] = A[coeff]
         
         return B
         

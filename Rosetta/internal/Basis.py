@@ -170,7 +170,7 @@ class Basis(object):
                 preamble = ('###################################\n'
                           + '## DECAY INFORMATION\n'
                           + '###################################')
-                for i,decay in enumerate(self.card.decays.values()):
+                for decay in self.card.decays.values():
                     decay.preamble=preamble
                     break
             
@@ -187,7 +187,7 @@ class Basis(object):
         else: 
 
             self.card = SLHA.Card(name=self.name)
-            self.card.add_entry('basis', 0, self.name, name = 'translated basis')
+            self.card.add_entry('basis', 1, self.name, name = 'translated basis')
 
             preamble = ('\n###################################\n'
                 + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
@@ -198,7 +198,7 @@ class Basis(object):
             if not self.blocks: 
                 theblock = SLHA.NamedBlock(name='newcoup')
                 for i,fld in enumerate(self.all_coeffs):
-                    theblock.new_entry(i,0., name=fld)
+                    theblock.new_entry(i+1,0., name=fld)
                 self.card.add_block(theblock)
 
             # otherwise follow self.blocks structure
@@ -206,7 +206,7 @@ class Basis(object):
                 for blk, flds in self.blocks.iteritems():
                     theblock = SLHA.NamedBlock(name=blk)
                     for i,fld in enumerate(flds):
-                        theblock.new_entry(i,0., name=fld)
+                        theblock.new_entry(i+1,0., name=fld)
                     self.card.add_block(theblock)
             
             self._gen_thedict()
@@ -293,7 +293,7 @@ class Basis(object):
     def generalise_flavour(self, flavour, blocks, independent):
 
         thecard = SLHA.Card(name=self.name)
-        thecard.add_entry('basis', 0, self.name, name = 'translated basis')
+        thecard.add_entry('basis', 1, self.name, name = 'translated basis')
 
         preamble = ('\n###################################\n'
             + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
@@ -303,7 +303,7 @@ class Basis(object):
         for blk, flds in blocks.iteritems():
             theblock = SLHA.NamedBlock(name=blk)
             for i,fld in enumerate(flds):
-                theblock.new_entry(i,0., name=fld)
+                theblock.new_entry(i+1,0., name=fld)
             thecard.add_block(theblock)
 
         for name, blk in thecard.blocks.iteritems():
@@ -351,7 +351,7 @@ class Basis(object):
     def reduce_flavour(self, flavour, blocks, independent):
 
         thecard = SLHA.Card(name=self.name)
-        thecard.add_entry('basis', 0, self.name, name = 'translated basis')
+        thecard.add_entry('basis', 1, self.name, name = 'translated basis')
 
         preamble = ('\n###################################\n'
             + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
@@ -361,7 +361,7 @@ class Basis(object):
         for blk, flds in blocks.iteritems():
             theblock = SLHA.NamedBlock(name=blk)
             for i,fld in enumerate(flds):
-                theblock.new_entry(i,0., name=fld)
+                theblock.new_entry(i+1,0., name=fld)
             thecard.add_block(theblock)
 
         done = []
@@ -441,7 +441,7 @@ class Basis(object):
         self.card = SLHA.read(self.param_card)
         
         try:
-            card_name = self.card.blocks.get('basis',[''])[0].lower()
+            card_name = self.card.blocks.get('basis',[''])[1].lower()
             if self.name.lower()!=card_name.lower():
                 err = ('Rosetta was expecting to read an instance of ' 
                      + '{}, named "{}", '.format(self.__class__.name, self.name)
@@ -586,7 +586,7 @@ class Basis(object):
             else:
                 if self.inputs:
                     for k,v in [(i,j) for i,j in self.inputs.iteritems() 
-                                if i in (4,8)]:
+                                if i in (4,25)]:
                         i = input_to_PID[k]
                         if i in self.mass:
                             v2 = float(self.mass[i])
@@ -655,7 +655,7 @@ class Basis(object):
             inputblock = self.card.blocks.get(bname,SLHA.NamedBlock())
             input_eles = set(inputblock.keys())
             
-            defined_block = {i:v for i,v in enumerate(defined)}
+            defined_block = {i+1:v for i,v in enumerate(defined)}
             defined_eles = set(defined_block.keys())
             
             independent = {i:v for i,v in defined_block.iteritems() 
@@ -746,7 +746,7 @@ class Basis(object):
                     + '###################################\n')
         if 'basis' in self.newcard.blocks:
             self.newcard.blocks['basis'].preamble = preamble
-            self.newcard.blocks['basis'][0] = self.newname
+            self.newcard.blocks['basis'][1] = self.newname
         
         dec_preamble = ('\n###################################\n'
                     + '## DECAY INFORMATION\n'
@@ -864,7 +864,7 @@ class Basis(object):
             to_add = [f for f in fields if f in self.dependent 
                                         and f not in theblock]
             for entry in to_add:
-                self.card.add_entry(bname, fields.index(entry), 0., name=entry)
+                self.card.add_entry(bname, fields.index(entry)+1, 0., name=entry)
 
     def check_calculated_data(self):
         '''

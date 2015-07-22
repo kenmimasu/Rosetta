@@ -45,7 +45,7 @@ if 'basis' not in thecard.blocks:
                        'does not have a block "BASIS".')
 else:
     try:
-        basis = thecard.blocks['basis'][0]
+        basis = thecard.blocks['basis'][1]
     except KeyError:
         raise RosettaError('\n\tParameter card {} '.format(args.param_card) + 
                            'does not have a block "basis".')

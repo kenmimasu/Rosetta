@@ -54,7 +54,7 @@ class WarsawBasis(Basis.Basis):
     independent = WBH4D2 + WBH6 + WBV3D3 + WBF2H3  + WBV2H2 + WBF2H2D + WB4F
     
     required_masses = set([y for x in PID.values() for y in x.values()])
-    required_inputs = {1, 2, 3, 4, 8 } # aEWM1, Gf, MZ, MH, aS(MZ)
+    required_inputs = {1, 2, 3, 4, 25} # aEWM1, Gf, MZ, MH, aS(MZ)
         
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
         ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared
