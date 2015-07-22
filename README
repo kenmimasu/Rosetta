@@ -139,6 +139,9 @@ Command line documentation:
     >>   -w, --overwrite       Overwrite any pre-existing output file.
     >>   -e, --ehdecay         Interface with eHDECAY for Higgs branching 
     >>                         fractions.
+    >> -f FLAVOUR, --flavour FLAVOUR
+                               Specify flavour structure ('general', 'diagonal',
+                               'minimal'). Default : 'general'
 
 Rosetta will read the SLHA card, look for the 0th element of block "basis", and 
 see if any implemented basis classes have this unique identifier. If so, Rosetta 
@@ -419,7 +422,6 @@ essential that the file name match the class name.
     >> class MyBasis(Basis.Basis):
     >>    name = 'mybasis'
     >>    independent = {'A','B','C','1','2','3'}
-    >>    dependent = {'D','4'}
     >>    required_inputs = {1,2,4}   # a_{EW}^{-1}, Gf and MZ required
     >>    required_masses = {24,25,6} # Z, Higgs and top masses required
     >>    blocks = {'letters':['A','B','C','D']
