@@ -47,15 +47,15 @@ else:
     try:
         basis = thecard.blocks['basis'][1]
     except KeyError:
-        raise RosettaError('\n\tParameter card {} '.format(args.param_card) + 
-                           'does not have a block "basis".')
+        raise RosettaError('\n\tFormatting error for block basis. '
+                               'Check input card, {}.'.format(args.param_card))
 try:
     mybasis = implemented.bases[basis.lower()] 
 except KeyError:
-    err = ('\n\tElement 0 of block "BASIS", "{}", not recognised. '.format(basis)
+    err = ('\n\tElement 1 of block "BASIS", "{}", not recognised. '.format(basis)
            + 'Rosetta accepts one of: {}.'.format(', '.join(bases.keys())))
     raise RosettaError(err)
-    
+
 if not args.output: # output file name
     if '.' in args.param_card:
         new_name = args.param_card.split('.')

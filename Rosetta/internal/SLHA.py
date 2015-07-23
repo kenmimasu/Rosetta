@@ -67,7 +67,7 @@ class NamedBlock(Block):
     '''
     Class derived from 'Block' with the added functionality of assigning a name 
     to each key via the 'names' keyword argument. The values can then also be 
-    referenced by name via a lookup in self._numbers.
+    referenced by name via a lookup in self._numbers. 
     '''
     
     def __parse__(self, key):
@@ -80,7 +80,7 @@ class NamedBlock(Block):
         '''
         if type(key) is str:
             try:
-                return self._numbers[key]
+                return self._numbers[key.lower()]
             except KeyError:
                 return None
                 # err = ('Name "{}" has not been assigned to a '.format(key) +
@@ -92,7 +92,7 @@ class NamedBlock(Block):
     def __init__(self, name=None, data=None, 
                  comment='',decimal=5, dtype=lambda x:x, preamble=''):
         '''    
-        Same as the SLHA.Block constructor but aditionally checks if the data 
+        Same as the SLHA.Block constructor but additionally checks if the data 
         keyword argument has a "_names" attribute (i.e. if it is an existing 
         instance of NamedBlock) and stores it. The "comment" keyword argument 
         prints a comment to the right of the block declaration in __str__().
@@ -100,7 +100,7 @@ class NamedBlock(Block):
         if data is not None and hasattr(data, '_names'):
             self._names = data._names
             try:
-                self._numbers = {v:k for k,v 
+                self._numbers = {v:k.lower() for k,v 
                                       in self._names.iteritems()}
             except AttributeError:
                 raise ValueError('"names" keyword argument must be a'
@@ -129,7 +129,7 @@ class NamedBlock(Block):
             except KeyError:
                 pass
         elif type(key) is str:
-            key = key
+            key = key.lower()
             try:
                 del self._names[self._numbers[key]]
                 del self._numbers[key]
@@ -164,10 +164,10 @@ class NamedBlock(Block):
         return string
 
     def get_name(self, key, default=''):
-        return self._names.get(key,default)
+        return self._names.get(key, default)
         
     def get_number(self, name, default=-1):
-        return self._numbers.get(name,default)
+        return self._numbers.get(name.lower(),default)
     
     def new_entry(self, key, value, name=None):
         '''
@@ -176,9 +176,9 @@ class NamedBlock(Block):
         '''
            
         if key in self:
-            err = ("Key '{}' already belongs to NamedBlock ".format(key) +
-                   "'{}', mapped to name '{}'.".format(self.name,
-                                                       self._names[key]))
+            err = ("Key '{}' already belongs to NamedBlock ".format(key.lower())
+                 +  "'{}', mapped to name '{}'.".format(self.name,
+                                                        self.get_name(key)))
             raise KeyError(err)
             
         if name in self._numbers:
@@ -188,8 +188,8 @@ class NamedBlock(Block):
             raise KeyError(err)
         else:
             if name is not None:
-                self._names[key] = name
-                self._numbers[name] = key
+                self._names[key] = name.lower()
+                self._numbers[name.lower()] = key
             self[key]=value
             
     def namedict(self):
@@ -640,7 +640,10 @@ def read_until(lines, here, *args):
             stopiter=True
             break
     try:
-        return lines_read[:-1],lines_read[-1], stopiter
+        if stopiter:
+            return lines_read, '', stopiter
+        else:
+            return lines_read[:-1],lines_read[-1], stopiter
     except IndexError:
         return [],'',stopiter
 

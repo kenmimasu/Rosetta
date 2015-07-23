@@ -123,7 +123,11 @@ class Basis(object):
                       Higgs width and BRs.
             silent  - suppress all checks and warnings
         '''
-
+        # make blocks,independent case insensitive
+        self.blocks = {k.lower():[vv.lower() for vv in v] 
+                       for k,v in self.blocks.iteritems()} 
+        self.independent = [k.lower() for k in self.independent]
+        
         self.flavour = flavour
 
         if self.flavour != 'general':
@@ -135,8 +139,8 @@ class Basis(object):
         self.all_coeffs = [c for v in self.blocks.values() for c in v]
         self.dependent = [c for c in self.all_coeffs 
                           if c not in self.independent]
-        # make blocks case insensitive
-        self.blocks = {k.lower():v for k,v in self.blocks.iteritems()} 
+                          
+
         # read param card (sets self.inputs, self.mass, self.name, self.card)
         if param_card is not None: 
             assert os.path.exists(self.param_card), \
