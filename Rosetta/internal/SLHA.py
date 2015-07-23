@@ -13,14 +13,14 @@ class Block(OrderedDict):
     SLHA formatted block.
     '''
 
-    def __check__(self,key):
+    def __checkkey__(self,key):
         '''Forces key to be of integer type as in SLHA convention.'''
         if type(key) is not int: 
             raise TypeError( self.__class__.__name__ +
                              ' only accepts integer keys.' ) 
         else:
             return key
-        
+    
     def __init__(self, name=None, data=None, 
                  decimal=5, dtype=lambda x: x, preamble=''):
         '''    Intialisation keyword arguments:
@@ -37,31 +37,39 @@ class Block(OrderedDict):
         super(Block, self).__init__()
         self.name = name
         self.cast = dtype # value casting function
-        self.fmt= ':+.{}e'.format(decimal) # format string
-        self.preamble=preamble
+        self.fmt = ':+.{}e'.format(decimal) # format string
+        self.preamble = preamble
         if data is not None:
             for k,v in data.iteritems():
                 self[k]=v
                 
     def __setitem__(self,key,value):
-        return super(Block,self).__setitem__(self.__check__(key),self.cast(value))
+        return super(Block,self).__setitem__(self.__checkkey__(key),
+                                             self.cast(value))
 
     def __repr__(self):
         return ( '<SHLA Block: "{}"; {} entries.>'.format(self.name,len(self)) )
 
     def __str__(self):
-        line = ('    {{: <4}} {{{}}}'.format(self.fmt)).format
-        content = '\n'.join([line(k,v)
-                             for k,v in self.iteritems()])
+        content = []
+        for k,v in self.iteritems():
+            try:
+                val = float(v)
+                fmt = self.fmt
+            except ValueError:
+                fmt = ''
+            
+            line = ('    {{: <4}} {{{}}}\n'.format(fmt)).format
+            content.append(line(k,val)) 
+            
         string = (self.preamble+'\n'
                   +'BLOCK {}\n'.format(self.name)
-                  + content + '\n')
+                  + ''.join(content) + '\n')
         return string
     
     def dict(self):
         '''Return SHLA Block object as a regular python dict.'''
         return {k:v for k,v in self.iteritems()}
-
 
 class NamedBlock(Block):
     '''
@@ -90,7 +98,7 @@ class NamedBlock(Block):
             return key
     
     def __init__(self, name=None, data=None, 
-                 comment='',decimal=5, dtype=lambda x:x, preamble=''):
+                 comment='', decimal=5, dtype=lambda x:x, preamble=''):
         '''    
         Same as the SLHA.Block constructor but additionally checks if the data 
         keyword argument has a "_names" attribute (i.e. if it is an existing 
@@ -107,12 +115,13 @@ class NamedBlock(Block):
                                  'dictionary or support iteritems() method.')
         else:
             self._names, self._numbers = {}, {}
-        self.cast=dtype
+
         self.comment=comment
 
         return super(NamedBlock, self).__init__(name=name, data=data, 
                                                 decimal=decimal, dtype=dtype,
                                                 preamble = preamble)
+                                                
     def __setitem__(self, key, value):
         super(NamedBlock,self).__setitem__(self.__parse__(key),
                                              self.cast(value))
@@ -122,17 +131,17 @@ class NamedBlock(Block):
     
     def __delitem__(self, key):
         # Additional cleanup needed for _names and _numbers lookup dicts.
-        if type(key) is int:
-            try:
-                del self._numbers[self._names[key]]
-                del self._names[key]
-            except KeyError:
-                pass
-        elif type(key) is str:
+        if type(key) is str:
             key = key.lower()
             try:
                 del self._names[self._numbers[key]]
                 del self._numbers[key]
+            except KeyError:
+                pass
+        else:
+            try:
+                del self._numbers[self._names[key]]
+                del self._names[key]
             except KeyError:
                 pass
                 
@@ -191,6 +200,215 @@ class NamedBlock(Block):
                 self._names[key] = name.lower()
                 self._numbers[name.lower()] = key
             self[key]=value
+            
+    def namedict(self):
+        '''Return python dict of name:key pairs.'''
+        return {self._names[k]:v for k,v in self.iteritems() 
+                                 if k in self._names }
+
+class Matrix(Block):
+    '''
+    Caontainer class for multi-counter SLHA Blocks. Inherits from Block and is 
+    intended to take further instances of Matrix or Block. items() and 
+    iteritems() methods are implemented to recursively iterate through the 
+    structure until non-Block values are encountered and return/yield a tuple 
+    of keys referring to the indices along with the values e.g. 
+    ((i,j,k,..), val).'''
+
+    def __checkval__(self,val):
+        '''Forces value to be an instance of SLHA.Block (or any of its subclasses).'''
+        if not isinstance(val,Block): 
+            raise TypeError( self.__class__.__name__ +
+                             ' only accepts SLHA.Block type as values.' ) 
+        else:
+            return val
+                
+    def __setitem__(self,keys,value):
+        if type(keys) is int:
+            return super(Matrix,self).__setitem__(self.__checkkey__(keys),
+                                                  self.__checkval__(value))
+        else:
+            key, subkeys = keys[0], keys[1:]
+            tmp = self.__getitem__(key)
+            if len(subkeys)==1: subkeys = subkeys[0]
+            tmp[subkeys] = value
+
+    def __getitem__(self,keys):
+        getitem = super(Matrix,self).__getitem__
+        if type(keys) is int:
+            return getitem(keys)
+        else:
+            tmp=self
+            for i,k in enumerate(keys):
+                try:
+                    tmp = tmp[k]
+                except KeyError as e:
+                    err = ', '.join([str(k) for k in keys]) + ('At index '+
+                        '{} of {}'.format(i+1, self))
+                    raise KeyError(err)
+            return tmp
+    
+    def __len__(self):
+        length = 0
+        for val in self.values():
+            length += len(val)
+        return length
+    
+    def __repr__(self):
+        return '<SHLA Matrix: "{}"; {} entries.>'.format(self.name, len(self.items()))        
+
+    def __str__(self):
+        content = []
+        for k,v in self.iteritems():
+            try:
+                v = float(v)
+                fmt = self.fmt
+            except ValueError:
+                fmt=''
+            ind = '{: <4}'*len(k)
+            line = ('    {} {{{}}}\n'.format(ind,fmt)).format
+            args = list(k)+[v]
+            content.append(line(*args))
+        string = (self.preamble+'\n'
+                  +'BLOCK {}\n'.format(self.name)
+                  + ''.join(content) + '\n')
+        return string
+        
+    def items(self):
+        itms = []
+        for k,v in zip(self.keys(),self.values()):
+            if isinstance(v, Block):
+                for sk, sv in v.items():
+                    if type(sk) is int: 
+                        sk = [sk]
+                    newkeys = tuple([k] + list(sk))
+                    itms.append((newkeys,sv))
+            else:
+                itms.append((k,v))
+        return itms
+    
+    def iteritems(self):
+        for x in self.items():
+            yield x
+    
+    def dimension(self):
+        for i,(k,v) in enumerate(self.iteritems()):
+            if i!=0: subdim_prev = subdim
+            
+            if isinstance(v,Matrix):
+                subdim = v.dimension()
+            else:
+                subdim = [len(v)]
+
+            if i!=0 and subdim_prev != subdim:
+                err = ('Inconsistent dimension of SLHA Matrix '
+                      '"{}" encountered'.format(self))
+                raise SLHAError(err)
+        
+        return [len(self)] + [d for d in subdim]
+    
+    def array(self):
+        array = []
+        for k,v in self.iteritems():
+            if isinstance(v,Matrix):
+                array.append(v.array())
+            else:
+                array.append([v for v in v.values()])
+        return array
+        
+        
+    def dict(self):
+        thedict = {}
+        for k,v in self.iteritems():
+            thedict[k] = v.dict()
+        return thedict
+
+class NamedMatrix(NamedBlock, Matrix):
+    '''
+    Class derived from 'Block' with the added functionality of assigning a name 
+    to each key via the 'names' keyword argument. The values can then also be 
+    referenced by name via a lookup in self._numbers. 
+    '''
+
+    def __setitem__(self, key, value):
+        return Matrix.__setitem__(self, self.__parse__(key), self.cast(value))
+
+    def __getitem__(self, key):
+        return Matrix.__getitem__(self, self.__parse__(key))
+        
+    def __len__(self):
+        return Matrix.__len__(self)
+   
+    def __repr__(self):
+        return ('<SHLA NamedMatrix: "{}"; {} entries, {} named.>'.format(
+                                       self.name, len(self), len(self._names)))
+   
+    def __str__(self):
+        content = []
+        for k,v in self.iteritems():
+            try:
+                v = float(v)
+                fmt = self.fmt
+            except ValueError:
+                fmt=''
+            vname = self._names.get(k,None)
+            comment = '' if vname is None else '# {}'.format(vname)
+            
+            ind = '{: <4}'*len(k)
+            line = ('    {} {{{}}} {{}}\n'.format(ind,fmt)).format
+            args = list(k)+[v, comment]
+            content.append(line(*args))
+        string = (self.preamble+'\n'
+                  +'BLOCK {}\n'.format(self.name)
+                  + ''.join(content) + '\n')
+        return string
+
+    def items(self):
+        return Matrix.items(self)
+    
+    def iteritems(self):
+        return Matrix.iteritems(self)
+
+    def get_name(self, key, default=''):
+        return self._names.get(key, default)
+        
+    def get_number(self, name, default=-1):
+        return self._numbers.get(name.lower(),default)
+    
+    def new_entry(self, key, value, name=None):
+        '''
+        Add a new named block entry. Ensures that the key hasn't already 
+        been set and the name given hasn't already been booked.
+        '''
+           
+        if key in self:
+            err = ("Key '{}' already belongs to NamedBlock ".format(key.lower())
+                 +  "'{}', mapped to name '{}'.".format(self.name,
+                                                        self.get_name(key)))
+            raise KeyError(err)
+            
+        if name in self._numbers:
+            err = ("Name '{}' already booked in ".format(name) +
+                   "NamedBlock {}, mapped to key '{}'.".format(
+                                   self.name, self._numbers[name]))
+            raise KeyError(err)
+        else:
+            if name is not None:
+                self._names[key] = name.lower()
+                self._numbers[name.lower()] = key
+            try:
+                self[key] = value
+            except KeyError:
+                subkey = key[:-2]
+                penult = key[-2]
+                submatrix = self
+                for i,sk in enumerate(subkey):
+                    if sk not in submatrix:
+                        submatrix[sk] = NamedMatrix()
+                    submatrix = submatrix[sk]
+                submatrix[penult] = NamedBlock()
+                self[key] = value
+                
             
     def namedict(self):
         '''Return python dict of name:key pairs.'''
@@ -322,7 +540,6 @@ class Decay(OrderedDict):
         self[PIDs]=BR
         if comment is not None: self._comments[PIDs]=comment
 
-
 class Card(object):
     '''
     SLHA card object: a container for storing multiple SLHA.Block, 
@@ -339,10 +556,15 @@ class Card(object):
         Finds the parent block of a given string key. Raises Key error 
         if the key is not booked in any of the card's blocks.
         '''
+        if key in self.matrices: 
+            return self.matrices[key]
+        for block in self.matrices.values():
+            if key in block:
+                return block
         for block in self.blocks.values():
             if key in block:
                 return block
-        err = 'Key "{}" not found in {}'.format(key, self)
+        err = 'Key/Matrix "{}" not found in {}'.format(key, self)
         raise KeyError(err)
     
     def _container(self, key):
@@ -365,10 +587,12 @@ class Card(object):
                  individual blocks in the card instance i.e. 
                  name:block pairs with block an SLHA.NamedBlock.
         decays - a dictionary of SLHA.Decay objects.
+        matrices - a dictionary of SLHA.NamedMatrix objects.
         name - card name'''
         
-        self.blocks=OrderedDict()
-        self.decays=OrderedDict()
+        self.blocks = OrderedDict()
+        self.decays = OrderedDict()
+        self.matrices = OrderedDict()
         self.name = name if name is not None else ''
         if blocks is not None:
             for bname, block in blocks.iteritems():
@@ -393,14 +617,18 @@ class Card(object):
     def __setitem__(self, key, value):
         return self._container(key).__setitem__(key,value)
         
-    def add_block(self, block):
+    def add_block(self, block, preamble=''):
         '''Append an SLHA.Block or NamedBlock to self.blocks.'''
-        self.blocks[block.name] = block
+        block.preamble = preamble
+        if isinstance(block,Matrix):
+            self.matrices[block.name] = block
+        else:
+            self.blocks[block.name] = block
         
     def add_decay(self, decay, preamble=''):
         '''Append an SLHA.Decay to self.decays.'''
+        decay.preamble = preamble
         self.decays[decay.PID] = decay
-        self.decays[decay.PID].preamble = preamble
     
     def add_entry(self, blockname, key, value, name=None):
         '''
@@ -410,12 +638,21 @@ class Card(object):
         '''
         if self.has_block(blockname):
             self.blocks[blockname].new_entry(key, value, name=name)
+        elif self.has_matrix(blockname):
+            self.matrices[blockname].new_entry(key, value, name=name)
         else:
+            if type(key) is tuple:
+                container = Matrix
+                namedcontainer = NamedMatrix
+            else:
+                container = Block
+                namedcontainer = NamedBlock
+                
             if name is not None:
-                theblock = NamedBlock(name=blockname)
+                theblock = namedcontainer(name=blockname)
                 theblock.new_entry(key, value, name=name)
             else:
-                theblock = Block(name=blockname)
+                theblock = container(name=blockname)
                 theblock.new_entry(key, value)
                 
             self.add_block(theblock)
@@ -435,7 +672,10 @@ class Card(object):
         if comment is not None: self._comments[PIDs]=comment
         
     def has_block(self, name):
-        return name in self.blocks
+        return name in self.blocks 
+    
+    def has_matrix(self, name):
+        return name in self.matrices
     
     def has_decay(self, PID):
         return PID in self.decays
@@ -455,22 +695,28 @@ class Card(object):
         
         with open(filename,'w') as out:
             out.write(preamble)
-            other_blocks = [b for b in self.blocks if b not in blockorder]
+            
+            allblocks = self.blocks.keys() + self.matrices.keys()
+            other_blocks = [b for b in allblocks if b not in blockorder]
+            
             for block in blockorder:
-                try:
+                if self.has_block(block):
                     out.write(str(self.blocks[block]))
-                except KeyError:
-                    pass
+                elif self.has_matrix(block):
+                    out.write(str(self.matrices[block]))
+                    
             for block in other_blocks:
-                out.write(str(self.blocks[block]))
+                if self.has_block(block):
+                    out.write(str(self.blocks[block]))
+                elif self.has_matrix(block):
+                    out.write(str(self.matrices[block]))
+                                
             for decay in self.decays.values():
                 out.write(str(decay))
             out.write(postamble)
 
-
 class SLHAReadError(Exception): # Custom error name for reader
     pass
-
 
 def read(card):
     '''
@@ -518,10 +764,10 @@ def read(card):
                 bname = block_details.split('#')[0].strip()
                 
                 comment = get_comment(ll)
-            
-                theblock = NamedBlock(name=bname.lower(), comment=comment)
-            
+                
                 block_data, last_line, stop = read_until(lines,'block','decay')
+                
+                elements = []
                 
                 for datum in block_data:
                     counter +=1                    
@@ -529,7 +775,7 @@ def read(card):
                 
                     if (not datum.strip() or is_comment): continue
                     
-                    info = re.match(r'\s*(\d+)\s+(\S+).*',
+                    info = re.match(r'\s*((?:\d+\s+)+)\s*(\S+).*',
                                     datum)
                     if not info:
                         print datum
@@ -537,17 +783,31 @@ def read(card):
                                 '{},'.format(theblock.name) +
                                 ' (line {} of {})'.format(counter, card))
                         continue
-                        
-                    index, value = info.group(1), info.group(2)
                     
-                    dname=get_comment(datum)
+                    key, value = info.group(1), info.group(2)
+                    
+                    try:
+                        key = int(key)
+                    except ValueError:
+                        key = tuple( map(int, key.split()) )
+
+                    dname = get_comment(datum)
                     
                     try:
                         entry = float(value)
                     except ValueError:
                         entry = value
                     finally:
-                        theblock.new_entry(int(index),entry,name=dname)
+                        elements.append((key,value,dname))
+                
+                
+                if type(elements[0][0]) is tuple:
+                    theblock = NamedMatrix(name=bname.lower(), comment=comment)
+                else:
+                    theblock = NamedBlock(name=bname.lower(), comment=comment)
+            
+                for ele in elements:
+                    theblock.new_entry(*ele)
                 
                 thecard.add_block(theblock)
 
@@ -647,5 +907,37 @@ def read_until(lines, here, *args):
     except IndexError:
         return [],'',stopiter
 
+
 if __name__=='__main__':
-    pass
+    # from itertools import product
+    # mm = NamedMatrix(name='wehey')
+    # for i,j,k in product((1,2,3),(1,2,3),(1,2,3)):
+    #     mm.new_entry((i,j,k),i+j+k, name = '{}{}{}'.format(i,j,k))
+    #     # print '{} {} {}'.format(i,j,k),m.dict()[i][j][k]
+    #
+    # print mm
+    # a = Block( name='a', data={1:'1',2:'seven'})
+    # b = Block( name='b', data={1:'1',2:'2'}, dtype=float)
+    # c = Block( name='c', data={1:'1',2:'2'}, dtype=float)
+    # d = Block( name='d', data={1:'1',2:'2'}, dtype=float)
+    # e = Block( name='e', data={1:'1',2:'2'}, dtype=float)
+    # f = Block( name='f', data={1:'1',2:'2'}, dtype=float)
+    # g = Block( name='g', data={1:'1',2:'2'}, dtype=float)
+    # h = Block( name='h', data={1:'1',2:'2'}, dtype=float)
+    # i = Block( name='i', data={1:'1',2:'2'}, dtype=float)
+    #
+    # aa = Matrix( name='aa', data={1:a,2:b,3:c})
+    # dd = Matrix( name='dd', data={1:d,2:e,3:f})
+    # gg = Matrix( name='gg', data={1:g,2:h,3:i})
+    #
+    # m = Matrix( name='m', data={1:aa,2:dd,3:gg})
+    #
+    # print m
+    # for k,v in m.iteritems():
+        # print k,v
+    # for i,j,k in product((1,2,3),(1,2,3),(1,2,3)):
+    #     print '{} {} {}'.format(i,j,k),m.dict()[i][j][k]
+    card = read('testmatrix.dat')
+    
+    print card.matrices['wehey']
+    print card.blocks['wehey2']
