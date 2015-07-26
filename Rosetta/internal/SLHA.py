@@ -4,19 +4,19 @@ import re
 
 class Block(OrderedDict):
     '''    
-    Container class for SLHA block. A subclass of `collections.OrderedDict`with 
-    a restriction on integer keys and a modified __repr__(). Block can't be 
-    initialised with any positional arguments but rather with the 'data' 
-    keyword argument. It can optionally be named using the 'name' keyword 
-    argument. __repr__ and __str__ functions are also defined to output the 
-    SLHA formatted block.
+    Container class for SLHA block with a single counter. A subclass of 
+    `collections.OrderedDict`with a restriction on integer keys and a modified 
+    __repr__(). Block can't be initialised with any positional arguments but 
+    rather with the 'data' keyword argument. It can optionally be named using 
+    the 'name' keyword argument. The__str__ function are also defined to output 
+    the contained data in an SLHA formatted block.
     '''
 
     def __checkkey__(self, key):
-        '''Forces key to be of integer type as in SLHA convention.'''
+        '''Forces key to be of integer type.'''
         if type(key) is not self.keytype: 
-            raise TypeError( self.__class__.__name__ +
-                ' only accepts keys of {}.'.format(self.keytype) ) 
+            raise TypeError("Key: '{}'. ".format(key) + self.__class__.__name__ 
+                            + ' only accepts keys of {}.'.format(self.keytype))
         else:
             return key
     
@@ -44,7 +44,7 @@ class Block(OrderedDict):
                 self[k]=v
                 
     def __setitem__(self,key,value):
-        return super(Block,self).__setitem__(self.__checkkey__(key),
+        return super(Block, self).__setitem__(self.__checkkey__(key),
                                              self.cast(value))
 
     def __repr__(self):
@@ -68,17 +68,18 @@ class Block(OrderedDict):
         return string
     
     def dict(self):
-        '''Return SHLA Block object as a regular python dict.'''
+        '''Return SHLA Block data as a regular python dict.'''
         return {k:v for k,v in self.iteritems()}
 
 class Matrix(Block):
     '''    
-    Container class for SLHA block. A subclass of `collections.OrderedDict`with 
-    a restriction on integer keys and a modified __repr__(). Block can't be 
-    initialised with any positional arguments but rather with the 'data' 
-    keyword argument. It can optionally be named using the 'name' keyword 
-    argument. __repr__ and __str__ functions are also defined to output the 
-    SLHA formatted block.
+    Container class for SLHA block with multiple counters. A subclass of 
+    `collections.OrderedDict`with a restriction on tuple keys and a modified 
+    __repr__(). Block can't be initialised with any positional arguments but 
+    rather with the 'data' keyword argument. It can optionally be named using 
+    the 'name' keyword argument. The__str__ function are also defined to output 
+    the contained data in an SLHA formatted block. The object is indexed 
+    like a numpy multi dimensional array ( x[i,j,k,...] ).
     '''
     
     def __init__(self,*args,**kwargs):
@@ -86,23 +87,10 @@ class Matrix(Block):
         self.keytype = tuple
     
     def __setitem__(self, key, value):
-        return super(Matrix, self).__setitem__(self.__checkkey__(key),
-                                               self.cast(value))
+        return super(Matrix, self).__setitem__(key, value)
     
     def __getitem__(self, key):
-        if type(key) is int:
-            if len(self.keys()[0]) == 1:
-                for k, v in self.iteritems():
-                    newkey = k[0]
-                    if newkey == key: return v
-                    
-            submatrix = self.__class__(name = self.name + '_' + str(key))
-            subdat = [(k[1:], v) for k,v in self.iteritems() if k[0]==key]
-            for k, v in subdat:
-                submatrix.new_entry(k, v)
-            return submatrix
-        else:
-            return super(Matrix, self).__getitem__(self.__checkkey__(key))
+        return super(Matrix, self).__getitem__(self.__checkkey__(key))
 
     def __repr__(self):
         return ('<SHLA Matrix: "{}"; {} entries.>'.format(self.name, len(self)))
@@ -124,10 +112,6 @@ class Matrix(Block):
                   + ''.join(content) + '\n')
         return string
     
-    def dict(self):
-        '''Return SHLA Block object as a regular python dict.'''
-        return {k:v for k,v in self.iteritems()}
-
     def array(self):
         pass
     def dimension(self):
@@ -184,14 +168,14 @@ class NamedBlock(Block):
                                                 preamble = preamble)
                                                 
     def __setitem__(self, key, value):
-        super(NamedBlock,self).__setitem__(self.__parse__(key),
-                                             self.cast(value))
+        return super(NamedBlock, self).__setitem__(self.__parse__(key),
+                                                   self.cast(value))
 
     def __getitem__(self, key):
-        return super(NamedBlock,self).__getitem__(self.__parse__(key))
+        return super(NamedBlock, self).__getitem__(self.__parse__(key))
     
     def __delitem__(self, key):
-        super(NamedBlock,self).__delitem__(self.__parse__(key))
+        super(NamedBlock, self).__delitem__(self.__parse__(key))
         
         # Additional cleanup needed for _names and _numbers lookup dicts.
         if type(key) is str:
@@ -210,7 +194,7 @@ class NamedBlock(Block):
                                      
     def __contains__(self, key):
         try:
-            return super(NamedBlock,self).__contains__(self.__parse__(key))
+            return super(NamedBlock, self).__contains__(self.__parse__(key))
         except KeyError:
             return False
         
@@ -272,18 +256,16 @@ class NamedBlock(Block):
 
 class NamedMatrix(Matrix, NamedBlock):
     '''    
-    Container class for SLHA block. A subclass of `collections.OrderedDict`with 
-    a restriction on integer keys and a modified __repr__(). Block can't be 
-    initialised with any positional arguments but rather with the 'data' 
-    keyword argument. It can optionally be named using the 'name' keyword 
-    argument. __repr__ and __str__ functions are also defined to output the 
-    SLHA formatted block.
+    Class derived from `Matrix` and `NamedBlock` to add the named indexing 
+    functionality to the multi-counter SLHA block structure.
     '''
                 
     def __setitem__(self, key, value):
-        return super(NamedMatrix,self).__setitem__(self.__checkkey__(key), 
-                                                   self.cast(value))
-
+        return super(NamedMatrix, self).__setitem__(self.__parse__(key), value)
+    
+    def __getitem__(self, key):
+        return super(NamedMatrix, self).__getitem__(self.__parse__(key))
+                                            
     def __repr__(self):
         return ('<SHLA NamedMatrix: "{}"; {} entries.>'.format(self.name, 
                                                                len(self)))
@@ -307,10 +289,6 @@ class NamedMatrix(Matrix, NamedBlock):
                   +'BLOCK {}\n'.format(self.name)
                   + ''.join(content) + '\n')
         return string
-    
-    def dict(self):
-        '''Return SHLA Block object as a regular python dict.'''
-        return {k:v for k,v in self.iteritems()}
 
 class Decay(OrderedDict):
     '''
@@ -716,9 +694,7 @@ def read(card):
                     theblock = NamedMatrix(name=bname.lower(), comment=comment)
                 else:
                     theblock = NamedBlock(name=bname.lower(), comment=comment)
-                
-                print type(theblock)
-                
+                                
                 for ele in elements:
                     theblock.new_entry(*ele)
                 
@@ -815,7 +791,6 @@ def read_until(lines, here, *args):
             return lines_read[:-1],lines_read[-1], stopiter
     except IndexError:
         return [],'',stopiter
-
 
 if __name__=='__main__':
     pass
