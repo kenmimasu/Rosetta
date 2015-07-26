@@ -595,6 +595,8 @@ class Basis(object):
                         if i in self.mass:
                             v2 = float(self.mass[i])
                             if v!=v2:
+                                print v, type(v)
+                                print v2, type(v2)
                                 print ('Warning: M{} '.format(particle_names[i])
                                 + 'specified in block sminput[{}] '.format(k)
                                 + '({:.5e}) not consistent with '.format(v)

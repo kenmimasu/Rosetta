@@ -20,8 +20,18 @@ class Block(OrderedDict):
         else:
             return key
     
+    def __cast__(self, val):
+        '''
+        Attempts to cast values to type specified in 'dtype' keyword argument 
+        of constructor.
+        '''
+        try:
+            return self.cast(val)
+        except ValueError:
+            return val
+    
     def __init__(self, name=None, data=None, 
-                 decimal=5, dtype=lambda x: x, preamble=''):
+                 decimal=5, dtype=float, preamble=''):
         '''    Intialisation keyword arguments:
             name - A name for the block that will appear 
                    in the __str__ and __repr__ methods.
@@ -45,7 +55,7 @@ class Block(OrderedDict):
                 
     def __setitem__(self,key,value):
         return super(Block, self).__setitem__(self.__checkkey__(key),
-                                             self.cast(value))
+                                              self.__cast__(value))
 
     def __repr__(self):
         return ('<SHLA Block: "{}"; {} entries.>'.format(self.name, len(self)))
@@ -143,7 +153,7 @@ class NamedBlock(Block):
             return key
     
     def __init__(self, name=None, data=None, 
-                 comment='', decimal=5, dtype=lambda x:x, preamble=''):
+                 comment='', decimal=5, dtype=float, preamble=''):
         '''    
         Same as the SLHA.Block constructor but additionally checks if the data 
         keyword argument has a "_names" attribute (i.e. if it is an existing 
@@ -169,7 +179,7 @@ class NamedBlock(Block):
                                                 
     def __setitem__(self, key, value):
         return super(NamedBlock, self).__setitem__(self.__parse__(key),
-                                                   self.cast(value))
+                                                   self.__cast__(value))
 
     def __getitem__(self, key):
         return super(NamedBlock, self).__getitem__(self.__parse__(key))
