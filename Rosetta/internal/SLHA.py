@@ -1,7 +1,32 @@
-from collections import OrderedDict
+from collections import OrderedDict, MutableMapping
+from operator import itemgetter
 import sys
 import re
 
+class CaseInsensitiveOrderedDict(MutableMapping):
+    
+    def __init__(self, data=None, **kwargs):
+        self._data = OrderedDict()
+        if data is None:
+            data = {}
+        self.update(data, **kwargs)
+    
+    def __setitem__(self, key, value):
+        self._data[key.lower()] = (key, value)
+
+    def __getitem__(self, key):
+        return self._data[key.lower()][1]
+
+    def __delitem__(self, key):
+        del self._data[key.lower()]
+
+    def __iter__(self):
+        return (casedkey for casedkey, mappedvalue in self._data.values())
+
+    def __len__(self):
+        return len(self._data)
+    
+        
 class Block(OrderedDict):
     '''    
     Container class for SLHA block with a single counter. A subclass of 
@@ -62,7 +87,8 @@ class Block(OrderedDict):
 
     def __str__(self):
         content = []
-        for k,v in self.iteritems():
+        sortitems = sorted(self.items())
+        for k,v in sortitems:
             try:
                 val = float(v)
                 fmt = self.fmt
@@ -107,7 +133,8 @@ class Matrix(Block):
 
     def __str__(self):
         content = []
-        for k,v in self.iteritems():
+        sortitems = sorted(self.items(), key=itemgetter(0,0))
+        for k,v in sortitems:
             try:
                 v = float(v)
                 fmt = self.fmt
@@ -119,7 +146,7 @@ class Matrix(Block):
             content.append(line(*args))
         string = (self.preamble+'\n'
                   +'BLOCK {}\n'.format(self.name)
-                  + ''.join(content) + '\n')
+                  + ''.join(content) )
         return string
     
     def array(self):
@@ -144,7 +171,7 @@ class NamedBlock(Block):
         '''
         if type(key) is str:
             try:
-                return self._numbers[key.lower()]
+                return self._numbers[key]
             except KeyError:
                 err = ('Name "{}" has not been assigned to a '.format(key) +
                        'key in SLHA.NamedBlock {}._names'.format(self.name))
@@ -163,15 +190,15 @@ class NamedBlock(Block):
         if data is not None and hasattr(data, '_names'):
             self._names = data._names
             try:
-                self._numbers = {v:k.lower() for k,v 
-                                      in self._names.iteritems()}
+                self._numbers = CaseInsensitiveOrderedDict({v:k for k,v 
+                                                  in self._names.iteritems()})
             except AttributeError:
                 raise ValueError('"names" keyword argument must be a'
                                  'dictionary or support iteritems() method.')
         else:
-            self._names, self._numbers = {}, {}
+            self._names, self._numbers = {}, CaseInsensitiveOrderedDict()
 
-        self.comment=comment
+        self.comment = comment
 
         return super(NamedBlock, self).__init__(name=name, data=data, 
                                                 decimal=decimal, dtype=dtype,
@@ -189,7 +216,7 @@ class NamedBlock(Block):
         
         # Additional cleanup needed for _names and _numbers lookup dicts.
         if type(key) is str:
-            key = key.lower()
+            # key = key.lower()
             try:
                 del self._names[self._numbers[key]]
                 del self._numbers[key]
@@ -213,7 +240,8 @@ class NamedBlock(Block):
                                         self.name, len(self), len(self._names)))
     def __str__(self):
         content = []
-        for k,v in self.iteritems():
+        sortitems = sorted(self.items(), key=itemgetter(0))
+        for k,v in sortitems:
             try:
                 strval = ('{{{}}}'.format(self.fmt)).format(float(v))
             except ValueError:
@@ -234,7 +262,7 @@ class NamedBlock(Block):
         return self._names.get(key, default)
         
     def get_number(self, name, default=-1):
-        return self._numbers.get(name.lower(),default)
+        return self._numbers.get(name, default)
     
     def new_entry(self, key, value, name=None):
         '''
@@ -243,11 +271,12 @@ class NamedBlock(Block):
         '''
            
         if key in self:
-            err = ("Key '{}' already belongs to NamedBlock ".format(key.lower())
+            err = ("Key '{}' already belongs to {} ".format(key,
+                                                            self.__class__)
                  +  "'{}', mapped to name '{}'.".format(self.name,
                                                         self.get_name(key)))
             raise KeyError(err)
-            
+        
         if name in self._numbers:
             err = ("Name '{}' already booked in ".format(name) +
                    "NamedBlock {}, mapped to key '{}'.".format(
@@ -255,8 +284,8 @@ class NamedBlock(Block):
             raise KeyError(err)
         else:
             if name is not None:
-                self._names[key] = name.lower()
-                self._numbers[name.lower()] = key
+                self._names[key] = name
+                self._numbers[name] = key
             self[key]=value
             
     def namedict(self):
@@ -279,10 +308,11 @@ class NamedMatrix(Matrix, NamedBlock):
     def __repr__(self):
         return ('<SHLA NamedMatrix: "{}"; {} entries.>'.format(self.name, 
                                                                len(self)))
-
+                                                               
     def __str__(self):
         content = []
-        for k,v in self.iteritems():
+        sortitems = sorted(self.items(), key=itemgetter(0,0))
+        for k,v in sortitems:
             try:
                 v = float(v)
                 fmt = self.fmt
@@ -297,7 +327,7 @@ class NamedMatrix(Matrix, NamedBlock):
             content.append(line(*args))
         string = (self.preamble+'\n'
                   +'BLOCK {}\n'.format(self.name)
-                  + ''.join(content) + '\n')
+                  + ''.join(content) )
         return string
 
 class Decay(OrderedDict):
@@ -460,7 +490,7 @@ class Card(object):
         if type(key) is int:
             return self.decays
         elif type(key) is str:
-            return self._parent_block(key)
+            return self._parent_block(key.lower())
         else:
             err = ('SLHA Card has integer keys for '
                    'DECAY and string keys for BLOCK.')
@@ -475,9 +505,9 @@ class Card(object):
         matrices - a dictionary of SLHA.NamedMatrix objects.
         name - card name'''
         
-        self.blocks = OrderedDict()
-        self.decays = OrderedDict()
-        self.matrices = OrderedDict()
+        self.blocks = CaseInsensitiveOrderedDict()
+        self.decays = CaseInsensitiveOrderedDict()
+        self.matrices = CaseInsensitiveOrderedDict()
         self.name = name if name is not None else ''
         if blocks is not None:
             for bname, block in blocks.iteritems():
@@ -496,7 +526,7 @@ class Card(object):
     def __getitem__(self, key):
         container = self._container(key)
         if container is not None:
-            return self._container(key)[key]
+            return container[key.lower()]
         else:
             err = 'Key/Matrix "{}" not found in {}'.format(key, self)
             raise KeyError(err)
@@ -504,7 +534,7 @@ class Card(object):
     def __delitem__(self, key):
         container = self._container(key)
         if container is not None:
-            del self._container(key)[key]
+            del container[key.lower()]
         else:
             err = 'Key/Matrix "{}" not found in {}'.format(key, self)
             raise KeyError(err)
@@ -512,7 +542,7 @@ class Card(object):
     def __setitem__(self, key, value):
         container = self._container(key)
         if container is not None:
-            return self._container(key).__setitem__(key,value)
+            return container.__setitem__(key.lower(), value)
         else:
             err = 'Key/Matrix "{}" not found in {}'.format(key, self)
             raise KeyError(err)
@@ -572,10 +602,10 @@ class Card(object):
         if comment is not None: self._comments[PIDs]=comment
         
     def has_block(self, name):
-        return name in self.blocks 
+        return name.lower() in self.blocks 
     
     def has_matrix(self, name):
-        return name in self.matrices
+        return name.lower() in self.matrices
     
     def has_decay(self, PID):
         return PID in self.decays
@@ -598,7 +628,7 @@ class Card(object):
             
             allblocks = self.blocks.keys() + self.matrices.keys()
             other_blocks = [b for b in allblocks if b not in blockorder]
-            
+
             for block in blockorder:
                 if self.has_block(block):
                     out.write(str(self.blocks[block]))
@@ -644,12 +674,12 @@ def read(card):
         while True:
             counter+=1 # keep track of line number
             stop=False
-            try: ll=(last_line.strip()).lower()
-            except NameError: ll = (lines.next()).strip().lower()
+            try: ll=(last_line.strip())
+            except NameError: ll = (lines.next()).strip()
         
             if not ll: continue
 
-            first_chars = re.match(r'\s*(\S+).*',ll).group(1)
+            first_chars = re.match(r'\s*(\S+).*',ll).group(1).lower()
             
             if first_chars=='block':
                 try:
@@ -701,9 +731,9 @@ def read(card):
                 
                 
                 if type(elements[0][0]) is tuple:
-                    theblock = NamedMatrix(name=bname.lower(), comment=comment)
+                    theblock = NamedMatrix(name=bname, comment=comment)
                 else:
-                    theblock = NamedBlock(name=bname.lower(), comment=comment)
+                    theblock = NamedBlock(name=bname, comment=comment)
                                 
                 for ele in elements:
                     theblock.new_entry(*ele)
@@ -803,4 +833,9 @@ def read_until(lines, here, *args):
         return [],'',stopiter
 
 if __name__=='__main__':
+    b= CaseInsensitiveOrderedDict()
+    b['buMs']=1
+    print 'bums' in b
+    print b.keys()
+    # a = CaseInsensitiveOrderedDict({'oNe':1,'twO':2,'THRee':3})
     pass

@@ -1,3 +1,4 @@
+from math import sqrt
 ################################################################################
 # PDG ID dictionary
 PID = {'u':{1:1 ,2:4, 3:6},'d':{1:2, 2:3, 3:5},
@@ -21,8 +22,26 @@ default_inputs = {1: 1.325070e+02, 2: 1.166390e-05, 3: 1.180000e-01,
                   4: default_masses[23], 5: default_masses[5], 
                   6: default_masses[6], 7: default_masses[15],
                   25:default_masses[25], 9:default_masses[24] }
+# Wolfenstein parameters (PDG best fit)
+lam, A, rho, eta = 0.22535, 0.811, 0.131, 0.345
+# CKM mixing angles and CP phase
+s12, s23 = lam, A*lam**2
+s13cd, s13sd = A*lam**3*rho, A*lam**3*eta
+s13 = sqrt(s13sd**2+s13cd**2)
+c12, c23, c13 = map(lambda x: sqrt(1.-x**2), (s12, s23, s13 ))
+
+
+# CKM matrix
+VCKM = {1:{1:c12*c13,                2:s12*c13,                3:s13cd  },
+        2:{1:-s12*c23-c12*s23*s13cd, 2:c12*c23-s12*s23*s13cd,  3:s23*c13},
+        3:{1:s12*s23-c12*c23*s13cd,  2:-c12*s23-s12*c23*s13cd, 3:c23*c13}}
+IMVCKM = {1:{1:0.,             2:0.,             3:-s13sd},
+          2:{1:-c12*s23*s13sd, 2:-s12*s23*s13sd, 3:0.   },
+          3:{1:-c12*c23*s13sd, 2:-s12*c23*s13sd, 3:0.   }}
 ################################################################################
 class RosettaError(Exception):
     '''Fancy error name.'''
     pass
 ################################################################################
+if __name__=='__main__':
+    pass

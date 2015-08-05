@@ -1,11 +1,7 @@
 ################################################################################
 ####################### ROSETTA: HIGGS BASIS INPUT CARD ########################
-###################### GENERATED WED JUL 22 15:07:24 2015 ######################
+###################### GENERATED TUE JUL 28 19:23:23 2015 ######################
 ################################################################################
-
-###################################
-## INFORMATION FOR MASS
-###################################
 
 BLOCK mass # 
     1    +4.80000e-03 # Mu
@@ -22,10 +18,6 @@ BLOCK mass #
     16   +0.00000e+00 # Mvta
     25   +1.25000e+02 # MH
 
-###################################
-## INFORMATION FOR SMINPUTS
-###################################
-
 BLOCK sminputs # 
     1    +1.32507e+02 # aEWM1
     2    +1.16639e-05 # Gf
@@ -39,82 +31,227 @@ BLOCK sminputs #
 BLOCK basis # 
     1    higgs # translated basis
 
-BLOCK hbh3 # 
-    1    +0.00000e+00 # dL3
-
-BLOCK hbvertex # 
-    1    +0.00000e+00 # dGLze11
-    2    +0.00000e+00 # dGLze22
-    3    +0.00000e+00 # dGLze33
-    4    +0.00000e+00 # dGRze11
-    5    +0.00000e+00 # dGRze22
-    6    +0.00000e+00 # dGRze33
-    7    +0.00000e+00 # dGLzu11
-    8    +0.00000e+00 # dGLzu22
-    9    +0.00000e+00 # dGLzu33
-    10   +0.00000e+00 # dGRzu11
-    11   +0.00000e+00 # dGRzu22
-    12   +0.00000e+00 # dGRzu33
-    13   +0.00000e+00 # dGLzd11
-    14   +0.00000e+00 # dGLzd22
-    15   +0.00000e+00 # dGLzd33
-    16   +0.00000e+00 # dGRzd11
-    17   +0.00000e+00 # dGRzd22
-    18   +0.00000e+00 # dGRzd33
-    19   +0.00000e+00 # dGLwl11
-    20   +0.00000e+00 # dGLwl22
-    21   +0.00000e+00 # dGLwl33
-    22   +0.00000e+00 # dGRwq11Re
-    23   +0.00000e+00 # dGRwq11Im
-    24   +0.00000e+00 # dGRwq22Re
-    25   +0.00000e+00 # dGRwq22Im
-    26   +0.00000e+00 # dGRwq33Re
-    27   +0.00000e+00 # dGRwq33Im
-
-BLOCK hb4f # 
+BLOCK HBx4F # 
     1    +0.00000e+00 # cll1122
     2    +0.00000e+00 # cpuu3333
 
-BLOCK hbv3 # 
-    1    +0.00000e+00 # Lz
-    2    +0.00000e+00 # C3g
-    3    +0.00000e+00 # LTz
-    4    +0.00000e+00 # CT3g
-
-BLOCK hbkin # 
-    1    +0.00000e+00 # dM
-
-BLOCK hbhff # 
-    1    +0.00000e+00 # dYu11
-    2    +0.00000e+00 # dYu22
-    3    +0.00000e+00 # dYu33
-    4    +0.00000e+00 # dYd11
-    5    +0.00000e+00 # dYd22
-    6    +0.00000e+00 # dYd33
-    7    +0.00000e+00 # dYe11
-    8    +0.00000e+00 # dYe22
-    9    +0.00000e+00 # dYe33
-    10   +0.00000e+00 # Su11
-    11   +0.00000e+00 # Su22
-    12   +0.00000e+00 # Su33
-    13   +0.00000e+00 # Sd11
-    14   +0.00000e+00 # Sd22
-    15   +0.00000e+00 # Sd33
-    16   +0.00000e+00 # Se11
-    17   +0.00000e+00 # Se22
-    18   +0.00000e+00 # Se33
-
-BLOCK hbhvv # 
+BLOCK HBxh # 
     1    +0.00000e+00 # dCz
     2    +0.00000e+00 # Cgg
-    3    +0.00000e+00 # Czz
-    4    +0.00000e+00 # Caa
-    5    +0.00000e+00 # Cza
+    3    +0.00000e+00 # Caa
+    4    +0.00000e+00 # Cza
+    5    +0.00000e+00 # Czz
     6    +0.00000e+00 # Czbx
-    7    +0.00000e+00 # CTgg
-    8    +0.00000e+00 # CTzz
-    9    +0.00000e+00 # CTaa
-    10   +0.00000e+00 # CTza
+    8    +0.00000e+00 # tCgg
+    9    +0.00000e+00 # tCaa
+    10   +0.00000e+00 # tCza
+
+BLOCK HBxhself # 
+    1    +0.00000e+00 # dL3
+
+BLOCK HBxMASS # 
+    1    +0.00000e+00 # dM
+
+BLOCK HBxTGC # 
+    1    +0.00000e+00 # Lz
+    2    +0.00000e+00 # tLz
+    10   +0.00000e+00 # C3g
+    11   +0.00000e+00 # tC3g
+
+BLOCK HBxSd
+    1   1    +0.00000e+00 # Sd1x1
+    2   2    +0.00000e+00 # Sd2x2
+    3   3    +0.00000e+00 # Sd3x3
+
+BLOCK HBxSe
+    1   1    +0.00000e+00 # Se1x1
+    2   2    +0.00000e+00 # Se2x2
+    3   3    +0.00000e+00 # Se3x3
+
+BLOCK HBxSu
+    1   1    +0.00000e+00 # Su1x1
+    2   2    +0.00000e+00 # Su2x2
+    3   3    +0.00000e+00 # Su3x3
+
+BLOCK HBxdGLwl
+    1   1    +0.00000e+00 # dGLwl1x1
+    2   2    +0.00000e+00 # dGLwl2x2
+    3   3    +0.00000e+00 # dGLwl3x3
+
+BLOCK HBxdGLzd
+    1   1    +0.00000e+00 # dGLzd1x1
+    2   2    +0.00000e+00 # dGLzd2x2
+    3   3    +0.00000e+00 # dGLzd3x3
+
+BLOCK HBxdGLze
+    1   1    +0.00000e+00 # dGLze1x1
+    2   2    +0.00000e+00 # dGLze2x2
+    3   3    +0.00000e+00 # dGLze3x3
+
+BLOCK HBxdGLzu
+    1   1    +0.00000e+00 # dGLzu1x1
+    2   2    +0.00000e+00 # dGLzu2x2
+    3   3    +0.00000e+00 # dGLzu3x3
+
+BLOCK HBxdGRzd
+    1   1    +0.00000e+00 # dGRzd1x1
+    2   2    +0.00000e+00 # dGRzd2x2
+    3   3    +0.00000e+00 # dGRzd3x3
+
+BLOCK HBxdGRze
+    1   1    +0.00000e+00 # dGRze1x1
+    2   2    +0.00000e+00 # dGRze2x2
+    3   3    +0.00000e+00 # dGRze3x3
+
+BLOCK HBxdGRzu
+    1   1    +0.00000e+00 # dGRzu1x1
+    2   2    +0.00000e+00 # dGRzu2x2
+    3   3    +0.00000e+00 # dGRzu3x3
+
+BLOCK HBxdYd
+    1   1    +0.00000e+00 # dYd1x1
+    2   2    +0.00000e+00 # dYd2x2
+    3   3    +0.00000e+00 # dYd3x3
+
+BLOCK HBxdYe
+    1   1    +0.00000e+00 # dYe1x1
+    2   2    +0.00000e+00 # dYe2x2
+    3   3    +0.00000e+00 # dYe3x3
+
+BLOCK HBxdYu
+    1   1    +0.00000e+00 # dYu1x1
+    2   2    +0.00000e+00 # dYu2x2
+    3   3    +0.00000e+00 # dYu3x3
+
+BLOCK HBxdad
+    1   1    +0.00000e+00 # dad1x1
+    2   2    +0.00000e+00 # dad2x2
+    3   3    +0.00000e+00 # dad3x3
+
+BLOCK HBxdae
+    1   1    +0.00000e+00 # dae1x1
+    2   2    +0.00000e+00 # dae2x2
+    3   3    +0.00000e+00 # dae3x3
+
+BLOCK HBxdau
+    1   1    +0.00000e+00 # dau1x1
+    2   2    +0.00000e+00 # dau2x2
+    3   3    +0.00000e+00 # dau3x3
+
+BLOCK HBxdgd
+    1   1    +0.00000e+00 # dgd1x1
+    2   2    +0.00000e+00 # dgd2x2
+    3   3    +0.00000e+00 # dgd3x3
+
+BLOCK HBxdgu
+    1   1    +0.00000e+00 # dgu1x1
+    2   2    +0.00000e+00 # dgu2x2
+    3   3    +0.00000e+00 # dgu3x3
+
+BLOCK HBxdzd
+    1   1    +0.00000e+00 # dzd1x1
+    2   2    +0.00000e+00 # dzd2x2
+    3   3    +0.00000e+00 # dzd3x3
+
+BLOCK HBxdze
+    1   1    +0.00000e+00 # dze1x1
+    2   2    +0.00000e+00 # dze2x2
+    3   3    +0.00000e+00 # dze3x3
+
+BLOCK HBxdzu
+    1   1    +0.00000e+00 # dzu1x1
+    2   2    +0.00000e+00 # dzu2x2
+    3   3    +0.00000e+00 # dzu3x3
+
+BLOCK HBxtdad
+    1   1    +0.00000e+00 # tdad1x1
+    2   2    +0.00000e+00 # tdad2x2
+    3   3    +0.00000e+00 # tdad3x3
+
+BLOCK HBxtdae
+    1   1    +0.00000e+00 # tdae1x1
+    2   2    +0.00000e+00 # tdae2x2
+    3   3    +0.00000e+00 # tdae3x3
+
+BLOCK HBxtdau
+    1   1    +0.00000e+00 # tdau1x1
+    2   2    +0.00000e+00 # tdau2x2
+    3   3    +0.00000e+00 # tdau3x3
+
+BLOCK HBxtdgd
+    1   1    +0.00000e+00 # tdgd1x1
+    2   2    +0.00000e+00 # tdgd2x2
+    3   3    +0.00000e+00 # tdgd3x3
+
+BLOCK HBxtdgu
+    1   1    +0.00000e+00 # tdgu1x1
+    2   2    +0.00000e+00 # tdgu2x2
+    3   3    +0.00000e+00 # tdgu3x3
+
+BLOCK HBxtdzd
+    1   1    +0.00000e+00 # tdzd1x1
+    2   2    +0.00000e+00 # tdzd2x2
+    3   3    +0.00000e+00 # tdzd3x3
+
+BLOCK HBxtdze
+    1   1    +0.00000e+00 # tdze1x1
+    2   2    +0.00000e+00 # tdze2x2
+    3   3    +0.00000e+00 # tdze3x3
+
+BLOCK HBxtdzu
+    1   1    +0.00000e+00 # tdzu1x1
+    2   2    +0.00000e+00 # tdzu2x2
+    3   3    +0.00000e+00 # tdzu3x3
+
+BLOCK HBxdGRwq
+    1   1    +0.00000e+00 # RdGRwq1x1
+    2   2    +0.00000e+00 # RdGRwq2x2
+    3   3    +0.00000e+00 # RdGRwq3x3
+
+BLOCK IMHBxdGRwq
+    1   1    +0.00000e+00 # IdGRwq1x1
+    2   2    +0.00000e+00 # IdGRwq2x2
+    3   3    +0.00000e+00 # IdGRwq3x3
+
+BLOCK HBxdwl
+    1   1    +0.00000e+00 # Rdwl1x1
+    2   2    +0.00000e+00 # Rdwl2x2
+    3   3    +0.00000e+00 # Rdwl3x3
+
+BLOCK IMHBxdwl
+    1   1    +0.00000e+00 # Idwl1x1
+    2   2    +0.00000e+00 # Idwl2x2
+    3   3    +0.00000e+00 # Idwl3x3
+
+BLOCK HBxdwq
+    1   1    +0.00000e+00 # Rdwq1x1
+    2   2    +0.00000e+00 # Rdwq2x2
+    3   3    +0.00000e+00 # Rdwq3x3
+
+BLOCK IMHBxdwq
+    1   1    +0.00000e+00 # Idwq1x1
+    2   2    +0.00000e+00 # Idwq2x2
+    3   3    +0.00000e+00 # Idwq3x3
+
+BLOCK HBxtdwl
+    1   1    +0.00000e+00 # Rtdwl1x1
+    2   2    +0.00000e+00 # Rtdwl2x2
+    3   3    +0.00000e+00 # Rtdwl3x3
+
+BLOCK IMHBxtdwl
+    1   1    +0.00000e+00 # Itdwl1x1
+    2   2    +0.00000e+00 # Itdwl2x2
+    3   3    +0.00000e+00 # Itdwl3x3
+
+BLOCK HBxtdwq
+    1   1    +0.00000e+00 # Rtdwq1x1
+    2   2    +0.00000e+00 # Rtdwq2x2
+    3   3    +0.00000e+00 # Rtdwq3x3
+
+BLOCK IMHBxtdwq
+    1   1    +0.00000e+00 # Itdwq1x1
+    2   2    +0.00000e+00 # Itdwq2x2
+    3   3    +0.00000e+00 # Itdwq3x3
 
 ################################################################################
 ################################################################################

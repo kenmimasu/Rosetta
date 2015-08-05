@@ -21,37 +21,35 @@ class WarsawBasis(Basis.Basis):
     name = 'warsaw'
     ###### 
     # [Tab. 1]
-    WBV2H2 = ['cGG','ctGG','cWW','ctWW','cBB','ctBB','cWB','ctWB']
+    WBV2H2 = ['cGG','tcGG','cWW','tcWW','cBB','tcBB','cWB','tcWB']
     
     WBH4D2 = ['cH','cT']
     
     WBH6 = ['c6H']
     
-    WBV3D3 = ['c3W','c3G','ct3W','ct3G']
-    
-    cu = flavmat('cu',kind='general',domain='complex')
-    cd = flavmat('cd',kind='general',domain='complex')
-    ce = flavmat('ce',kind='general',domain='complex')
-
-    WBF2H3 = cu + cd + ce
-    
-    cHl  = flavmat('cHl' ,kind='hermitian',domain='complex')
-    cpHl = flavmat('cpHl',kind='hermitian',domain='complex')
-    cHe  = flavmat('cHe' ,kind='hermitian',domain='complex')
-    cHq  = flavmat('cHq' ,kind='hermitian',domain='complex')
-    cpHq = flavmat('cpHq',kind='hermitian',domain='complex')
-    cHu  = flavmat('cHu' ,kind='hermitian',domain='complex')
-    cHd  = flavmat('cHd' ,kind='hermitian',domain='complex')
-    cHud = flavmat('cHud',kind='general',domain='complex')
-    WBF2H2D = cHl + cpHl + cHe + cHq + cpHq + cHu + cHd + cHud
+    WBV3D3 = ['c3W','c3G','tc3W','tc3G']
     
     # affects Gf input, Warsaw <-> SILH translation
     WB4F = ['cll1221','cll1122','cpuu3333'] 
     ######
-    blocks = {'WBV2H2':WBV2H2, 'WBH4D2':WBH4D2, 'WBH6':WBH6, 'WBV3D3':WBV3D3, 
-              'WBF2H3':WBF2H3, 'WBF2H2D':WBF2H2D, 'WB4F':WB4F}
+    blocks = {'WBV2H2':WBV2H2, 'WBH4D2':WBH4D2, 'WBH6':WBH6, 
+              'WBV3D3':WBV3D3, 'WB4F':WB4F}
+              
+    flavoured = {
+        'WBxu': {'cname':'cu', 'kind':'general', 'domain':'complex'},
+        'WBxd': {'cname':'cd', 'kind':'general', 'domain':'complex'},
+        'WBxe': {'cname':'ce', 'kind':'general', 'domain':'complex'},
+        'WBxHl': {'cname':'cHl' , 'kind':'hermitian', 'domain':'complex'},
+        'WBxHpl': {'cname':'cHpl', 'kind':'hermitian', 'domain':'complex'},
+        'WBxHe': {'cname':'cHe' , 'kind':'hermitian', 'domain':'complex'},
+        'WBxHq': {'cname':'cHq' , 'kind':'hermitian', 'domain':'complex'},
+        'WBxHpq': {'cname':'cHpq', 'kind':'hermitian', 'domain':'complex'},
+        'WBxHu': {'cname':'cHu' , 'kind':'hermitian', 'domain':'complex'},
+        'WBxHd' : {'cname':'cHd' , 'kind':'hermitian', 'domain':'complex'},
+        'WBxHud' : {'cname':'cHud', 'kind':'general', 'domain':'complex'}
+    }
     
-    independent = WBH4D2 + WBH6 + WBV3D3 + WBF2H3  + WBV2H2 + WBF2H2D + WB4F
+    independent = [c for c in blocks.keys()] + [c for c in flavoured.keys()]
     
     required_masses = set([y for x in PID.values() for y in x.values()])
     required_inputs = {1, 2, 3, 4, 25} # aEWM1, Gf, MZ, MH, aS(MZ)
@@ -73,85 +71,86 @@ class WarsawBasis(Basis.Basis):
         MH = self.mass[25]
         MW = MZ*sqrt(c2w)
         
-        A = self
-        B = instance
+        W = self
+        M = instance
 
         def delta(i,j):
             return 1. if i==j else 0.
                     
         def f(T3,Q,i,j): # [eqn (4.11)]
-                return delta(i,j)*( -Q*A['cWB']*gw2*gp2/(gw2-gp2)
-                                   + (A['cT']-dv)*(T3 + Q*gp2/(gw2-gp2)))
+                return delta(i,j)*( -Q*W['cWB']*gw2*gp2/(gw2-gp2)
+                                   + (W['cT']-dv)*(T3 + Q*gp2/(gw2-gp2)))
 
         # Higgs vev shift [eqn (4.8)]
-        dv = (A['cpHl11']+A['cpHl22'])/2.-A['cll1221']/4.
+        dv = (W['RcHpl1x1']+W['RcHpl2x2'])/2.-W['cll1221']/4.
         
         # W mass shift [eqn (4.9)]
-        B['dM'] = ( gw2*A['cT'] - gp2*gw2*A['cWB']-gp2*dv )/(gw2-gp2)
+        M['dM'] = ( gw2*W['cT'] - gp2*gw2*W['cWB']-gp2*dv )/(gw2-gp2)
+        
         # W/Z chiral coupling deviations
-        for i,j in comb((1,2,3),2):
-            ind = '{}{}'.format(i,j)
-            tail = [ind] if i==j else [ind+'Re', ind+'Im']
-            for t in tail:
-                # [eqn (4.10)]
-                B['dGLwl%s' % t] = (A['cpHl%s' % t] + f(1./2.,0.,i,j) 
-                                                    - f(-1./2.,-1.,i,j))
-                B['dGLzv%s' % t] = (1./2.*A['cpHl%s' % t] - 1./2.*A['cHl%s' % t] 
-                                                          + f(1./2.,0.,i,j))
-                B['dGLze%s' % t] = (-1./2.*A['cpHl%s' % t] - 1./2.*A['cHl%s' % t] 
-                                                           + f(-1./2.,-1.,i,j))
-                B['dGRze%s' % t] = - 1./2.*A['cHe%s' % t] + f(0.,-1.,i,j)
-                # [eqn (4.12)]
-                B['dGLwq%s' % t] = (A['cpHq%s' % t] + f(1./2.,2./3.,i,j)
-                                                    - f(-1./2.,-1./3.,i,j))
-                B['dGLzu%s' % t] = (1./2.*A['cpHq%s' % t] - 1./2.*A['cHq%s' % t] 
-                                                          + f(1./2.,2./3.,i,j))
-                B['dGLzd%s' % t] = (-1./2.*A['cpHq%s' % t] 
-                                  - 1./2.*A['cHq%s' % t] + f(-1./2.,-1./3.,i,j))
-                B['dGRzu%s' % t] = - 1./2.*A['cHu%s' % t] + f(0.,2./3.,i,j)
-                B['dGRzd%s' % t] = - 1./2.*A['cHd%s' % t] + f(0.,-1./3.,i,j)
-                # [eqn (4.13)]
-                B['CLwl%s' % t] = B['dGLwl%s' % t]
-                B['CLzv%s' % t] = B['dGLzv%s' % t]
-                B['CLze%s' % t] = B['dGLze%s' % t]
-                B['CRze%s' % t] = B['dGRze%s' % t]
-                B['CLwq%s' % t] = B['dGLwq%s' % t]
-                B['CLzu%s' % t] = B['dGLzu%s' % t]
-                B['CLzd%s' % t] = B['dGLzd%s' % t]
-                B['CRzu%s' % t] = B['dGRzu%s' % t]
-                B['CRzd%s' % t] = B['dGRzd%s' % t]
+        for px in ('','IM'):
+            for i,j in W[px+'WBxHpl'].keys():
+                M[px+'MBxdGLzv'][i,j] = (1./2.*W[px+'WBxHpl'][i,j] 
+                                       - 1./2.*W[px+'WBxHl'][i,j] 
+                                       + f(1./2.,0.,i,j))
+                M[px+'MBxdGLze'][i,j] = (-1./2.*W[px+'WBxHpl'][i,j] 
+                                       - 1./2.*W[px+'WBxHl'][i,j] 
+                                       + f(-1./2.,-1.,i,j))
+                M[px+'MBxdGRze'][i,j] = (- 1./2.*W[px+'WBxHe'][i,j] 
+                                       + f(0.,-1.,i,j))
+                M[px+'MBxdGLzu'][i,j] = (1./2.*W[px+'WBxHpq'][i,j] 
+                                       - 1./2.*W[px+'WBxHq'][i,j] 
+                                       + f(1./2.,2./3.,i,j))
+                M[px+'MBxdGLzd'][i,j] = (-1./2.*W[px+'WBxHpq'][i,j] 
+                                       - 1./2.*W[px+'WBxHq'][i,j] 
+                                       + f(-1./2.,-1./3.,i,j))
+                M[px+'MBxdGRzu'][i,j] = (- 1./2.*W[px+'WBxHu'][i,j] 
+                                       + f(0.,2./3.,i,j))
+                M[px+'MBxdGRzd'][i,j] = (- 1./2.*W[px+'WBxHd'][i,j]
+                                       + f(0.,-1./3.,i,j))
+                M[px+'MBxdGLwl'][i,j] = (W[px+'WBxHpl'][i,j] + f(1./2.,0.,i,j) 
+                                       - f(-1./2.,-1.,i,j))
+                M[px+'MBxdGLwq'][i,j] = (W[px+'WBxHpq'][i,j] 
+                                       + f(1./2.,2./3.,i,j)
+                                       - f(-1./2.,-1./3.,i,j))
+            for k,v in W[px+'WBxHud'].iteritems():
+                M[px+'MBxdGRwq'][k] = -v/2.
+
         
-        # Treat dGRwq separately as it has more flavour components
-        dGRwq = flavmat('dGRwq', kind='general', domain='complex')
-        for coeffW, coeffM in zip(self.cHud, dGRwq):
-            B[coeffM] = -1./2.*A[coeffW]
-            cvff = coeffM.replace('dG','C')
-            B[cvff] = B[coeffM]
-        
+        vertex = ['MBxdGLze', 'MBxdGRze', 'MBxdGLzv', 'MBxdGLzu', 'MBxdGRzu', 
+                  'MBxdGLzd', 'MBxdGRzd', 'MBxdGLwl', 'MBxdGLwq', 'MBxdGRwq']
+
+        # HVFF coeffs [Eqns (3.10)]
+        for dG in vertex: 
+            dGh = dG[:-2]+'h'+dG[-2:]
+            for k,v in M[dG].iteritems():
+                M[dGh][k] = v
+            for k,v in M['IM'+dG].iteritems():
+                M['IM'+dGh][k] = v
+
         # Higgs couplings to W/Z [eqn (4.14)]
-        B['dCw'] = ( -A['cH']*(gw2-gp2) - A['cWB']*4.*gw2*gp2 
-                    + A['cT']*4.*gw2 - dv*(3.*gw2+gp2) )/(gw2-gp2)
-        B['dCz'] = -A['cH'] - 3.*dv 
+        M['dCw'] = ( -W['cH']*(gw2-gp2) - W['cWB']*4.*gw2*gp2 
+                    + W['cT']*4.*gw2 - dv*(3.*gw2+gp2) )/(gw2-gp2)
+        M['dCz'] = -W['cH'] - 3.*dv 
         
         # Two derivative field strength interactions [eqn (4.15)]
-        B['Cgg']  = A['cGG'] 
-        B['Caa']  = A['cWW'] + A['cBB'] - 4.*A['cWB']
-        B['Czz']  = ( gw2**2*A['cWW'] + gp2**2*A['cBB'] 
-                     + 4.*gw2*gp2*A['cWB'] )/(gw2+gp2)**2
-        B['Czbx'] =  -(2./gw2)*(A['cT'] - dv) 
-        B['Cza']  = ( gw2*A['cWW'] - gp2*A['cBB'] 
-                      - 2.*(gw2-gp2)*A['cWB'] )/(gw2+gp2)
-        B['Cabx'] =  2./(gw2-gp2)*((gw2+gp2)*A['cWB'] - 2.*A['cT'] + 2.*dv) 
-        B['Cww']  =  A['cWW']
-        B['CwbxRe'] =  2./(gw2-gp2)*(gp2*A['cWB'] - A['cT'] + dv) 
-        B['CwbxIm'] = 0. 
-        B['CTgg'] = A['ctGG'] 
-        B['CTaa'] =  A['ctWW'] + A['ctBB'] - 4.*A['ctWB']
-        B['CTzz'] = ( gw2**2*A['ctWW'] + gp2**2*A['ctBB'] 
-                      + 4.*gw2*gp2*A['ctWB'] )/(gw2+gp2)**2
-        B['CTza'] = ( gw2*A['ctWW'] - gp2*A['ctBB'] 
-                      - 2.*(gw2-gp2)*A['ctWB'] )/(gw2+gp2)
-        B['CTww'] =  A['ctWW']
+        M['Cgg']  = W['cGG'] 
+        M['Caa']  = W['cWW'] + W['cBB'] - 4.*W['cWB']
+        M['Czz']  = ( gw2**2*W['cWW'] + gp2**2*W['cBB'] 
+                     + 4.*gw2*gp2*W['cWB'] )/(gw2+gp2)**2
+        M['Czbx'] =  -(2./gw2)*(W['cT'] - dv) 
+        M['Cza']  = ( gw2*W['cWW'] - gp2*W['cBB'] 
+                      - 2.*(gw2-gp2)*W['cWB'] )/(gw2+gp2)
+        M['Cabx'] =  2./(gw2-gp2)*((gw2+gp2)*W['cWB'] - 2.*W['cT'] + 2.*dv) 
+        M['Cww']  =  W['cWW']
+        M['Cwbx'] =  2./(gw2-gp2)*(gp2*W['cWB'] - W['cT'] + dv) 
+        M['tCgg'] = W['tcGG'] 
+        M['tCaa'] =  W['tcWW'] + W['tcBB'] - 4.*W['tcWB']
+        M['tCzz'] = ( gw2**2*W['tcWW'] + gp2**2*W['tcBB'] 
+                      + 4.*gw2*gp2*W['tcWB'] )/(gw2+gp2)**2
+        M['tCza'] = ( gw2*W['tcWW'] - gp2*W['tcBB'] 
+                      - 2.*(gw2-gp2)*W['tcWB'] )/(gw2+gp2)
+        M['tCww'] =  W['tcWW']
         
         
         # solution for  [eqn (4.16)]
@@ -170,77 +169,264 @@ class WarsawBasis(Basis.Basis):
                 else:
                     return -R*signY, -abs(Y)/R
 
-        # Yukawa type interaction coefficients [eqns. (4.16) & (4.17)]
-        for i,j in product((1,2,3),(1,2,3)): 
-            diag = delta(i,j)*(A['cH']+dv)
-            diag2 = 2.*delta(i,j)*A['cH']
-            for f in ('u','d','e'):
+        # Yukawa type interaction coefficients [eqns. (5.16) & (4.17)]
+        for f in ('u','d','e'):
+            matrix = 'WBx' + f
+            for i,j in W['WBx'+f].keys(): 
+                diag = delta(i,j)*(W['cH']+dv)
+                diag2 = 2.*delta(i,j)*W['cH']
                 mi, mj = self.mass[ PID[f][i] ],self.mass[ PID[f][j] ] 
-                name = '{}{}{}'.format(f,i,j)
-                if (mi and mj):
-                    c_Re, c_Im = A['c'+name+'Re'], A['c'+name+'Im']
+                if mi and mj:
+                    s_Re, s_Im = W[matrix][i,j], W['IM'+matrix][i,j]
+                    dy_cosphi = vev*s_Re/sqrt(2.*mi*mj) - diag
+                    dy_sinphi = vev*s_Im/sqrt(2.*mi*mj)
                     
-                    dy_cosphi = vev*c_Re/sqrt(2.*mi*mj) - diag
-                    dy_sinphi = vev*c_Im/sqrt(2.*mi*mj)
+                    M['MBxdY'+f][i,j], M['MBxS'+f][i,j] = dy_sf(dy_cosphi, 
+                                                                dy_sinphi)
                     
-                    B['dY'+name], B['S'+name]  = dy_sf(dy_cosphi, dy_sinphi)
+                    M['MBxY2'+f][i,j] = 3.*vev*s_Re/sqrt(2.*mi*mj) - diag2
+                    M['IMMBxY2'+f][i,j] = 3.*vev*s_Im/sqrt(2.*mi*mj)
                     
-                    B['Y2{}Re'.format(name)] = 3.*vev*c_Re/sqrt(2.*mi*mj) - diag2
-                    B['Y2{}Im'.format(name)] = 3.*vev*c_Im/sqrt(2.*mi*mj)
-        
         # Triple gauge couplings [eqn. (4.18)]
-        B['dG1z'] = (gw2+gp2)/(gw2-gp2)*( -A['cWB']*gp2 + A['cT'] - dv )
-        B['dKa']  = A['cWB']*gw2
-        B['dKz']  = (-A['cWB']*2.*gw2*gp2 + (gw2+gp2)*(A['cT'] - dv))/(gw2-gp2)
-        B['La']   = -A['c3W']*3./2.*gw2**2
-        B['Lz']   = B['La']
-        B['KTa']  = A['ctWB']*gw2
-        B['KTz']  = -A['ctWB']*gp2
-        B['LTa']  = -A['ct3W']*3./2.*gw2**2
-        B['LTz']  = B['LTa']
-        B['C3g']  = A['c3G']
-        B['CT3g']  = A['ct3G']
+        M['dG1z'] = (gw2+gp2)/(gw2-gp2)*( -W['cWB']*gp2 + W['cT'] - dv )
+        M['dKa']  = W['cWB']*gw2
+        M['dKz']  = (-W['cWB']*2.*gw2*gp2 + (gw2+gp2)*(W['cT'] - dv))/(gw2-gp2)
+        M['La']   = -W['c3W']*3./2.*gw2**2
+        M['Lz']   = M['La']
+        M['tKa']  = W['tcWB']*gw2
+        M['tKz']  = -W['tcWB']*gp2
+        M['tLa']  = -W['tc3W']*3./2.*gw2**2
+        M['tLz']  = M['tLa']
+        M['C3g']  = W['c3G']
+        M['tC3g']  = W['tc3G']
         
         # Quartic gauge couplings [Sec 3.7] [eqn (3.23)] 
-        B['dGw4'] = 2.*c2w*B['dG1z']
-        B['dGw2z2'] = 2.*B['dG1z']
-        B['dGw2za'] = B['dG1z']
+        M['dGw4'] = 2.*c2w*M['dG1z']
+        M['dGw2z2'] = 2.*M['dG1z']
+        M['dGw2za'] = M['dG1z']
         
         # two derivative quartic gauge couplings [Sec 3.7] [eqn (3.24)] 
-        B['Ldw4'] = -gw2/2./MW**2*B['Lz']
-        B['LTdw4'] = -gw2/2./MW**2*B['LTz']
-        B['Ldzdwzw'] = -gw2*c2w/MW**2*B['Lz']
-        B['LTdzdwzw'] = -gw2*c2w/MW**2*B['LTz']
-        B['Ldzdwaw'] = -ee2/MW**2*B['Lz']
-        B['LTdzdwaw'] = -ee2/MW**2*B['LTz']
-        B['Ldadwaw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
-        B['LTdadwaw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
-        B['Ldadwzw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['Lz']
-        B['LTdadwzw'] = -sqrt(ee2*gw2*c2w)/MW**2*B['LTz']
-        B['Ldgg3'] = 3.*sqrt(gs2)**3/vev**2*B['C3g']
-        B['LTdgg3'] = 3.*sqrt(gs2)**3/vev**2*B['CT3g']
+        M['Lw4'] = -gw2/2./MW**2*M['Lz']
+        M['tLw4'] = -gw2/2./MW**2*M['tLz']
+        M['Lw2z2'] = -gw2*c2w/MW**2*M['Lz']
+        M['tLw2z2'] = -gw2*c2w/MW**2*M['tLz']
+        M['Lw2za'] = -ee2/MW**2*M['Lz']
+        M['tLw2za'] = -ee2/MW**2*M['tLz']
+        M['Lw2a2'] = -sqrt(ee2*gw2*c2w)/MW**2*M['Lz']
+        M['tLw2a2'] = -sqrt(ee2*gw2*c2w)/MW**2*M['tLz']
+        M['Lw2az'] = -sqrt(ee2*gw2*c2w)/MW**2*M['Lz']
+        M['tLw2az'] = -sqrt(ee2*gw2*c2w)/MW**2*M['tLz']
+        M['C4g'] = 3.*sqrt(gs2)**3/vev**2*M['C3g']
+        M['tC4g'] = 3.*sqrt(gs2)**3/vev**2*M['tC3g']
         
         # Higgs cubic interaction [eqn. (4.19)]
-        B['dL3']  =  -MH**2/(2.*vev**2) * (3.*A['cH'] + dv) - A['c6H']
+        M['dL3']  =  -MH**2/(2.*vev**2) * (3.*W['cH'] + dv) - W['c6H']
+        M['dL4'] = 3./2.*M['dL3'] - MH**2/vev**2/6.*M['dCz']
         
         # Couplings of two Higgs bosons to gluons [Sec 3.8]
         # [eqn (3.27)] copied from HiggsBasis implemetation
-        B['Cgg2'], B['CTgg2'] = B['Cgg'], B['CTgg']
+        M['Cgg2'], M['tCgg2'] = M['Cgg'], M['tCgg']
+        
+        M['dCz2'] = M['dCz']
+        M['dCw2'] = M['dCw'] + 3.*M['dM']
+                
+        hvv = ['Cww', 'Cwbx', 'Cgg', 'Caa', 'Cza', 'Czz', 'Czbx', 'Cabx',
+               'tCww', 'tCgg', 'tCaa', 'tCza', 'tCzz']
+        
+        for cvv in hvv:
+            cvv2 = cvv +'2'
+            M[cvv2] = M[cvv]
         
         # 4-fermion 
-        B['cll1122'] = A['cll1122']
-        B['cpuu3333'] = A['cpuu3333']
-        B['cll1221'] = A['cll1221']
+        M['cll1122'] = W['cll1122']
+        M['cpuu3333'] = W['cpuu3333']
+        M['cll1221'] = W['cll1221']
         
         # print B.card.blocks
         # print B.card.blocks['mbvertex']
         # W mass shift
-        self.mass[24] = MW + B['dM']
-        return B
+        self.mass[24] = MW + M['dM']
+        return M
     
     @Basis.translation('higgs')        
     def to_higgs(self, instance):
-        H = self.to_mass(instance)
+        s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
+        MH = self.mass[25]
+        MW = MZ*sqrt(c2w)
+        
+        W = self
+        H = instance
+
+        def delta(i,j):
+            return 1. if i==j else 0.
+                    
+        def f(T3,Q,i,j): # [eqn (4.11)]
+                return delta(i,j)*( -Q*W['cWB']*gw2*gp2/(gw2-gp2)
+                                   + (W['cT']-dv)*(T3 + Q*gp2/(gw2-gp2)))
+
+        # Higgs vev shift [eqn (4.8)]
+        dv = (W['RcHpl1x1']+W['RcHpl2x2'])/2.-W['cll1221']/4.
+        
+        # W mass shift [eqn (4.9)]
+        H['dM'] = ( gw2*W['cT'] - gp2*gw2*W['cWB']-gp2*dv )/(gw2-gp2)
+        # sys.exit(0)
+        # W/Z chiral coupling deviations
+        for px in ('','IM'):
+            for i,j in W[px+'WBxHpl'].keys():
+                H[px+'HBxdGLzv'][i,j] = (1./2.*W[px+'WBxHpl'][i,j] 
+                                       - 1./2.*W[px+'WBxHl'][i,j] 
+                                       + f(1./2.,0.,i,j))
+                H[px+'HBxdGLze'][i,j] = (-1./2.*W[px+'WBxHpl'][i,j] 
+                                       - 1./2.*W[px+'WBxHl'][i,j] 
+                                       + f(-1./2.,-1.,i,j))
+                H[px+'HBxdGRze'][i,j] = (- 1./2.*W[px+'WBxHe'][i,j] 
+                                       + f(0.,-1.,i,j))
+                H[px+'HBxdGLzu'][i,j] = (1./2.*W[px+'WBxHpq'][i,j] 
+                                       - 1./2.*W[px+'WBxHq'][i,j] 
+                                       + f(1./2.,2./3.,i,j))
+                H[px+'HBxdGLzd'][i,j] = (-1./2.*W[px+'WBxHpq'][i,j] 
+                                       - 1./2.*W[px+'WBxHq'][i,j] 
+                                       + f(-1./2.,-1./3.,i,j))
+                H[px+'HBxdGRzu'][i,j] = (- 1./2.*W[px+'WBxHu'][i,j] 
+                                       + f(0.,2./3.,i,j))
+                H[px+'HBxdGRzd'][i,j] = (- 1./2.*W[px+'WBxHd'][i,j]
+                                       + f(0.,-1./3.,i,j))
+                H[px+'HBxdGLwl'][i,j] = (W[px+'WBxHpl'][i,j] + f(1./2.,0.,i,j) 
+                                       - f(-1./2.,-1.,i,j))
+                H[px+'HBxdGLwq'][i,j] = (W[px+'WBxHpq'][i,j] 
+                                       + f(1./2.,2./3.,i,j)
+                                       - f(-1./2.,-1./3.,i,j))
+            for k,v in W[px+'WBxHud'].iteritems():
+                H[px+'HBxdGRwq'][k] = -v/2.
+
+        
+        vertex = ['HBxdGLze', 'HBxdGRze', 'HBxdGLzv', 'HBxdGLzu', 'HBxdGRzu', 
+                  'HBxdGLzd', 'HBxdGRzd', 'HBxdGLwl', 'HBxdGLwq', 'HBxdGRwq']
+
+        # HVFF coeffs [Eqns (3.10)]
+        for dG in vertex: 
+            dGh = dG[:-2]+'h'+dG[-2:]
+            for k,v in H[dG].iteritems():
+                H[dGh][k] = v
+            for k,v in H['IM'+dG].iteritems():
+                H['IM'+dGh][k] = v
+                
+        # Higgs couplings to W/Z [eqn (4.14)]
+        H['dCw'] = ( -W['cH']*(gw2-gp2) - W['cWB']*4.*gw2*gp2 
+                    + W['cT']*4.*gw2 - dv*(3.*gw2+gp2) )/(gw2-gp2)
+        H['dCz'] = -W['cH'] - 3.*dv 
+        
+        # Two derivative field strength interactions [eqn (4.15)]
+        H['Cgg']  = W['cGG'] 
+        H['Caa']  = W['cWW'] + W['cBB'] - 4.*W['cWB']
+        H['Czz']  = ( gw2**2*W['cWW'] + gp2**2*W['cBB'] 
+                     + 4.*gw2*gp2*W['cWB'] )/(gw2+gp2)**2
+        H['Czbx'] =  -(2./gw2)*(W['cT'] - dv) 
+        H['Cza']  = ( gw2*W['cWW'] - gp2*W['cBB'] 
+                      - 2.*(gw2-gp2)*W['cWB'] )/(gw2+gp2)
+        H['Cabx'] =  2./(gw2-gp2)*((gw2+gp2)*W['cWB'] - 2.*W['cT'] + 2.*dv) 
+        H['Cww']  =  W['cWW']
+        H['Cwbx'] =  2./(gw2-gp2)*(gp2*W['cWB'] - W['cT'] + dv) 
+        H['tCgg'] = W['tcGG'] 
+        H['tCaa'] =  W['tcWW'] + W['tcBB'] - 4.*W['tcWB']
+        H['tCzz'] = ( gw2**2*W['tcWW'] + gp2**2*W['tcBB'] 
+                      + 4.*gw2*gp2*W['tcWB'] )/(gw2+gp2)**2
+        H['tCza'] = ( gw2*W['tcWW'] - gp2*W['tcBB'] 
+                      - 2.*(gw2-gp2)*W['tcWB'] )/(gw2+gp2)
+        H['tCww'] =  W['tcWW']
+        
+        
+        # solution for  [eqn (4.16)]
+        # dy*cos(phi) == X
+        # dy*sin(phi) == Y
+        def dy_sf(X,Y): 
+            R = sqrt(X**2+Y**2)
+            if R==0: 
+                return 0., 0.
+            elif Y==0.:
+                return X, 0.
+            else:
+                signY = Y/abs(Y)
+                if X*Y > 0.:
+                    return R*signY, abs(Y)/R
+                else:
+                    return -R*signY, -abs(Y)/R
+
+        # Yukawa type interaction coefficients [eqns. (5.16) & (4.17)]
+        for f in ('u','d','e'):
+            matrix = 'WBx' + f
+            for i,j in W['WBx'+f].keys(): 
+                diag = delta(i,j)*(W['cH']+dv)
+                diag2 = 2.*delta(i,j)*W['cH']
+                mi, mj = self.mass[ PID[f][i] ],self.mass[ PID[f][j] ] 
+                if mi and mj:
+                    s_Re, s_Im = W[matrix][i,j], W['IM'+matrix][i,j]
+                    dy_cosphi = vev*s_Re/sqrt(2.*mi*mj) - diag
+                    dy_sinphi = vev*s_Im/sqrt(2.*mi*mj)
+                    
+                    H['HBxdY'+f][i,j], H['HBxS'+f][i,j] = dy_sf(dy_cosphi, 
+                                                                dy_sinphi)
+                    
+                    H['HBxY2'+f][i,j] = 3.*vev*s_Re/sqrt(2.*mi*mj) - diag2
+                    H['IMHBxY2'+f][i,j] = 3.*vev*s_Im/sqrt(2.*mi*mj)
+
+        # Triple gauge couplings [eqn. (4.18)]
+        H['dG1z'] = (gw2+gp2)/(gw2-gp2)*( -W['cWB']*gp2 + W['cT'] - dv )
+        H['dKa']  = W['cWB']*gw2
+        H['dKz']  = (-W['cWB']*2.*gw2*gp2 + (gw2+gp2)*(W['cT'] - dv))/(gw2-gp2)
+        H['La']   = -W['c3W']*3./2.*gw2**2
+        H['Lz']   = H['La']
+        H['tKa']  = W['tcWB']*gw2
+        H['tKz']  = -W['tcWB']*gp2
+        H['tLa']  = -W['tc3W']*3./2.*gw2**2
+        H['tLz']  = H['tLa']
+        H['C3g']  = W['c3G']
+        H['tC3g']  = W['tc3G']
+        
+        # Quartic gauge couplings [Sec 3.7] [eqn (3.23)] 
+        H['dGw4'] = 2.*c2w*H['dG1z']
+        H['dGw2z2'] = 2.*H['dG1z']
+        H['dGw2za'] = H['dG1z']
+        
+        # two derivative quartic gauge couplings [Sec 3.7] [eqn (3.24)] 
+        H['Lw4'] = -gw2/2./MW**2*H['Lz']
+        H['tLw4'] = -gw2/2./MW**2*H['tLz']
+        H['Lw2z2'] = -gw2*c2w/MW**2*H['Lz']
+        H['tLw2z2'] = -gw2*c2w/MW**2*H['tLz']
+        H['Lw2za'] = -ee2/MW**2*H['Lz']
+        H['tLw2za'] = -ee2/MW**2*H['tLz']
+        H['Lw2a2'] = -sqrt(ee2*gw2*c2w)/MW**2*H['Lz']
+        H['tLw2a2'] = -sqrt(ee2*gw2*c2w)/MW**2*H['tLz']
+        H['Lw2az'] = -sqrt(ee2*gw2*c2w)/MW**2*H['Lz']
+        H['tLw2az'] = -sqrt(ee2*gw2*c2w)/MW**2*H['tLz']
+        H['C4g'] = 3.*sqrt(gs2)**3/vev**2*H['C3g']
+        H['tC4g'] = 3.*sqrt(gs2)**3/vev**2*H['tC3g']
+        
+        # Higgs cubic interaction [eqn. (4.19)]
+        H['dL3']  =  -MH**2/(2.*vev**2) * (3.*W['cH'] + dv) - W['c6H']
+        H['dL4'] = 3./2.*H['dL3'] - MH**2/vev**2/6.*H['dCz']
+        
+        # Couplings of two Higgs bosons to gluons [Sec 3.8]
+        # [eqn (3.27)] copied from HiggsBasis implemetation
+        H['Cgg2'], H['tCgg2'] = H['Cgg'], H['tCgg']
+        
+        H['dCz2'] = H['dCz']
+        H['dCw2'] = H['dCw'] + 3.*H['dM']
+                
+        hvv = ['Cww', 'Cwbx', 'Cgg', 'Caa', 'Cza', 'Czz', 'Czbx', 'Cabx',
+               'tCww', 'tCgg', 'tCaa', 'tCza', 'tCzz']
+        
+        for cvv in hvv:
+            cvv2 = cvv +'2'
+            H[cvv2] = H[cvv]
+        
+        # 4-fermion 
+        H['cll1122'] = W['cll1122']
+        H['cpuu3333'] = W['cpuu3333']
+        H['cll1221'] = W['cll1221']
+        
+        # W mass shift
+        self.mass[24] = MW + H['dM']
         return H
     
     @Basis.translation('silh')
@@ -256,72 +442,69 @@ class WarsawBasis(Basis.Basis):
             return 1. if i==j else 0.
         
         S['sBB'] = W['cBB'] - 4.*W['cWB'] + W['cWW']
-        S['stBB'] = W['ctBB'] - 4.*W['ctWB'] + W['ctWW']
+        S['tsBB'] = W['tcBB'] - 4.*W['tcWB'] + W['tcWW']
         S['s2W'] = W['cll1221']/gw2
         S['s2B'] = (2.*W['cll1122'] + W['cll1221'])/gp2
         S['s2G'] = 3.*W['cpuu3333']/gs2
         
         S['sB'] = (4.*W['cWB'] - W['cWW'] 
-                  - (4.*W['cHl11'] + 4.*W['cll1122'] + 2.*W['cll1221'])/gp2)
-        S['sW'] = W['cWW'] - (2.*W['cll1221'] - 4.*W['cpHl11'])/gw2        
+                  - (4.*W['RcHl1x1'] + 4.*W['cll1122'] + 2.*W['cll1221'])/gp2)
+        S['sW'] = W['cWW'] - (2.*W['cll1221'] - 4.*W['RcHpl1x1'])/gw2        
         S['sHW'] = - W['cWW']
-        S['stHW'] = - W['ctWW']
+        S['tsHW'] = - W['tcWW']
         S['sHB'] = W['cWW'] - 4.*W['cWB']
-        S['stHB'] = W['ctWW'] - 4.*W['ctWB']
-        S['sH'] = W['cH'] - 3./4.*W['cll1221'] + 3.*W['cpHl11']
-        S['sT'] = W['cT'] - W['cHl11'] - W['cll1122']/2. - W['cll1221']/4.
+        S['tsHB'] = W['tcWW'] - 4.*W['tcWB']
+        S['sH'] = W['cH'] - 3./4.*W['cll1221'] + 3.*W['RcHpl1x1']
+        S['sT'] = W['cT'] - W['RcHl1x1'] - W['cll1122']/2. - W['cll1221']/4.
     
-        S['s6H'] = W['c6H'] - 2.*lam*(W['cll1221'] - 4.*W['cpHl11'])
+        S['s6H'] = W['c6H'] - 2.*lam*(W['cll1221'] - 4.*W['RcHpl1x1'])
         
         def sHf(wc, Yf, i, j):
-            if 'Im'!=wc[-2:]:
-                return W[wc] + delta(i,j)*2.*Yf*W['cHl11'] 
+            if 'IM'!=wc[:2]:
+                return W[wc][i,j] + delta(i,j)*2.*Yf*W['RcHl1x1'] 
             else:
-                return W[wc]
+                return W[wc][i,j]
 
         def spHf(wc, i, j):
-            if 'Im'!=wc[-2:]:
-                return W[wc] - delta(i,j)*W['cpHl11']
+            if 'IM'!=wc[:2]:
+                return W[wc][i,j] - delta(i,j)*W['RcHpl1x1']
             else:
-                return W[wc]
-            
-        for i,j in comb((1,2,3),2):
-            ind = '{}{}'.format(i,j)
-            tail = [ind] if i==j else [ind+'Re', ind+'Im']
-            for t in tail:
-                S['sHl'+t] = sHf('cHl'+t, -1./2., i, j)
-                S['sHe'+t] = sHf('cHe'+t, -1., i, j)
-                S['sHq'+t] = sHf('cHq'+t, 1./6., i, j)
-                S['sHu'+t] = sHf('cHu'+t, 2./3., i, j)
-                S['sHd'+t] = sHf('cHd'+t, -1./3., i, j)
-                S['spHl'+t] = spHf('cpHl'+t, i, j)
-                S['spHq'+t] = spHf('cpHq'+t, i, j)
-                if i==j==1:
-                    S['sHl'+t] = 0.
-                    S['spHl'+t] = 0.
+                return W[wc][i,j]
         
+        for px in ('','IM'):
+            for i,j in W[px+'WBxHl'].keys():
+                S[px+'SBxHl'][i,j] = sHf(px+'WBxHl', -1./2., i, j)
+                S[px+'SBxHe'][i,j] = sHf(px+'WBxHe', -1., i, j)
+                S[px+'SBxHq'][i,j] = sHf(px+'WBxHq', 1./6., i, j)
+                S[px+'SBxHu'][i,j] = sHf(px+'WBxHu', 2./3., i, j)
+                S[px+'SBxHd'][i,j] = sHf(px+'WBxHd', -1./3., i, j)
+                S[px+'SBxHpl'][i,j] = spHf(px+'WBxHpl', i, j)
+                S[px+'SBxHpq'][i,j] = spHf(px+'WBxHpq', i, j)
+                if i==j==1:
+                    S[px+'SBxHl'][i,j] = 0.
+                    S[px+'SBxHpl'][i,j] = 0.
+            for k in W[px+'WBxHud'].keys():
+                S[px+'SBxHud'][k] = W[px+'WBxHud'][k]            
+
         def sf(wc, i, j):
             mass = self.mass[ PID[f][i] ]
             yuk = mass/vev/sqrt(2.)
             if 'Im'!=wc[-2:]:
-                return W[wc] - delta(i,j)*yuk*(W['cll1221'] - 4.*W['cpHl11'])
+                return W[wc][i,j] - delta(i,j)*yuk*(W['cll1221'] - 4.*W['RcHpl1x1'])
             else:
-                return W[wc]
+                return W[wc][i,j]
             
         # [eqn (5.9)]
-        for i,j in product((1,2,3),(1,2,3)): # flavour loop
-            ind = ['{}{}{}'.format(i,j,cplx) for cplx in ('Re','Im')]
-            for t in ind: # Re, Im loop
-                for f in ('u','d','e'): # fermion loop
-                    scoeff, wcoeff = 's{}{}'.format(f,t),'c{}{}'.format(f,t)
-                    S[scoeff] = sf(wcoeff, i, j)
-        
+        for f in ('u','d','e'): # fermion loop
+            for px in ('','IM'):
+                wmatrix, smatrix = px+'WBx'+f, px+'SBx'+f
+                for i,j in W[wmatrix].keys(): # flavour loop
+                    S[smatrix][i,j] = sf(wmatrix, i, j)
+
         # trivial translation, sX==cX
-        sHud = flavmat('sHud', kind='general', domain='complex')
-        others = ['sGG','stGG','s3W','st3W','s3G','st3G']
-        trivial = sHud+others
+        trivial = ['sGG','tsGG','s3W','ts3W','s3G','ts3G']
         for coeff in trivial:
-            wcoeff = 'c'+coeff[1:]
+            wcoeff = coeff.replace('s','c')
             S[coeff] = W[wcoeff]
         
         return S

@@ -36,6 +36,7 @@ class Basis(object):
                   definition are also stored.
     self.mass   - SLHA.NamedBlock instance for the "mass" block
     self.inputs - SLHA.NamedBlock instance for the "sminputs" block
+    self.ckm - SLHA.NamedBlock instance for the "sminputs" block
 
     self.blocks, self.required_inputs and self.required_masses should be defined 
     in accordance with block structure of the SLHA parameter card, Blocks 
@@ -108,39 +109,58 @@ class Basis(object):
     
     blocks = dict()
     independent = []
+    dependent = []
+    flavoured = dict()
     required_inputs, required_masses = set(),set()
     
     def __init__(self, param_card=None, output_basis='mass', 
                  ehdecay=False, silent=False, translate=True,
-                 flavour = 'general'):
+                 flavour = 'general', dependent=True):
         '''
         Keyword arguments:
-            param_card - SLHA formatted card conforming to the definitions in 
-                         self.blocks, self.required_masses and 
-                         self.required_inputs.
+            param_card   - SLHA formatted card conforming to the definitions in 
+                           self.blocks, self.required_masses and 
+                           self.required_inputs.
             output_basis - target basis to which to translate coefficients.
-            ehdecay - whether to run the eHDECAY interface to calculate the 
-                      Higgs width and BRs.
-            silent  - suppress all checks and warnings
+            ehdecay      - whether to run the eHDECAY interface to calculate the 
+                           Higgs width and BRs.
+            silent       - suppress all checks and warnings.
+            translate    - Whether to call the translate method when reading in 
+                           from a parameter card.
+            flavour      - flavour structure of matrices: 'diagonal, 'minimal' 
+                           or 'general'.
+            dependent    - when param_card is None, whether or not to include 
+                           dependent parameters in the SLHA.Card attribute of 
+                           the basis instance.
         '''
-        # make blocks,independent case insensitive
-        self.blocks = {k.lower():[vv.lower() for vv in v] 
-                       for k,v in self.blocks.iteritems()} 
-        self.independent = [k.lower() for k in self.independent]
         
         self.flavour = flavour
 
-        if self.flavour != 'general':
-            self.set_flavour()
-
+        # if self.flavour != 'general':
+        #     self.set_flavour()
         self.param_card = param_card
         self.output_basis = output_basis
         self.newname = 'Basis'
         self.all_coeffs = [c for v in self.blocks.values() for c in v]
-        self.dependent = [c for c in self.all_coeffs 
-                          if c not in self.independent]
-                          
-
+        # remove overlaps
+        self.independent = [c for c in self.independent 
+                            if c not in self.dependent]
+                            
+        self.dependent.extend([c for c in self.all_coeffs if (c not in
+                               self.independent and c not in self.dependent)])
+        # check for block names in independent
+        for k,v in self.blocks.iteritems():
+            if k in self.independent and k not in self.dependent:
+                for fld in v:
+                    if fld not in self.independent:
+                        self.independent.append(fld)
+                    try:
+                        self.dependent.remove(fld)
+                    except ValueError:
+                        pass
+        
+        self.set_fblocks(self.flavour)
+        
         # read param card (sets self.inputs, self.mass, self.name, self.card)
         if param_card is not None: 
             assert os.path.exists(self.param_card), \
@@ -151,10 +171,9 @@ class Basis(object):
             self.check_sminputs(self.required_inputs) 
             self.check_masses(self.required_masses, silent=silent) 
             self.check_param_data(silent=silent)
+            self.check_flavoured_data(silent=silent)
             
-            if self.flavour!='general':
-                self.generalise_flavour(self.flavour,self.old_blocks,
-                                        self.old_ind)
+            self.set_flavour(self.flavour, 'general')
 
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
@@ -167,6 +186,7 @@ class Basis(object):
             if translate:
                 # translate to new basis (User defined) 
                 # return an instance of a class derived from Basis
+                
                 newbasis = self.translate() 
                 # set new SLHA card
                 self.newcard = newbasis.card 
@@ -189,30 +209,7 @@ class Basis(object):
         # and all coeffs set to 0 (used for creating an empty basis 
         # instance for use in translate() method)
         else: 
-
-            self.card = SLHA.Card(name=self.name)
-            self.card.add_entry('basis', 1, self.name, name = 'translated basis')
-
-            preamble = ('\n###################################\n'
-                + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
-                + '###################################\n')
-            self.card.blocks['basis'].preamble=preamble
-
-            # default behaviour: create one 'newcoup' block
-            if not self.blocks: 
-                theblock = SLHA.NamedBlock(name='newcoup')
-                for i,fld in enumerate(self.all_coeffs):
-                    theblock.new_entry(i+1,0., name=fld)
-                self.card.add_block(theblock)
-
-            # otherwise follow self.blocks structure
-            else: 
-                for blk, flds in self.blocks.iteritems():
-                    theblock = SLHA.NamedBlock(name=blk)
-                    for i,fld in enumerate(flds):
-                        theblock.new_entry(i+1,0., name=fld)
-                    self.card.add_block(theblock)
-            
+            self.card = self.default_card(dependent=dependent)            
             self._gen_thedict()
             
     # overloaded container (dict) methods for indexing etc.
@@ -251,181 +248,107 @@ class Basis(object):
             if name in self.blocks:
                 for k, v in blk.iteritems():
                     thedict[blk.get_name(k)] = v
+        for name, blk in self.card.matrices.iteritems():
+            if name in self.fblocks:
+                for k, v in blk.iteritems():
+                    thedict[blk.get_name(k)] = v
         self._thedict = thedict
-        
-    def set_flavour(self):
-        def fix(clist):
-            new = []
-            for c in clist:
-                if re.match(r'.*\d{4}.*',c):
-                    new.append(c)
-                    continue
-                try:
-                    ind = re.match(r'.*(\d{2})(Re|Im|)$',c).group(1)
-                    ii, jj = ind[0], ind[1]
-                except AttributeError:
-                    new.append(c)
-                    continue
-                if self.flavour == 'diagonal':
-                    if ii==jj:
-                        new.append(c)
-                elif self.flavour == 'minimal':
-                    if not re.match(r'.*\d{2}(Re|Im)$',c):
-                        newc = c.replace(ind,'')
-                        if newc not in new:
-                            new.append(newc)
-                    elif re.match(r'.*\d{2}(Re|Im)',c):
-                        # only keep re and im parts if whole matrix is complex 
-                        comp = re.match(r'.*\d{2}((Re|Im))$',c).group(1)
-                        newc= c.replace(ind,'')
-                        name = newc.replace(comp,'')
-                        regexp = r'{}\d{{2}}$'.format(name)
-                        if not any( [re.match(regexp, x) for x in clist] ):
-                            if newc not in new:
-                                new.append(newc)                        
-            return new
-            
-        self.old_blocks = {k.lower():v[:] for k,v in self.blocks.iteritems()}
-        self.old_ind = self.independent[:]
-
-        for k, v in self.blocks.iteritems():
-            self.blocks[k] = fix(v)
-
-        self.independent = fix(self.independent)
-        
-        
-    def generalise_flavour(self, flavour, blocks, independent):
-
-        thecard = SLHA.Card(name=self.name)
-        thecard.add_entry('basis', 1, self.name, name = 'translated basis')
-
-        preamble = ('\n###################################\n'
-            + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
-            + '###################################\n')
-        thecard.blocks['basis'].preamble=preamble
-
-        for blk, flds in blocks.iteritems():
-            theblock = SLHA.NamedBlock(name=blk)
-            for i,fld in enumerate(flds):
-                theblock.new_entry(i+1,0., name=fld)
-            thecard.add_block(theblock)
-
-        for name, blk in thecard.blocks.iteritems():
-            if name in blocks:
-                for k in blk:
-
-                    key = blk._names[k]
-                    if key not in independent:
-                        continue
-                    
-                    if re.match(r'.*\d{4}.*',key):
-                        thecard[key] = self[key]
-                        continue
-                        
-                    has_flavour = re.match(r'.*(\d{2})(Re|Im|)',key)
-                    
-                    if has_flavour and flavour == 'diagonal':
-                        ind = has_flavour.group(1)
-                        ii, jj = ind[0], ind[1]
-                        if ii==jj:
-                            thecard[key] = self[key]
-                        else:
-                            thecard[key] = 0.
-            
-                    elif has_flavour and flavour == 'minimal':
-                        ind = has_flavour.group(1)
-                        ii, jj = ind[0], ind[1]
-                        if ii==jj:
-                            oldkey = key.replace(ind,'')
-                            thecard[key] = self[oldkey]
-                        else:
-                            thecard[key] = 0.
-                                        
-                    else:
-                        thecard[key] = self[key]
-                        continue                        
-        
-        self.card, self.old_card = thecard, self.card
-        self.blocks, self.old_blocks = blocks, self.blocks
-        self.independent, self.old_ind = independent, self.independent
-        
-        self.get_other_blocks(self.old_card, self.old_blocks.keys())
-        
-        
-    def reduce_flavour(self, flavour, blocks, independent):
-
-        thecard = SLHA.Card(name=self.name)
-        thecard.add_entry('basis', 1, self.name, name = 'translated basis')
-
-        preamble = ('\n###################################\n'
-            + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
-            + '###################################\n')
-        thecard.blocks['basis'].preamble=preamble
-
-        for blk, flds in blocks.iteritems():
-            theblock = SLHA.NamedBlock(name=blk)
-            for i,fld in enumerate(flds):
-                theblock.new_entry(i+1,0., name=fld)
-            thecard.add_block(theblock)
-
-        done = []
-        for blk, keys in self.old_blocks.iteritems():
-            for k in self.card.blocks[blk]:
-                key = self.card.blocks[blk]._names[k]
-
-                if key not in self.old_ind:
-                    continue
-                    
-                if re.match(r'.*\d{4}.*',key):
-                    thecard[key] = self[key]
-                    continue
-                    
-                has_flavour = re.match(r'.*(\d{2})(Re|Im|)$',key)
-                
-                if has_flavour and flavour == 'diagonal':
-                    ind = has_flavour.group(1)
-                    ii, jj = ind[0], ind[1]
-                
-                    if ii==jj and key not in done: 
-                        thecard[key] = self[key]
-                        done.append(key)
-                        
-                        
-                elif has_flavour and flavour == 'minimal':
-                    ind = has_flavour.group(1)
-                    ii, jj = ind[0], ind[1]
-                    if ii!=jj: continue
-                    newkey = key.replace(ind,'')
-                    cmplx = re.match(r'.*((Re|Im))$',newkey)
-                    if not cmplx and newkey not in done:
-                        thecard[newkey] = self[key]
-                        done.append(newkey)
-                    
-                    elif cmplx and newkey not in done:
-                        try:
-                            thecard[newkey] = self[key]
-                            done.append(newkey)
-                            
-                        except KeyError:
-                            part = cmplx.group(1)
-                            thecard[newkey.replace(part,'')] = self[key]
-                            done.append(newkey)
-                else:
-                    thecard[key] = self[key]
-                    done.append(key)
-                            
-        
-        self.card, self.old_card = thecard, self.card
-        self.blocks, self.old_blocks = blocks, self.blocks
-        self.independent, self.old_ind = independent, self.independent
-        
-        self.get_other_blocks(self.old_card, self.old_blocks.keys())
-
     
+    def set_fblocks(self, option='general'):
+        self.fblocks = dict()
+        for name, opt in self.flavoured.iteritems():
+            opt['flavour']=option
+            real, imag = flavour_coeffs(name,**opt)
+            if real: self.fblocks[name] = real
+            if imag: self.fblocks['IM' + name] = imag
+            if name not in (self.independent + self.dependent):
+                self.dependent.extend([c for c in real+imag   
+                                       if (c not in self.independent  
+                                       and c not in self.dependent)])
+    
+    def default_card(self, dependent=True):
+        '''
+        Create a new default SLHA.Card instance according to the self.blocks 
+        and self.flavoured structure of the basis class specified in the 
+        implementaion. The dependent option allows one to switch on or off the 
+        inclusion of dependent parameters in the default card. By default they 
+        are included.
+        '''
+        thecard = SLHA.Card(name=self.name)
+        thecard.add_entry('basis', 1, self.name, name = 'translated basis')
+
+        preamble = ('\n###################################\n'
+            + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
+            + '###################################\n')
+        thecard.blocks['basis'].preamble=preamble
+
+        # default behaviour: create one 'newcoup' block, ignoring flavoured
+        if not self.blocks: 
+            omit = ([] if not self.flavoured else 
+                    [c for (k,v) in self.fblocks.items() for c in v+[k]])
+            
+            all_coeffs = [c for c in self.independent if c not in omit]
+            self.blocks = {'newcoup':all_coeffs}
+            
+        # otherwise follow self.blocks structure
+        for blk, flds in self.blocks.iteritems():                
+            for i,fld in enumerate(flds):                    
+                if (blk not in self.dependent and fld not in self.dependent):
+                    thecard.add_entry(blk, i+1, 0., name = fld)
+                else:
+                    if dependent:
+                        # print 'didnt skip', fld
+                        thecard.add_entry(blk, i+1, 0., name = fld)
+
+        # deal with flavoured
+        for blk, flds in self.fblocks.iteritems():
+            for fld in flds:
+                index = (int(fld[-3]), int(fld[-1])) # XBcoeffIxJ
+                if (blk not in self.dependent and
+                    fld not in self.dependent):
+                    thecard.add_entry(blk, index, 0., name = fld)
+                else:
+                    if dependent:
+                        thecard.add_entry(blk, index, 0., name = fld)
+                    
+        
+        return thecard
+    
+    def set_flavour(self, _from, to):
+        if _from == to: return
+        
+        self.set_fblocks(to)
+        newcard = self.default_card(dependent=False)
+        if (_from, to) in (('general', 'minimal'), ('general', 'diagonal')):
+            for bname, blk in self.card.matrices.iteritems():
+                if not newcard.has_matrix(bname): continue
+                for k in blk.keys():
+                    cname = blk.get_name(k)
+                    if k not in newcard.matrices[bname]:
+                        del blk[k]
+                    # elif (bname in self.dependent or cname in self.dependent):
+                    #     del blk[k]
+                        
+        elif to=='general':
+            for bname, blk in newcard.matrices.iteritems():
+                if not self.card.has_matrix(bname): continue
+                oneone = blk.get((1,1), 0.)
+                for k, v in blk.iteritems():
+                    diag = (k[0] == k[1])
+                    if k in self.card.matrices[bname]: 
+                        continue
+                    cname = blk.get_name(k)
+                    if diag: v = oneone
+                    self.card.add_entry(bname, k, v, name = cname)
+                    # if (bname not in self.dependent and
+                    #     cname not in self.dependent):
+                    #     if diag: v = oneone
+                    #     self.card.add_entry(bname, k, v, name = cname)
+        
     def get_other_blocks(self, card, ignore):
         other_blocks = {k:v for k,v in card.blocks.iteritems() 
                         if not (k in ignore or k.lower()=='basis')}
-                        
+
         for block in other_blocks:
             theblock = card.blocks[block]
             self.card.add_block(theblock)
@@ -445,7 +368,7 @@ class Basis(object):
         self.card = SLHA.read(self.param_card)
         
         try:
-            card_name = self.card.blocks.get('basis',[''])[1].lower()
+            card_name = self.card.blocks.get('basis',[''])[1]
             if self.name.lower()!=card_name.lower():
                 err = ('Rosetta was expecting to read an instance of ' 
                      + '{}, named "{}", '.format(self.__class__.name, self.name)
@@ -467,8 +390,6 @@ class Basis(object):
                     self.blocks[name] = [par]
                 else:
                     self.blocks[name].append(par)
-            # # default behaviour, create new block for all dependent parameters
-            # self.blocks['dependent']=self.dependent
 
         self.inputs = self.card.blocks.get('sminputs',None)
         self.mass = self.card.blocks.get('mass',None)
@@ -656,9 +577,8 @@ class Basis(object):
         '''
         if silent: return        
         for bname, defined in self.blocks.iteritems():
-            
             # collect block info
-            inputblock = self.card.blocks.get(bname,SLHA.NamedBlock())
+            inputblock = self.card.blocks.get(bname, SLHA.NamedBlock())
             input_eles = set(inputblock.keys())
             
             defined_block = {i+1:v for i,v in enumerate(defined)}
@@ -691,7 +611,7 @@ class Basis(object):
                 input_name = inputblock.get_name(index, None)
                 if input_name is None: 
                     inputblock._names[index] = name
-                elif input_name!=name:
+                elif input_name.lower()!=name.lower():
                     mismatched.append((index,name,input_name))
                     
             if mismatched:
@@ -718,7 +638,7 @@ class Basis(object):
                                                    if k in defined_dependent]
                                                    ))
                 print 'These may be overwritten by an implementation of '\
-                      '{}.translate()'.format(self.__class__.__name__)
+                      '{}.calculate_dependent()'.format(self.__class__.__name__)
                 carry_on = Y_or_N('Continue?')
                 if carry_on:
                     pass
@@ -727,10 +647,118 @@ class Basis(object):
                     sys.exit()
             
             # check if all independent coefficients are assigned values
-            missing = set(independent).difference(input_eles)
+            missing = set(independent).difference(input_eles).difference(set(dependent))
             if missing: # Deal with unassigned independent coefficients
                 print 'Warning: some coefficients defined as independent '\
                       'in {}, block "{}", have not been assigned values'\
+                      '.'.format(self.__class__,bname)
+                print 'Undefined: {}'.format(', '.join(
+                                                ['{}:"{}"'.format(k,v) 
+                                                 for k,v in independent.items() 
+                                                 if k in missing]))
+                carry_on = Y_or_N('Continue assuming unspecified '\
+                                  'coefficients are Zero?')
+                if carry_on:
+                    for m in missing: 
+                        inputblock.new_entry(m, 0., independent[m])
+                else:
+                    print 'Exit'
+                    sys.exit()
+    
+    def check_flavoured_data(self, silent=False):
+        '''
+        Cross check of flavoured part of parameter data read in the SLHA 
+        formatted card. Compares lists of coefficients declared in 
+        self.independent and self.dependent to those read in from self.param_card.
+           1)  Deals with unrecognised names by removing them from the block
+           2)  Check consistency of name & numbering for the EFT basis blocks 
+               declared in self.blocks. Renames coefficients according to their 
+               position in each block's list.
+           2)  Prints a warning if coefficients declared as dependent are 
+               assigned values in param_card. The user is asked whether or not 
+               they wish to continue knowing these values could be overwritten 
+               by calculate_dependent().
+           3)  Checks if all coefficients declared as independent are 
+               assigned values. If not, the user is given the option to 
+               continue with them set to 0.
+        '''
+        if silent: return        
+        for bname, defined in self.fblocks.iteritems():
+            # collect block info
+            inputblock = self.card.matrices.get(bname, SLHA.NamedMatrix())
+            input_eles = set(inputblock.keys())
+            
+            defined_block = {(int(v[-3]),int(v[-1])):v for 
+                                i,v in enumerate(defined)}
+            defined_eles = set(defined_block.keys())
+            
+            independent = {k:v for k,v in defined_block.iteritems() 
+                           if v in self.independent or bname in self.independent}
+            dependent = {k:v for k,v in defined_block.iteritems() 
+                           if v in self.dependent}
+                           
+            # check for unrecognised coefficient numbers              
+            unknown = input_eles.difference(defined_eles)
+            if unknown:
+                unknown_names = {i:inputblock.get_name(i,'none') 
+                                 for i in unknown}
+                print 'Warning: you have declared coefficients '\
+                      'undefined in {}, matrix:{}.'.format(self.__class__,
+                                                          bname)
+                print 'The following will be ignored - '\
+                      '{}'.format(', '.join(['{}:"{}"'.format(k,v) for k,v 
+                                             in unknown_names.iteritems()]))
+                                             
+                for x in unknown: del inputblock[x]
+                                             
+            # check that name, number pairs match
+            mismatched = []
+            unnamed = []
+            
+            for index, name in independent.items():
+                input_name = inputblock.get_name(index, None)
+                if input_name is None: 
+                    inputblock._names[index] = name
+                elif input_name.lower()!=name.lower():
+                    mismatched.append((index,name,input_name))
+                    
+            if mismatched:
+                print 'Warning: Mismatch of coefficient names '\
+                      'in {}, matrix "{}".'.format(self.__class__,
+                                                          bname)
+                for index, name, input_name in mismatched:
+                    print ('    Coefficient ' +
+                           '{}, named {} '.format(index, input_name) +
+                           'will be renamed to {}'.format(name))
+                    inputblock._names[index] = name
+                    inputblock._numbers[name] = index
+            
+            # check if coefficients defined as dependent 
+            # have been assigned values
+            defined_dependent = set(dependent).intersection(input_eles)
+            if defined_dependent: 
+                print 'Warning: you have assigned values to some '\
+                      'coefficients defined as dependent '\
+                      'in {}, matrix "{}".'.format(self.__class__, bname)
+                print 'Coefficients: {}'.format(', '.join(
+                                                  ['{}:"{}"'.format(k,v) 
+                                                   for k,v in dependent.items() 
+                                                   if k in defined_dependent]
+                                                   ))
+                print 'These may be overwritten by an implementation of '\
+                      '{}.calculate_dependent()'.format(self.__class__.__name__)
+                carry_on = Y_or_N('Continue?')
+                if carry_on:
+                    pass
+                else:
+                    print 'Exit'
+                    sys.exit()
+            
+            # check if all independent coefficients are assigned values
+            missing = set(independent).difference(input_eles).difference(set(dependent))
+            if missing: # Deal with unassigned independent coefficients
+                print 'Warning: some coefficients defined as independent '\
+                      'in {}, matrix "{}", have not been assigned values'\
                       '.'.format(self.__class__,bname)
                 print 'Undefined: {}'.format(', '.join(
                                                 ['{}:"{}"'.format(k,v) 
@@ -788,8 +816,10 @@ class Basis(object):
         else:
             carry_on=True
         if carry_on:
-            order = ['loop','mass','sminputs','yukawa','basis']
-            self.newcard.write(filename, blockorder=order, 
+            coefforder = sortblocks(self.newcard, 
+                          ignore = ['loop','mass','sminputs','yukawa','basis'])
+            order = ['loop','mass','sminputs','yukawa','basis'] + coefforder
+            self.newcard.write(filename, blockorder=order,
                                          preamble=card_preamble)
             print 'Wrote "{}".'.format(filename)
             return True
@@ -802,29 +832,53 @@ class Basis(object):
             val = float(value)
             rand = False
         except ValueError:
-            if value.lower() != 'random':
+            if value.lower() == 'random':
                 import random
                 rand = True
             else:
                 print ('In write_template_card: "value" keyword argument '
-                       'must either be a number or the string, "random".')            
+                       'must either be a number or the string, "random".')  
+                sys.exit()          
 
-        newinstance = bases[self.name](flavour=self.flavour)
+        newinstance = bases[self.name](flavour=self.flavour, dependent=False)
 
         SLHA_card = newinstance.card
         # remove non independent coefficients and set values
         for name, blk in SLHA_card.blocks.iteritems():
             if name.lower()=='basis': continue
-            for coeff in blk:
-                if blk.get_name(coeff) not in newinstance.independent:
-                    del blk[coeff]
+            to_del=[]
+            for k in blk:
+                if blk.get_name(k) in newinstance.dependent:
+                    to_del.append(k)
                 else:
-                    blk[coeff]=val if not rand else random.uniform(-1.,1.)
-                    
+                    blk[k]=val if not rand else random.uniform(-1.,1.)
+            for k in to_del:
+                del blk[k]
+                
+        for name, blk in SLHA_card.matrices.iteritems():
+            to_del=[]
+            for k in blk:
+                if (blk.get_name(k) in newinstance.dependent 
+                                or name in newinstance.dependent):
+                    if name.lower().startswith('im'):
+                        if (name[2:] in newinstance.dependent or 
+                           'R'+blk.get_name(k)[1:] in newinstance.dependent): 
+                            to_del.append(k)
+                    else:
+                        to_del.append(k)
+                else:
+                    blk[k]=val if not rand else random.uniform(-1.,1.)
+            for k in to_del:
+                del blk[k]
+                
         # delete any empty blocks that contained only dependent coefficients
         for name, blk in SLHA_card.blocks.iteritems():
             if len(blk)==0:
                 del SLHA_card.blocks[name]
+                
+        for name, blk in SLHA_card.matrices.iteritems():
+            if len(blk)==0:
+                del SLHA_card.matrices[name]
         
         mass_preamble = ('\n###################################\n'
                        + '## INFORMATION FOR MASS\n'
@@ -855,8 +909,10 @@ class Basis(object):
                     +'#'*nleft + title + '#'*nright +'\n'
                     +'#'*22 + time + '#'*22 + '\n'
                     +'#'*80 +'\n')
+                
+        theorder = sortblocks(SLHA_card, ignore = ['mass','sminputs','basis'])
         
-        SLHA_card.write(filename, blockorder=['mass','sminputs'], 
+        SLHA_card.write(filename, blockorder=['mass','sminputs','basis'] + theorder, 
                         preamble = preamble, postamble = ('\n'+'#'*80)*2)
         print ('wrote {}'.format(filename))
         
@@ -871,7 +927,17 @@ class Basis(object):
                                         and f not in theblock]
             for entry in to_add:
                 self.card.add_entry(bname, fields.index(entry)+1, 0., name=entry)
-
+        
+        for bname, fields in self.fblocks.iteritems():
+            theblock = self.card.matrices.get(bname,[])
+            to_add = [f for f in fields if f in self.dependent 
+                                        and f not in theblock]
+            for entry in to_add:
+                i,j = int(entry[-3]), int(entry[-1])
+                index = (i, j)
+                self.card.add_entry(bname, index, 0., name=entry)
+        
+        
     def check_calculated_data(self):
         '''
         Compares self.dependent and self.card to see if all dependent 
@@ -922,7 +988,6 @@ class Basis(object):
         
         # find the chain of bases and translation functions 
         # to get from self.name to target
-        # chain = get_path(self.name.lower(), target, implemented.relationships)
         chain = get_path(self.name.lower(), target, relationships)
 
         if not chain: # no translation possible
@@ -944,6 +1009,7 @@ class Basis(object):
         # instance of the input class with general flavour structure, since the 
         # translations are written in a flavour general way.
         current = self
+        
         required_inputs = current.required_inputs
         required_masses = current.required_masses
         for target, function in chain:
@@ -971,10 +1037,9 @@ class Basis(object):
             print 'Translation successful.'
         
         if self.flavour!='general' and current.name!='mass':
+        # if self.flavour!='general':
             current.flavour = self.flavour
-            current.set_flavour()
-            current.reduce_flavour(self.flavour, current.blocks, 
-                                                 current.independent)
+            current.set_flavour('general', self.flavour)
             current.newcard = self.card
             
         return current
@@ -1048,7 +1113,7 @@ def flavour_matrix(name, kind='hermitian', domain='real', dimension=3):
         'ij' indices for matrix coefficients (e.g. 12, 22, 13...)
         'Im' and 'Re' for complex parameters
     '''
-    index = range(1,dimension+1)
+    index = range(1, dimension+1)
     
     if (kind, domain) == ('hermitian', 'complex'):
         real = ['{0}{0}'.format(i) for i in index]
@@ -1084,3 +1149,75 @@ def flavour_matrix(name, kind='hermitian', domain='real', dimension=3):
         coefficients.append('{}{}Im'.format(name,indices))
 
     return coefficients
+
+def flavour_coeffs(name, kind='hermitian', domain='real', flavour='general', 
+                         cname = None):
+    '''
+    Function to create flavour components of a coefficient according to its 
+    properties. Takes a parameter name as an arguement and returns a tuple of 
+    lists corresponding to the real and imaginary parts of the matrix elements. 
+    The naming convention for real coefficients is to suffix the coefficient 
+    name with the matrix indices. For the imaginary parts, the name is 
+    prefixed with 'im' and suffixed with the matrix indices. 
+    '''
+    index = (1, 2, 3)
+    if cname is None: cname = name
+    
+    if flavour == 'diagonal':
+        include = lambda i,j: i == j 
+    elif flavour == 'minimal':
+        include = lambda i,j: i == 1 and j == 1
+    else:
+        include = lambda i,j: True
+        
+    if (kind, domain) == ('hermitian', 'complex'):
+        real = ['{0}{1}x{1}'.format(cname,i) for i in index if include(i,i)]
+        cplx = ['{}{}x{}'.format(cname,i,j) for i,j in 
+                combinations(index,2) if include(i,j)]
+
+    elif (kind, domain) == ('symmetric', 'complex'):
+        real = []
+        cplx = ['{}{}x{}'.format(cname,i,j) for i,j in 
+                combinations2(index,2) if include(i,j)]
+        
+    elif ((kind, domain) == ('hermitian', 'real') or
+          (kind, domain) == ('symmetric', 'real')):
+        real = ['{}{}x{}'.format(cname,i,j) for i,j in 
+                combinations2(index,2) if include(i,j)]
+        cplx = []
+        
+    elif (kind, domain) == ('general', 'real'):
+        real = ['{}{}x{}'.format(cname,i,j) for i,j in 
+                product(index,index) if include(i,j)]
+        cplx = []
+        
+    elif (kind, domain) == ('general', 'complex'):
+        real = []
+        cplx = ['{}{}x{}'.format(cname,i,j) for i,j in 
+                product(index,index) if include(i,j)]
+        
+    else:
+        print ('flavour_matrix function got and unrecognised combination of '
+               '"kind" and "domain" keyword arguments')
+        return [name]
+    real = real if (not cplx and domain!='complex') else ['R' + c for c in real]
+    return real + ['R'+c for c in cplx], ['I'+c for c in cplx]
+    
+def sortblocks(card, ignore = []):
+    normal_blocks = sorted([k for k in card.blocks.keys() if k not in ignore],
+                            key=str.lower)
+    flav_blocks = sorted([k for k in card.matrices.keys() if k not in ignore],
+                          key=str.lower)
+    flav_cplx = []
+    for im in [fl for fl in flav_blocks if fl.lower().startswith('im')]:
+        re = im[2:]
+        flav_cplx.append(re)
+        flav_cplx.append(im)
+        flav_blocks.remove(re)
+        flav_blocks.remove(im)
+
+    
+    return normal_blocks + flav_blocks + flav_cplx
+    
+if __name__=='__main__':
+    pass
