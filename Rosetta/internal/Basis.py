@@ -5,18 +5,21 @@ import sys
 import os
 import math
 import datetime
-from collections import namedtuple, OrderedDict
+from collections import namedtuple, OrderedDict, MutableMapping
 from itertools import product, combinations
 from itertools import combinations_with_replacement as combinations2
 ################################################################################
 import SLHA
 from query import query_yes_no as Y_or_N
 from decorators import translation
-from __init__ import (PID, default_inputs, default_masses, input_names, 
-                      particle_names, input_to_PID, PID_to_input, RosettaError)
+from matrices import (TwoDMatrix, CTwoDMatrix, HermitianMatrix, 
+                      SymmetricMatrix, AntisymmetricMatrix)
+from __init__ import (PID, default_inputs, default_masses, input_names, VCKM, 
+                      IMVCKM, VCKMele, particle_names, input_to_PID, 
+                      PID_to_input, RosettaError)
 ################################################################################
 # Base Basis class
-class Basis(object):
+class Basis(MutableMapping):
     '''
     Base class from which to derive other Higgs EFT basis classes. 
     
@@ -36,7 +39,7 @@ class Basis(object):
                   definition are also stored.
     self.mass   - SLHA.NamedBlock instance for the "mass" block
     self.inputs - SLHA.NamedBlock instance for the "sminputs" block
-    self.ckm - SLHA.NamedBlock instance for the "sminputs" block
+    self.ckm    - SLHA.NamedMatrix instance for the VCKM and IMVCKM blocks
 
     self.blocks, self.required_inputs and self.required_masses should be defined 
     in accordance with block structure of the SLHA parameter card, Blocks 
@@ -124,10 +127,11 @@ class Basis(object):
             output_basis - target basis to which to translate coefficients.
             ehdecay      - whether to run the eHDECAY interface to calculate the 
                            Higgs width and BRs.
-            silent       - suppress all checks and warnings.
+            silent       - suppress all warnings and take default answers for 
+                           all questions.
             translate    - Whether to call the translate method when reading in 
                            from a parameter card.
-            flavour      - flavour structure of matrices: 'diagonal, 'minimal' 
+            flavour      - flavour structure of matrices: 'diagonal, 'universal' 
                            or 'general'.
             dependent    - when param_card is None, whether or not to include 
                            dependent parameters in the SLHA.Card attribute of 
@@ -136,8 +140,6 @@ class Basis(object):
         
         self.flavour = flavour
 
-        # if self.flavour != 'general':
-        #     self.set_flavour()
         self.param_card = param_card
         self.output_basis = output_basis
         self.newname = 'Basis'
@@ -167,44 +169,47 @@ class Basis(object):
                    '{} does not exist!'.format(self.param_card)
             
             self.read_param_card() 
+
             # various input checks
             self.check_sminputs(self.required_inputs) 
             self.check_masses(self.required_masses, silent=silent) 
             self.check_param_data(silent=silent)
             self.check_flavoured_data(silent=silent)
-            
+            # generalises potentially reduced flavour structure
             self.set_flavour(self.flavour, 'general')
-
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
+            self._gen_thedict()
             # user defined function
             self.calculate_dependent()
+
             # generate internal OrderedDict() object for __len__, __iter__, 
             # items() and iteritems() method
-            self._gen_thedict()
 
             if translate:
                 # translate to new basis (User defined) 
                 # return an instance of a class derived from Basis
-                
                 newbasis = self.translate() 
-                # set new SLHA card
-                self.newcard = newbasis.card 
-                self.newname = newbasis.name
-                preamble = ('###################################\n'
-                          + '## DECAY INFORMATION\n'
-                          + '###################################')
-                for decay in self.card.decays.values():
-                    decay.preamble=preamble
-                    break
-            
-                try: 
-                    if ehdecay: 
-                        self.run_eHDECAY()
-                except TranslationError as e:
-                    print e
-                    print 'Translation to SILH Basis required, skipping eHDECAY.'
+            else:
+                # do nothing!
+                newbasis = self
                 
+            # set new SLHA card
+            self.newcard = newbasis.card 
+            self.newname = newbasis.name
+            preamble = ('###################################\n'
+                      + '## DECAY INFORMATION\n'
+                      + '###################################')
+            for decay in self.card.decays.values():
+                decay.preamble=preamble
+                break
+                        
+            try: 
+                if ehdecay: 
+                    self.run_eHDECAY()
+            except TranslationError as e:
+                print e
+                print 'Translation to SILH Basis required, skipping eHDECAY.'
         # if param_card option not given, instantiate with class name 
         # and all coeffs set to 0 (used for creating an empty basis 
         # instance for use in translate() method)
@@ -231,38 +236,48 @@ class Basis(object):
         return self.card.__delitem__(key)
     
     def __len__(self):
-        return self._thedict.__len__()
+        return len(self._thedict)
         
     def __iter__(self):
-        return self._thedict.__iter__()
-    
-    def items(self):
-        return self._thedict.items()
-    
-    def iteritems(self):
-        return self._thedict.iteritems()
+        return iter(self._thedict)
+    #
+    # def items(self):
+    #     return self._thedict.items()
+    #
+    # def iteritems(self):
+    #     return self._thedict.iteritems()
     
     def _gen_thedict(self):
-        thedict = OrderedDict()
+        thedict = SLHA.CaseInsensitiveOrderedDict()
         for name, blk in self.card.blocks.iteritems():
             if name in self.blocks:
                 for k, v in blk.iteritems():
                     thedict[blk.get_name(k)] = v
+                    if isinstance(blk, SLHA.CBlock):
+                        thedict[blk._re.get_name(k)] = v.real
+                        thedict[blk._im.get_name(k)] = v.imag
+                        
         for name, blk in self.card.matrices.iteritems():
             if name in self.fblocks:
                 for k, v in blk.iteritems():
-                    thedict[blk.get_name(k)] = v
+                    cname = blk.get_name(k)
+                    if cname: thedict[cname] = v
+                    if isinstance(blk, SLHA.CMatrix):
+                        re_name = blk._re.get_name(k)
+                        im_name = blk._im.get_name(k)
+                        if re_name: thedict[re_name] = v.real
+                        if im_name: thedict[im_name] = v.real
         self._thedict = thedict
+        
     
     def set_fblocks(self, option='general'):
         self.fblocks = dict()
         for name, opt in self.flavoured.iteritems():
             opt['flavour']=option
-            real, imag = flavour_coeffs(name,**opt)
-            if real: self.fblocks[name] = real
-            if imag: self.fblocks['IM' + name] = imag
+            coeffs = flavour_coeffs(name, **opt)
+            self.fblocks[name] = coeffs
             if name not in (self.independent + self.dependent):
-                self.dependent.extend([c for c in real+imag   
+                self.dependent.extend([c for c in coeffs 
                                        if (c not in self.independent  
                                        and c not in self.dependent)])
     
@@ -293,64 +308,83 @@ class Basis(object):
         # otherwise follow self.blocks structure
         for blk, flds in self.blocks.iteritems():                
             for i,fld in enumerate(flds):                    
-                if (blk not in self.dependent and fld not in self.dependent):
+                if dependent or (blk not in self.dependent 
+                                 and fld not in self.dependent):
                     thecard.add_entry(blk, i+1, 0., name = fld)
-                else:
-                    if dependent:
-                        # print 'didnt skip', fld
-                        thecard.add_entry(blk, i+1, 0., name = fld)
 
         # deal with flavoured
         for blk, flds in self.fblocks.iteritems():
             for fld in flds:
-                index = (int(fld[-3]), int(fld[-1])) # XBcoeffIxJ
-                if (blk not in self.dependent and
-                    fld not in self.dependent):
-                    thecard.add_entry(blk, index, 0., name = fld)
-                else:
-                    if dependent:
+                index = (int(fld[-3]), int(fld[-1])) # XBcoeff(I)x(J)               
+                if dependent or (blk not in self.dependent 
+                                 and fld not in self.dependent):
+                    if self.flavoured[blk]['domain']=='complex':              
+                        thecard.add_entry(blk, index, 0., name = 'R'+fld[1:])
+                        thecard.add_entry('IM'+blk, index, 0., name = 'I'+fld[1:])
+                    else:
                         thecard.add_entry(blk, index, 0., name = fld)
-                    
         
+        vckm = self.default_ckm()
+        thecard.add_block(vckm)
+        thecard.ckm = vckm
+        thecard.set_complex()
+        self.fix_matrices(card = thecard)
         return thecard
     
     def set_flavour(self, _from, to):
         if _from == to: return
-        
+
         self.set_fblocks(to)
         newcard = self.default_card(dependent=False)
-        if (_from, to) in (('general', 'minimal'), ('general', 'diagonal')):
+        
+        if (_from, to) in (('general', 'universal'), ('general', 'diagonal')):
+            blks_to_del = []
             for bname, blk in self.card.matrices.iteritems():
-                if not newcard.has_matrix(bname): continue
+                if bname not in self.flavoured: continue
+                if not newcard.has_matrix(bname):
+                    blks_to_del.append(bname) 
+                    continue
+                to_del = []
                 for k in blk.keys():
                     cname = blk.get_name(k)
                     if k not in newcard.matrices[bname]:
-                        del blk[k]
-                    # elif (bname in self.dependent or cname in self.dependent):
-                    #     del blk[k]
+                        to_del.append(k)
+                for k in to_del:
+                    del blk[k]
+            for blk in blks_to_del:
+                del self.card.matrices[blk]
                         
         elif to=='general':
             for bname, blk in newcard.matrices.iteritems():
-                if not self.card.has_matrix(bname): continue
-                oneone = blk.get((1,1), 0.)
+                if bname not in self.flavoured: continue
+                if not self.card.has_matrix(bname):
+                    self.card.add_block(blk)
+                    continue
+                
+                oneone = self.card.matrices[bname].get((1,1), 0.)
                 for k, v in blk.iteritems():
+                    if k in self.card.matrices[bname]: continue
+
                     diag = (k[0] == k[1])
-                    if k in self.card.matrices[bname]: 
-                        continue
-                    cname = blk.get_name(k)
                     if diag: v = oneone
+
+                    cname = blk.get_name(k)
                     self.card.add_entry(bname, k, v, name = cname)
-                    # if (bname not in self.dependent and
-                    #     cname not in self.dependent):
-                    #     if diag: v = oneone
-                    #     self.card.add_entry(bname, k, v, name = cname)
+
         
     def get_other_blocks(self, card, ignore):
         other_blocks = {k:v for k,v in card.blocks.iteritems() 
                         if not (k in ignore or k.lower()=='basis')}
-
+        
+        other_matrices = {k:v for k,v in card.matrices.iteritems() 
+                          if k not in ignore}
+                        
         for block in other_blocks:
             theblock = card.blocks[block]
+            self.card.add_block(theblock)
+        
+        for matrix in other_matrices:
+            theblock = card.matrices[matrix]
             self.card.add_block(theblock)
         
         for decay in card.decays.values():
@@ -359,13 +393,15 @@ class Basis(object):
         if card.has_block('mass'):
             self.mass=self.card.blocks['mass']
         if card.has_block('sminputs'):
-            self.sminputs=self.card.blocks['sminputs']
+            self.inputs=self.card.blocks['sminputs']
             
+        self.ckm = card.matrices['vckm']
+
     def read_param_card(self):
         '''
         Call SLHA.read() and set up the Basis instance accordingly.
         '''
-        self.card = SLHA.read(self.param_card)
+        self.card = SLHA.read(self.param_card, set_cplx=False)
         
         try:
             card_name = self.card.blocks.get('basis',[''])[1]
@@ -390,10 +426,33 @@ class Basis(object):
                     self.blocks[name] = [par]
                 else:
                     self.blocks[name].append(par)
-
-        self.inputs = self.card.blocks.get('sminputs',None)
-        self.mass = self.card.blocks.get('mass',None)
         
+        to_add = []
+        for bname, blk in self.card.matrices.iteritems():
+            is_cplx = self.flavoured.get(bname,{}).get('domain','')=='complex'
+            if is_cplx:
+                if bname.lower().startswith('im'):
+                    other_part = bname[2:]
+                else: 
+                    other_part ='IM' + bname
+                if other_part not in self.card.matrices:
+                    to_add.append((bname,other_part))
+
+        for part, other_part in to_add:
+            blk = self.card.matrices[part]
+            for k, v in blk.iteritems():
+                if other_part.lower().startswith('im'):
+                    imname = 'R' + blk.get_name(k)[1:]
+                else:
+                    imname = 'I' + blk.get_name(k)[1:]
+                self.card.add_entry(other_part, k, 0., name=imname)
+                
+        self.inputs = self.card.blocks.get('sminputs', None)
+        self.mass = self.card.blocks.get('mass', None)
+        
+        self.card.set_complex()
+        self.fix_matrices()
+            
     def check_sminputs(self, required_inputs, message='Rosetta'):
         '''
         Check consistency of sminputs w.r.t required_inputs. Any inconsistencies
@@ -471,7 +530,34 @@ class Basis(object):
                     else:
                         print 'Exit'
                         sys.exit()
-        # print 'SM inputs are OK.'
+            # ensure presence of CKM matrix
+            vckm = self.card.matrices.get('vckm', None)
+            if vckm is None:
+                print 'Block "VCKM" not found, will use default values.\n'
+                vckm = default_ckm()
+                self.card.add_block(vckm)
+            self.ckm = vckm
+                
+
+    def default_ckm(self):
+        preamble = ('\n###################################\n'
+                + '## CKM INFORMATION\n'
+                + '###################################\n')
+                
+        ckm = SLHA.NamedMatrix(name='VCKM', preamble=preamble)
+        for i,j in product((1,2,3),(1,2,3)):
+            cname = 'RV{}{}x{}'.format(VCKMele[(i,j)], i, j)
+            ckm.new_entry((i,j), VCKM[i][j], name=cname)
+            
+        imckm = SLHA.NamedMatrix(name='IMVCKM')
+        for i,j in product((1,2,3),(1,2,3)):
+            cname = 'IV{}{}x{}'.format(VCKMele[(i,j)], i, j)
+            imckm.new_entry((i,j), IMVCKM[i][j], name=cname) 
+            
+        vckm = SLHA.CNamedMatrix(ckm, imckm)
+        
+        return vckm
+
         
     def check_masses(self, required_masses, silent=False, message='Rosetta'):
         '''
@@ -480,7 +566,6 @@ class Basis(object):
         the user wishes to continue assuming default values for masses. Higgs 
         and Z masses are also stored as SM inputs.
         '''
-        if silent: return
         PID_list = ', '.join([str(x) for x in required_masses])
         if required_masses:
             if self.mass is None:
@@ -489,15 +574,19 @@ class Basis(object):
                                  k in required_masses]
                 mass_list = ', '.join( ['{} (M{})'.format(x,particle_names[x]) 
                                         for x in required_masses] )
-                print 'Warning: Block "mass" not found. '\
-                      'Assume default values for required masses?'
-                print 'Required PIDs: {}'.format(mass_list)
+                if not silent:
+                    print 'Warning: Block "mass" not found. '\
+                          'Assume default values for required masses?'
+                    print 'Required PIDs: {}'.format(mass_list)
 
-                carry_on = Y_or_N(
-                    'Continue with default values '\
-                    'for unspecified masses? '\
-                    '({})'.format(', '.join(repr_default))
-                                 )
+                    carry_on = Y_or_N(
+                        'Continue with default values '\
+                        'for unspecified masses? '\
+                        '({})'.format(', '.join(repr_default))
+                                     )
+                else:
+                    carry_on=True
+                    
                 if carry_on:
                     theblock = SLHA.NamedBlock(name='mass')
                     for m in required_masses: 
@@ -516,9 +605,8 @@ class Basis(object):
                         if i in self.mass:
                             v2 = float(self.mass[i])
                             if v!=v2:
-                                print v, type(v)
-                                print v2, type(v2)
-                                print ('Warning: M{} '.format(particle_names[i])
+                                if not silent:
+                                    print ('Warning: M{} '.format(particle_names[i])
                                 + 'specified in block sminput[{}] '.format(k)
                                 + '({:.5e}) not consistent with '.format(v)
                                 + 'value specified in block mass '
@@ -539,15 +627,18 @@ class Basis(object):
                                     for k,v in missing_values.items()]
                     mass_list = ', '.join(['{} (M{})'.format(x,particle_names[x]) 
                                             for x in missing_masses])
-                    print 'Warning: Not all required masses are '\
-                          'defined for {}.'.format(message)
-                    print 'Required PIDs: {}'.format(PID_list)
-                    print 'Missing PIDs: {}'.format(mass_list)
-                    carry_on = Y_or_N(
-                        'Continue assuming default values '\
-                        'for unspecified masses? '\
-                        '({})'.format(', '.join(repr_default))
-                        )
+                    if not silent:
+                        print 'Warning: Not all required masses are '\
+                              'defined for {}.'.format(message)
+                        print 'Required PIDs: {}'.format(PID_list)
+                        print 'Missing PIDs: {}'.format(mass_list)
+                        carry_on = Y_or_N(
+                            'Continue assuming default values '\
+                            'for unspecified masses? '\
+                            '({})'.format(', '.join(repr_default))
+                            )
+                    else:
+                        carry_on = True
                     if carry_on: 
                         for m in missing_masses: 
                             self.mass.new_entry(m, default_masses[m], 
@@ -556,7 +647,6 @@ class Basis(object):
                     else:
                         print 'Exit'
                         sys.exit()
-        # print 'Particle masses are OK.'
 
     def check_param_data(self, silent=False):
         '''
@@ -575,10 +665,14 @@ class Basis(object):
                assigned values. If not, the user is given the option to 
                continue with them set to 0.
         '''
-        if silent: return        
         for bname, defined in self.blocks.iteritems():
             # collect block info
-            inputblock = self.card.blocks.get(bname, SLHA.NamedBlock())
+            inputblock = self.card.blocks.get(bname, None)
+            if inputblock is None:
+                theblock = SLHA.NamedBlock(name=bname)
+                self.card.add_block(theblock)
+                inputblock = theblock
+            
             input_eles = set(inputblock.keys())
             
             defined_block = {i+1:v for i,v in enumerate(defined)}
@@ -594,12 +688,13 @@ class Basis(object):
             if unknown:
                 unknown_names = {i:inputblock.get_name(i,'none') 
                                  for i in unknown}
-                print 'Warning: you have declared coefficients '\
-                      'undefined in {}, block:{}.'.format(self.__class__,
-                                                          bname)
-                print 'The following will be ignored - '\
-                      '{}'.format(', '.join(['{}:"{}"'.format(k,v) for k,v 
-                                             in unknown_names.iteritems()]))
+                if not silent:
+                    print 'Warning: you have declared coefficients '\
+                          'undefined in {}, block:{}.'.format(self.__class__,
+                                                              bname)
+                    print 'The following will be ignored - '\
+                          '{}'.format(', '.join(['{}:"{}"'.format(k,v) for k,v 
+                                                 in unknown_names.iteritems()]))
                                              
                 for x in unknown: del inputblock[x]
                                              
@@ -615,13 +710,15 @@ class Basis(object):
                     mismatched.append((index,name,input_name))
                     
             if mismatched:
-                print 'Warning: Mismatch of coefficient names '\
-                      'in {}, block "{}".'.format(self.__class__,
-                                                          bname)
+                if not silent:
+                    print 'Warning: Mismatch of coefficient names '\
+                          'in {}, block "{}".'.format(self.__class__,
+                                                              bname)
                 for index, name, input_name in mismatched:
-                    print ('    Coefficient ' +
-                           '{}, named {} '.format(index, input_name) +
-                           'will be renamed to {}'.format(name))
+                    if not silent:
+                        print ('    Coefficient ' +
+                               '{}, named {} '.format(index, input_name) +
+                               'will be renamed to {}'.format(name))
                     inputblock._names[index] = name
                     inputblock._numbers[name] = index
             
@@ -629,17 +726,20 @@ class Basis(object):
             # have been assigned values
             defined_dependent = set(dependent).intersection(input_eles)
             if defined_dependent: 
-                print 'Warning: you have assigned values to some '\
-                      'coefficients defined as dependent '\
-                      'in {}, block "{}".'.format(self.__class__, bname)
-                print 'Coefficients: {}'.format(', '.join(
-                                                  ['{}:"{}"'.format(k,v) 
-                                                   for k,v in dependent.items() 
-                                                   if k in defined_dependent]
-                                                   ))
-                print 'These may be overwritten by an implementation of '\
-                      '{}.calculate_dependent()'.format(self.__class__.__name__)
-                carry_on = Y_or_N('Continue?')
+                if not silent:
+                    print 'Warning: you have assigned values to some '\
+                          'coefficients defined as dependent '\
+                          'in {}, block "{}".'.format(self.__class__, bname)
+                    print 'Coefficients: {}'.format(', '.join(
+                                                    ['{}:"{}"'.format(k,v) 
+                                                    for k,v in dependent.items() 
+                                                    if k in defined_dependent]
+                                                    ))
+                    print 'These may be overwritten by an implementation of '\
+                          '{}.calculate_dependent()'.format(self.__class__.__name__)
+                    carry_on = Y_or_N('Continue?')
+                else:
+                    carry_on = True
                 if carry_on:
                     pass
                 else:
@@ -649,15 +749,18 @@ class Basis(object):
             # check if all independent coefficients are assigned values
             missing = set(independent).difference(input_eles).difference(set(dependent))
             if missing: # Deal with unassigned independent coefficients
-                print 'Warning: some coefficients defined as independent '\
-                      'in {}, block "{}", have not been assigned values'\
-                      '.'.format(self.__class__,bname)
-                print 'Undefined: {}'.format(', '.join(
-                                                ['{}:"{}"'.format(k,v) 
-                                                 for k,v in independent.items() 
-                                                 if k in missing]))
-                carry_on = Y_or_N('Continue assuming unspecified '\
-                                  'coefficients are Zero?')
+                if not silent:
+                    print 'Warning: some coefficients defined as independent '\
+                          'in {}, block "{}", have not been assigned values'\
+                          '.'.format(self.__class__,bname)
+                    print 'Undefined: {}'.format(', '.join(
+                                                    ['{}:"{}"'.format(k,v) 
+                                                     for k,v in independent.items() 
+                                                     if k in missing]))
+                    carry_on = Y_or_N('Continue assuming unspecified '\
+                                      'coefficients are Zero?')
+                else:
+                    carry_on = True
                 if carry_on:
                     for m in missing: 
                         inputblock.new_entry(m, 0., independent[m])
@@ -682,10 +785,15 @@ class Basis(object):
                assigned values. If not, the user is given the option to 
                continue with them set to 0.
         '''
-        if silent: return        
+
         for bname, defined in self.fblocks.iteritems():
             # collect block info
-            inputblock = self.card.matrices.get(bname, SLHA.NamedMatrix())
+            inputblock = self.card.matrices.get(bname, None)
+            if inputblock is None:
+                theblock = SLHA.NamedMatrix(name=bname)
+                self.card.add_block(theblock)
+                inputblock = theblock
+                
             input_eles = set(inputblock.keys())
             
             defined_block = {(int(v[-3]),int(v[-1])):v for 
@@ -702,12 +810,13 @@ class Basis(object):
             if unknown:
                 unknown_names = {i:inputblock.get_name(i,'none') 
                                  for i in unknown}
-                print 'Warning: you have declared coefficients '\
-                      'undefined in {}, matrix:{}.'.format(self.__class__,
-                                                          bname)
-                print 'The following will be ignored - '\
-                      '{}'.format(', '.join(['{}:"{}"'.format(k,v) for k,v 
-                                             in unknown_names.iteritems()]))
+                if not silent:
+                    print 'Warning: you have declared coefficients '\
+                          'undefined in {}, matrix:{}.'.format(self.__class__,
+                                                              bname)
+                    print 'The following will be ignored - '\
+                          '{}'.format(', '.join(['{}:"{}"'.format(k,v) for k,v 
+                                                 in unknown_names.iteritems()]))
                                              
                 for x in unknown: del inputblock[x]
                                              
@@ -723,13 +832,15 @@ class Basis(object):
                     mismatched.append((index,name,input_name))
                     
             if mismatched:
-                print 'Warning: Mismatch of coefficient names '\
-                      'in {}, matrix "{}".'.format(self.__class__,
-                                                          bname)
+                if not silent:
+                    print 'Warning: Mismatch of coefficient names '\
+                          'in {}, matrix "{}".'.format(self.__class__,
+                                                              bname)
                 for index, name, input_name in mismatched:
-                    print ('    Coefficient ' +
-                           '{}, named {} '.format(index, input_name) +
-                           'will be renamed to {}'.format(name))
+                    if not silent:
+                        print ('    Coefficient ' +
+                               '{}, named {} '.format(index, input_name) +
+                               'will be renamed to {}'.format(name))
                     inputblock._names[index] = name
                     inputblock._numbers[name] = index
             
@@ -737,17 +848,20 @@ class Basis(object):
             # have been assigned values
             defined_dependent = set(dependent).intersection(input_eles)
             if defined_dependent: 
-                print 'Warning: you have assigned values to some '\
-                      'coefficients defined as dependent '\
-                      'in {}, matrix "{}".'.format(self.__class__, bname)
-                print 'Coefficients: {}'.format(', '.join(
-                                                  ['{}:"{}"'.format(k,v) 
-                                                   for k,v in dependent.items() 
-                                                   if k in defined_dependent]
-                                                   ))
-                print 'These may be overwritten by an implementation of '\
-                      '{}.calculate_dependent()'.format(self.__class__.__name__)
-                carry_on = Y_or_N('Continue?')
+                if not silent:
+                    print 'Warning: you have assigned values to some '\
+                          'coefficients defined as dependent '\
+                          'in {}, matrix "{}".'.format(self.__class__, bname)
+                    print 'Coefficients: {}'.format(', '.join(
+                                                   ['{}:"{}"'.format(k,v) 
+                                                    for k,v in dependent.items() 
+                                                    if k in defined_dependent]
+                                                    ))
+                    print 'These may be overwritten by an implementation of '\
+                          '{}.calculate_dependent()'.format(self.__class__.__name__)
+                    carry_on = Y_or_N('Continue?')
+                else:
+                    carry_on = True
                 if carry_on:
                     pass
                 else:
@@ -757,15 +871,18 @@ class Basis(object):
             # check if all independent coefficients are assigned values
             missing = set(independent).difference(input_eles).difference(set(dependent))
             if missing: # Deal with unassigned independent coefficients
-                print 'Warning: some coefficients defined as independent '\
-                      'in {}, matrix "{}", have not been assigned values'\
-                      '.'.format(self.__class__,bname)
-                print 'Undefined: {}'.format(', '.join(
+                if not silent:
+                    print 'Warning: some coefficients defined as independent '\
+                          'in {}, matrix "{}", have not been assigned values'\
+                          '.'.format(self.__class__,bname)
+                    print 'Undefined: {}'.format(', '.join(
                                                 ['{}:"{}"'.format(k,v) 
                                                  for k,v in independent.items() 
                                                  if k in missing]))
-                carry_on = Y_or_N('Continue assuming unspecified '\
-                                  'coefficients are Zero?')
+                    carry_on = Y_or_N('Continue assuming unspecified '\
+                                      'coefficients are Zero?')
+                else:
+                    carry_on = True
                 if carry_on:
                     for m in missing: 
                         inputblock.new_entry(m, 0., independent[m])
@@ -812,14 +929,13 @@ class Basis(object):
                     +'######################\n\n')
         if os.path.exists(filename) and not overwrite:
             print '{} already exists.'.format(filename)
-            carry_on = Y_or_N('Overwrite?')
+            carry_on = Y_or_N('Overwrite?', default='no')
         else:
             carry_on=True
         if carry_on:
-            coefforder = sortblocks(self.newcard, 
-                          ignore = ['loop','mass','sminputs','yukawa','basis'])
-            order = ['loop','mass','sminputs','yukawa','basis'] + coefforder
-            self.newcard.write(filename, blockorder=order,
+            special_blocks = ['loop','mass','sminputs','yukawa','vckm','basis']
+            coefforder = sortblocks(self.newcard, ignore = special_blocks)
+            self.newcard.write(filename, blockorder=special_blocks + coefforder,
                                          preamble=card_preamble)
             print 'Wrote "{}".'.format(filename)
             return True
@@ -839,46 +955,21 @@ class Basis(object):
                 print ('In write_template_card: "value" keyword argument '
                        'must either be a number or the string, "random".')  
                 sys.exit()          
-
         newinstance = bases[self.name](flavour=self.flavour, dependent=False)
-
-        SLHA_card = newinstance.card
-        # remove non independent coefficients and set values
-        for name, blk in SLHA_card.blocks.iteritems():
-            if name.lower()=='basis': continue
-            to_del=[]
-            for k in blk:
-                if blk.get_name(k) in newinstance.dependent:
-                    to_del.append(k)
-                else:
-                    blk[k]=val if not rand else random.uniform(-1.,1.)
-            for k in to_del:
-                del blk[k]
-                
-        for name, blk in SLHA_card.matrices.iteritems():
-            to_del=[]
-            for k in blk:
-                if (blk.get_name(k) in newinstance.dependent 
-                                or name in newinstance.dependent):
-                    if name.lower().startswith('im'):
-                        if (name[2:] in newinstance.dependent or 
-                           'R'+blk.get_name(k)[1:] in newinstance.dependent): 
-                            to_del.append(k)
+        for k in newinstance.keys():            
+                try:
+                    if rand:
+                        newinstance[k] = complex(random.uniform(-1.,1.),
+                                                 random.uniform(-1.,1.))
                     else:
-                        to_del.append(k)
-                else:
-                    blk[k]=val if not rand else random.uniform(-1.,1.)
-            for k in to_del:
-                del blk[k]
-                
-        # delete any empty blocks that contained only dependent coefficients
-        for name, blk in SLHA_card.blocks.iteritems():
-            if len(blk)==0:
-                del SLHA_card.blocks[name]
-                
-        for name, blk in SLHA_card.matrices.iteritems():
-            if len(blk)==0:
-                del SLHA_card.matrices[name]
+                        newinstance[k] = complex(val, val)
+                except TypeError as e:
+                    if rand:
+                        newinstance[k] = random.uniform(-1.,1.)
+                    else:
+                        newinstance[k] = val
+                        
+        SLHA_card = newinstance.card
         
         mass_preamble = ('\n###################################\n'
                        + '## INFORMATION FOR MASS\n'
@@ -889,7 +980,6 @@ class Basis(object):
             massblock.new_entry(m, default_masses[m], 
                                name='M%s' % particle_names[m])
         SLHA_card.add_block(massblock)
-        
                     
         sm_preamble = ('\n###################################\n'
                      + '## INFORMATION FOR SMINPUTS\n'
@@ -898,7 +988,7 @@ class Basis(object):
         inputblock = SLHA.NamedBlock(name='sminputs', preamble=sm_preamble)
         for m in self.required_inputs: 
             inputblock.new_entry(m, default_inputs[m], 
-                               name='%s' % input_names[m])
+                                 name='%s' % input_names[m])
         SLHA_card.add_block(inputblock)
         
         title = ' ROSETTA: {} BASIS INPUT CARD '.format(self.name.upper())
@@ -909,10 +999,10 @@ class Basis(object):
                     +'#'*nleft + title + '#'*nright +'\n'
                     +'#'*22 + time + '#'*22 + '\n'
                     +'#'*80 +'\n')
-                
-        theorder = sortblocks(SLHA_card, ignore = ['mass','sminputs','basis'])
         
-        SLHA_card.write(filename, blockorder=['mass','sminputs','basis'] + theorder, 
+        special_blocks = ['mass','sminputs','vckm','basis']
+        theorder = sortblocks(SLHA_card, ignore = special_blocks)
+        SLHA_card.write(filename, blockorder=special_blocks + theorder, 
                         preamble = preamble, postamble = ('\n'+'#'*80)*2)
         print ('wrote {}'.format(filename))
         
@@ -935,8 +1025,15 @@ class Basis(object):
             for entry in to_add:
                 i,j = int(entry[-3]), int(entry[-1])
                 index = (i, j)
-                self.card.add_entry(bname, index, 0., name=entry)
-        
+                if self.flavoured[bname]['domain']=='complex':              
+                    self.card.add_entry(bname, index, 0., name='R'+entry[1:])
+                    self.card.add_entry('IM'+bname, index, 0., 
+                                         name='I'+entry[1:])
+                else:
+                    self.card.add_entry(bname, index, 0., name = entry)
+                    
+        self.card.set_complex()
+        self.fix_matrices()
         
     def check_calculated_data(self):
         '''
@@ -966,21 +1063,43 @@ class Basis(object):
         '''
         print 'Nothing done for {}.calculate_'\
               'dependent()'.format(self.__class__.__name__)
-              
+    
+    def fix_matrices(self, card=None):
+        if card is None:
+            card = self.card
+            
+        for name, matrix in card.matrices.iteritems():
+            if name not in self.flavoured:
+                continue
+            else:
+                opt = self.flavoured[name]
+                kind, domain = opt['kind'], opt['domain']
+                if (kind, domain) == ('hermitian', 'complex'):
+                    MatrixType = HermitianMatrix
+                elif (kind, domain) == ('symmetric', 'complex'):
+                    MatrixType = CSymmetricMatrix
+                elif ((kind, domain) == ('hermitian', 'real') or
+                      (kind, domain) == ('symmetric', 'real')):
+                    MatrixType = SymmetricMatrix
+                elif (kind, domain) == ('general', 'real'):
+                    MatrixType = TwoDMatrix                    
+                elif (kind, domain) == ('general', 'complex'):
+                    MatrixType = CTwoDMatrix
+                else: 
+                    continue
+                card.matrices[name] = MatrixType(matrix)
+    
     def translate(self, target=None, verbose=True): 
         '''
-        Translation function. Makes use of known translations in implemented.py 
-        and attempts to find a path between the basis instance and the target 
-        basis. If a path exists, successive translations are performed to get 
-        from A to B.
+        Translation function. Makes use of existing translations and attempts to 
+        find a path between the basis instance and the target basis. If a path 
+        exists, successive translations are performed to get from A to B.
         Keyword arguments:
             target - target basis, must be defined in implemented.bases.
             verbose - print some status messages.
         '''
         from machinery import get_path, relationships, bases
-        
-        # from .. import implemented
-        
+                
         # default target
         target = target if target is not None else self.output_basis
         
@@ -1004,10 +1123,8 @@ class Basis(object):
                                                     for x in names])
         
         # perform succesive translations, checking for  
-        # required SM inputs along the way
-        # if a non-general flavour structure has be selected, create a new 
-        # instance of the input class with general flavour structure, since the 
-        # translations are written in a flavour general way.
+        # required SM inputs/masses along the way
+
         current = self
         
         required_inputs = current.required_inputs
@@ -1020,28 +1137,27 @@ class Basis(object):
                                                       instance.name)
             current.check_sminputs(required_inputs, message=message)
             current.check_masses(required_masses, message=message)
-
             # call translation function
             new = function(current, instance)
-            # update new basis instance with non-EFT blocks, decays
-            new.inputs, new.mass = current.inputs, current.mass
             
-            new.get_other_blocks(current.card, current.blocks.keys())
-
+            # update new basis instance with non-EFT blocks, decays
+            all_coeffs = (current.blocks.keys() + current.flavoured.keys())
+            new.get_other_blocks(current.card, all_coeffs)
+            
+            
             # prepare for next step
             required_inputs = set(instance.required_inputs)
             required_masses = set(instance.required_masses)
             current = new
-            # print current
-        if verbose:
-            print 'Translation successful.'
-        
-        if self.flavour!='general' and current.name!='mass':
-        # if self.flavour!='general':
-            current.flavour = self.flavour
-            current.set_flavour('general', self.flavour)
-            current.newcard = self.card
             
+
+        if verbose:
+            print 'Translation successful.\n'
+        
+        if current.name!='mass':
+            current.flavour = self.flavour
+            current.set_flavour('general', self.flavour)            
+        
         return current
             
     def run_eHDECAY(self):
@@ -1050,7 +1166,9 @@ class Basis(object):
         fractions. 
         '''
         import eHDECAY
-        BRs = eHDECAY.run(self,electroweak=True)
+        
+        BRs = eHDECAY.run(self, electroweak=True)
+        
         sum_BRs = sum([v for k,v in BRs.items() if k is not 'WTOT'])
         
         # sometimes eHDECAY gives a sum of BRs slightly greater than 1. 
@@ -1105,51 +1223,7 @@ class TranslationError(Exception):
     '''Fancy error name.'''
     pass
 ################################################################################
-def flavour_matrix(name, kind='hermitian', domain='real', dimension=3):
-    '''
-    Function to declare flavour components of a coefficient according to its 
-    properties. Takes a parameter name as an arguement and returns a list of 
-    coefficients with the string suffixed by:
-        'ij' indices for matrix coefficients (e.g. 12, 22, 13...)
-        'Im' and 'Re' for complex parameters
-    '''
-    index = range(1, dimension+1)
     
-    if (kind, domain) == ('hermitian', 'complex'):
-        real = ['{0}{0}'.format(i) for i in index]
-        cplx = ['{}{}'.format(i,j) for i,j in combinations(index,2)]
-
-    elif (kind, domain) == ('symmetric', 'complex'):
-        real = []
-        cplx = ['{}{}'.format(i,j) for i,j in combinations2(index,2)]
-        
-    elif ((kind, domain) == ('hermitian', 'real') or
-          (kind, domain) == ('symmetric', 'real')):
-        real = ['{}{}'.format(i,j) for i,j in combinations2(index,2)]
-        cplx = []
-        
-    elif (kind, domain) == ('general', 'real'):
-        real = ['{}{}'.format(i,j) for i,j in product(index,index)]
-        cplx = []
-        
-    elif (kind, domain) == ('general', 'complex'):
-        real = []
-        cplx = ['{}{}'.format(i,j) for i,j in product(index,index)]
-        
-    else:
-        print ('flavour_matrix function got and unrecognised combination of '
-               '"kind" and "domain" keyword arguments')
-        return [name]
-        
-    coefficients = []
-    for indices in real:
-        coefficients.append('{}{}'.format(name,indices))
-    for indices in cplx:
-        coefficients.append('{}{}Re'.format(name,indices))
-        coefficients.append('{}{}Im'.format(name,indices))
-
-    return coefficients
-
 def flavour_coeffs(name, kind='hermitian', domain='real', flavour='general', 
                          cname = None):
     '''
@@ -1157,15 +1231,14 @@ def flavour_coeffs(name, kind='hermitian', domain='real', flavour='general',
     properties. Takes a parameter name as an arguement and returns a tuple of 
     lists corresponding to the real and imaginary parts of the matrix elements. 
     The naming convention for real coefficients is to suffix the coefficient 
-    name with the matrix indices. For the imaginary parts, the name is 
-    prefixed with 'im' and suffixed with the matrix indices. 
+    name with the matrix indices separates by "x". 
     '''
     index = (1, 2, 3)
     if cname is None: cname = name
     
     if flavour == 'diagonal':
         include = lambda i,j: i == j 
-    elif flavour == 'minimal':
+    elif flavour == 'universal':
         include = lambda i,j: i == 1 and j == 1
     else:
         include = lambda i,j: True
@@ -1200,13 +1273,18 @@ def flavour_coeffs(name, kind='hermitian', domain='real', flavour='general',
         print ('flavour_matrix function got and unrecognised combination of '
                '"kind" and "domain" keyword arguments')
         return [name]
-    real = real if (not cplx and domain!='complex') else ['R' + c for c in real]
-    return real + ['R'+c for c in cplx], ['I'+c for c in cplx]
     
+    if (not cplx and domain!='complex'):
+        return real
+    else:
+        return ['C'+c for c in real+cplx]
+
 def sortblocks(card, ignore = []):
-    normal_blocks = sorted([k for k in card.blocks.keys() if k not in ignore],
+    normal_blocks = sorted([k for k in card.blocks.keys() 
+                            if k.lower() not in ignore],
                             key=str.lower)
-    flav_blocks = sorted([k for k in card.matrices.keys() if k not in ignore],
+    flav_blocks = sorted([k for k in card.matrices.keys() 
+                          if k.lower() not in ignore],
                           key=str.lower)
     flav_cplx = []
     for im in [fl for fl in flav_blocks if fl.lower().startswith('im')]:
@@ -1216,8 +1294,8 @@ def sortblocks(card, ignore = []):
         flav_blocks.remove(re)
         flav_blocks.remove(im)
 
-    
     return normal_blocks + flav_blocks + flav_cplx
     
+################################################################################
 if __name__=='__main__':
     pass

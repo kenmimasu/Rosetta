@@ -1,0 +1,1164 @@
+######################################################################
+############# COEFFICIENTS TRANSLATED BY ROSETTA MODULE  #############
+########### PARAM CARD GENERATED TUE JUL 28 19:07:53 2015  ###########
+######################################################################
+
+
+###################################
+## INFORMATION FOR MASS
+###################################
+
+BLOCK mass # 
+    1    +4.80000e-03 # Mu
+    2    +2.30000e-03 # Md
+    3    +9.50000e-02 # Ms
+    4    +1.42000e+00 # Mc
+    5    +4.70000e+00 # Mb
+    6    +1.73000e+02 # Mt
+    11   +5.11000e-04 # Me
+    12   +0.00000e+00 # Mve
+    13   +1.05658e-01 # Mmu
+    14   +0.00000e+00 # Mvmu
+    15   +1.77680e+00 # Mta
+    16   +0.00000e+00 # Mvta
+    23   +9.11880e+01 # MZ
+    24   +8.04190e+01
+    25   +1.25000e+02 # MH
+
+###################################
+## INFORMATION FOR SMINPUTS
+###################################
+
+BLOCK sminputs # 
+    1    +1.32507e+02 # aEWM1
+    2    +1.16639e-05 # Gf
+    3    +1.18000e-01 # aS
+    4    +9.11880e+01 # MZ
+    25   +1.25000e+02 # MH
+
+###################################
+## INFORMATION FOR MASS BASIS
+###################################
+
+BLOCK basis # 
+    1    mass # translated basis
+
+BLOCK hbx4f # 
+    1    +0.00000e+00 # cll1122
+    2    +0.00000e+00 # cpuu3333
+    3    +0.00000e+00 # cll1221
+
+BLOCK hbxh # 
+    1    +0.00000e+00 # dCw
+    2    +0.00000e+00 # dCz
+    3    +0.00000e+00 # Cww
+    4    +0.00000e+00 # Cwbx
+    5    +0.00000e+00 # Cgg
+    6    +0.00000e+00 # Caa
+    7    +0.00000e+00 # Cza
+    8    +0.00000e+00 # Czz
+    9    +0.00000e+00 # Czbx
+    10   +0.00000e+00 # Cabx
+    11   +0.00000e+00 # tCww
+    12   +0.00000e+00 # tCgg
+    13   +0.00000e+00 # tCaa
+    14   +0.00000e+00 # tCza
+    15   +0.00000e+00 # tCzz
+
+BLOCK hbxhself # 
+    1    +0.00000e+00 # dL3
+    2    +0.00000e+00 # dL4
+
+BLOCK hbxmass # 
+    1    +0.00000e+00 # dM
+
+BLOCK hbxtgc # 
+    1    -0.00000e+00 # dKa
+    2    -0.00000e+00 # tKa
+    3    +0.00000e+00 # dG1z
+    4    +0.00000e+00 # dKz
+    5    +0.00000e+00 # tKz
+    6    +0.00000e+00 # La
+    7    +0.00000e+00 # tLa
+    8    +0.00000e+00 # Lz
+    9    +0.00000e+00 # tLz
+    10   +0.00000e+00 # C3g
+    11   +0.00000e+00 # tC3g
+
+BLOCK MBxh # 
+    1    +0.00000e+00 # dCw
+    2    +0.00000e+00 # dCz
+    3    +0.00000e+00 # Cww
+    4    +0.00000e+00 # Cwbx
+    5    +0.00000e+00 # Cgg
+    6    +0.00000e+00 # Caa
+    7    +0.00000e+00 # Cza
+    8    +0.00000e+00 # Czz
+    9    +0.00000e+00 # Czbx
+    10   +0.00000e+00 # Cabx
+    11   +0.00000e+00 # tCww
+    12   +0.00000e+00 # tCgg
+    13   +0.00000e+00 # tCaa
+    14   +0.00000e+00 # tCza
+    15   +0.00000e+00 # tCzz
+
+BLOCK MBxhh # 
+    1    +0.00000e+00 # dCw2
+    2    +0.00000e+00 # dCz2
+    3    +0.00000e+00 # Cww2
+    4    +0.00000e+00 # Cwbx2
+    5    +0.00000e+00 # Cgg2
+    6    +0.00000e+00 # Caa2
+    7    +0.00000e+00 # Cza2
+    8    +0.00000e+00 # Czz2
+    9    +0.00000e+00 # Czbx2
+    10   +0.00000e+00 # Cabx2
+    11   +0.00000e+00 # tCww2
+    12   +0.00000e+00 # tCgg2
+    13   +0.00000e+00 # tCaa2
+    14   +0.00000e+00 # tCza2
+    15   +0.00000e+00 # tCzz2
+
+BLOCK MBx4F # 
+    1    +0.00000e+00 # cll1122
+    2    +0.00000e+00 # cpuu3333
+    3    +0.00000e+00 # cll1221
+
+BLOCK MBxQGC # 
+    1    +0.00000e+00 # dGw4
+    2    +0.00000e+00 # dGw2z2
+    3    +0.00000e+00 # dGw2za
+    4    -0.00000e+00 # Lw4
+    5    -0.00000e+00 # Lw2z2
+    6    -0.00000e+00 # Lw2a2
+    7    -0.00000e+00 # Lw2az
+    8    -0.00000e+00 # Lw2za
+    9    +0.00000e+00 # C4g
+    10   -0.00000e+00 # tLw4
+    11   -0.00000e+00 # tLw2z2
+    12   -0.00000e+00 # tLw2a2
+    13   -0.00000e+00 # tLw2az
+    14   -0.00000e+00 # tLw2za
+    15   +0.00000e+00 # tC4g
+
+BLOCK MBxTGC # 
+    1    +0.00000e+00 # dKa
+    2    +0.00000e+00 # tKa
+    3    +0.00000e+00 # dG1z
+    4    +0.00000e+00 # dKz
+    5    +0.00000e+00 # tKz
+    6    +0.00000e+00 # La
+    7    +0.00000e+00 # tLa
+    8    +0.00000e+00 # Lz
+    9    +0.00000e+00 # tLz
+    10   +0.00000e+00 # C3g
+    11   +0.00000e+00 # tC3g
+
+BLOCK MBxhself # 
+    1    +0.00000e+00 # dL3
+    2    +0.00000e+00 # dL4
+
+BLOCK MBxMASS # 
+    1    +0.00000e+00 # dM
+
+BLOCK IMMBxtdhwl
+    1   1    +0.00000e+00 # Itdhwl1x1
+    1   2    +0.00000e+00 # Itdhwl1x2
+    1   3    +0.00000e+00 # Itdhwl1x3
+    2   1    +0.00000e+00 # Itdhwl2x1
+    2   2    +0.00000e+00 # Itdhwl2x2
+    2   3    +0.00000e+00 # Itdhwl2x3
+    3   1    +0.00000e+00 # Itdhwl3x1
+    3   2    +0.00000e+00 # Itdhwl3x2
+    3   3    +0.00000e+00 # Itdhwl3x3
+
+BLOCK MBxY2u
+    1   1    +0.00000e+00 # RY2u1x1
+    1   2    +0.00000e+00 # RY2u1x2
+    1   3    +0.00000e+00 # RY2u1x3
+    2   1    +0.00000e+00 # RY2u2x1
+    2   2    +0.00000e+00 # RY2u2x2
+    2   3    +0.00000e+00 # RY2u2x3
+    3   1    +0.00000e+00 # RY2u3x1
+    3   2    +0.00000e+00 # RY2u3x2
+    3   3    +0.00000e+00 # RY2u3x3
+
+BLOCK IMMBxtdzu
+    1   2    +0.00000e+00 # Itdzu1x2
+    1   3    +0.00000e+00 # Itdzu1x3
+    2   3    +0.00000e+00 # Itdzu2x3
+
+BLOCK MBxtdhgd
+    1   1    +0.00000e+00 # Rtdhgd1x1
+    1   2    +0.00000e+00 # Rtdhgd1x2
+    1   3    +0.00000e+00 # Rtdhgd1x3
+    2   2    +0.00000e+00 # Rtdhgd2x2
+    2   3    +0.00000e+00 # Rtdhgd2x3
+    3   3    +0.00000e+00 # Rtdhgd3x3
+
+BLOCK MBxY2d
+    1   1    +0.00000e+00 # RY2d1x1
+    1   2    +0.00000e+00 # RY2d1x2
+    1   3    +0.00000e+00 # RY2d1x3
+    2   1    +0.00000e+00 # RY2d2x1
+    2   2    +0.00000e+00 # RY2d2x2
+    2   3    +0.00000e+00 # RY2d2x3
+    3   1    +0.00000e+00 # RY2d3x1
+    3   2    +0.00000e+00 # RY2d3x2
+    3   3    +0.00000e+00 # RY2d3x3
+
+BLOCK MBxY2e
+    1   1    +0.00000e+00 # RY2e1x1
+    1   2    +0.00000e+00 # RY2e1x2
+    1   3    +0.00000e+00 # RY2e1x3
+    2   1    +0.00000e+00 # RY2e2x1
+    2   2    +0.00000e+00 # RY2e2x2
+    2   3    +0.00000e+00 # RY2e2x3
+    3   1    +0.00000e+00 # RY2e3x1
+    3   2    +0.00000e+00 # RY2e3x2
+    3   3    +0.00000e+00 # RY2e3x3
+
+BLOCK IMMBxtdzd
+    1   2    +0.00000e+00 # Itdzd1x2
+    1   3    +0.00000e+00 # Itdzd1x3
+    2   3    +0.00000e+00 # Itdzd2x3
+
+BLOCK IMMBxtdze
+    1   2    +0.00000e+00 # Itdze1x2
+    1   3    +0.00000e+00 # Itdze1x3
+    2   3    +0.00000e+00 # Itdze2x3
+
+BLOCK IMMBxdGLzu
+    1   2    +0.00000e+00 # IdGLzu1x2
+    1   3    +0.00000e+00 # IdGLzu1x3
+    2   3    +0.00000e+00 # IdGLzu2x3
+
+BLOCK IMMBxtdhwq
+    1   1    +0.00000e+00 # Itdhwq1x1
+    1   2    +0.00000e+00 # Itdhwq1x2
+    1   3    +0.00000e+00 # Itdhwq1x3
+    2   1    +0.00000e+00 # Itdhwq2x1
+    2   2    +0.00000e+00 # Itdhwq2x2
+    2   3    +0.00000e+00 # Itdhwq2x3
+    3   1    +0.00000e+00 # Itdhwq3x1
+    3   2    +0.00000e+00 # Itdhwq3x2
+    3   3    +0.00000e+00 # Itdhwq3x3
+
+BLOCK MBxtdhzu
+    1   1    +0.00000e+00 # Rtdhzu1x1
+    1   2    +0.00000e+00 # Rtdhzu1x2
+    1   3    +0.00000e+00 # Rtdhzu1x3
+    2   2    +0.00000e+00 # Rtdhzu2x2
+    2   3    +0.00000e+00 # Rtdhzu2x3
+    3   3    +0.00000e+00 # Rtdhzu3x3
+
+BLOCK MBxtdhau
+    1   1    +0.00000e+00 # Rtdhau1x1
+    1   2    +0.00000e+00 # Rtdhau1x2
+    1   3    +0.00000e+00 # Rtdhau1x3
+    2   2    +0.00000e+00 # Rtdhau2x2
+    2   3    +0.00000e+00 # Rtdhau2x3
+    3   3    +0.00000e+00 # Rtdhau3x3
+
+BLOCK MBxtdhze
+    1   1    +0.00000e+00 # Rtdhze1x1
+    1   2    +0.00000e+00 # Rtdhze1x2
+    1   3    +0.00000e+00 # Rtdhze1x3
+    2   2    +0.00000e+00 # Rtdhze2x2
+    2   3    +0.00000e+00 # Rtdhze2x3
+    3   3    +0.00000e+00 # Rtdhze3x3
+
+BLOCK MBxtdhzd
+    1   1    +0.00000e+00 # Rtdhzd1x1
+    1   2    +0.00000e+00 # Rtdhzd1x2
+    1   3    +0.00000e+00 # Rtdhzd1x3
+    2   2    +0.00000e+00 # Rtdhzd2x2
+    2   3    +0.00000e+00 # Rtdhzd2x3
+    3   3    +0.00000e+00 # Rtdhzd3x3
+
+BLOCK MBxtdhad
+    1   1    +0.00000e+00 # Rtdhad1x1
+    1   2    +0.00000e+00 # Rtdhad1x2
+    1   3    +0.00000e+00 # Rtdhad1x3
+    2   2    +0.00000e+00 # Rtdhad2x2
+    2   3    +0.00000e+00 # Rtdhad2x3
+    3   3    +0.00000e+00 # Rtdhad3x3
+
+BLOCK MBxtdhae
+    1   1    +0.00000e+00 # Rtdhae1x1
+    1   2    +0.00000e+00 # Rtdhae1x2
+    1   3    +0.00000e+00 # Rtdhae1x3
+    2   2    +0.00000e+00 # Rtdhae2x2
+    2   3    +0.00000e+00 # Rtdhae2x3
+    3   3    +0.00000e+00 # Rtdhae3x3
+
+BLOCK IMMBxdGLhwq
+    1   2    +0.00000e+00 # IdGLhwq1x2
+    1   3    +0.00000e+00 # IdGLhwq1x3
+    2   3    +0.00000e+00 # IdGLhwq2x3
+
+BLOCK IMMBxY2d
+    1   1    +0.00000e+00 # IY2d1x1
+    1   2    +0.00000e+00 # IY2d1x2
+    1   3    +0.00000e+00 # IY2d1x3
+    2   1    +0.00000e+00 # IY2d2x1
+    2   2    +0.00000e+00 # IY2d2x2
+    2   3    +0.00000e+00 # IY2d2x3
+    3   1    +0.00000e+00 # IY2d3x1
+    3   2    +0.00000e+00 # IY2d3x2
+    3   3    +0.00000e+00 # IY2d3x3
+
+BLOCK IMMBxY2e
+    1   1    +0.00000e+00 # IY2e1x1
+    1   2    +0.00000e+00 # IY2e1x2
+    1   3    +0.00000e+00 # IY2e1x3
+    2   1    +0.00000e+00 # IY2e2x1
+    2   2    +0.00000e+00 # IY2e2x2
+    2   3    +0.00000e+00 # IY2e2x3
+    3   1    +0.00000e+00 # IY2e3x1
+    3   2    +0.00000e+00 # IY2e3x2
+    3   3    +0.00000e+00 # IY2e3x3
+
+BLOCK IMMBxdGLwl
+    1   2    +0.00000e+00 # IdGLwl1x2
+    1   3    +0.00000e+00 # IdGLwl1x3
+    2   3    +0.00000e+00 # IdGLwl2x3
+
+BLOCK MBxSd
+    1   1    +0.00000e+00 # Sd1x1
+    1   2    +0.00000e+00 # Sd1x2
+    1   3    +0.00000e+00 # Sd1x3
+    2   1    +0.00000e+00 # Sd2x1
+    2   2    +0.00000e+00 # Sd2x2
+    2   3    +0.00000e+00 # Sd2x3
+    3   1    +0.00000e+00 # Sd3x1
+    3   2    +0.00000e+00 # Sd3x2
+    3   3    +0.00000e+00 # Sd3x3
+
+BLOCK IMMBxdGLhwl
+    1   2    +0.00000e+00 # IdGLhwl1x2
+    1   3    +0.00000e+00 # IdGLhwl1x3
+    2   3    +0.00000e+00 # IdGLhwl2x3
+
+BLOCK IMMBxY2u
+    1   1    +0.00000e+00 # IY2u1x1
+    1   2    +0.00000e+00 # IY2u1x2
+    1   3    +0.00000e+00 # IY2u1x3
+    2   1    +0.00000e+00 # IY2u2x1
+    2   2    +0.00000e+00 # IY2u2x2
+    2   3    +0.00000e+00 # IY2u2x3
+    3   1    +0.00000e+00 # IY2u3x1
+    3   2    +0.00000e+00 # IY2u3x2
+    3   3    +0.00000e+00 # IY2u3x3
+
+BLOCK IMMBxdhzd
+    1   2    +0.00000e+00 # Idhzd1x2
+    1   3    +0.00000e+00 # Idhzd1x3
+    2   3    +0.00000e+00 # Idhzd2x3
+
+BLOCK MBxdhae
+    1   1    +0.00000e+00 # Rdhae1x1
+    1   2    +0.00000e+00 # Rdhae1x2
+    1   3    +0.00000e+00 # Rdhae1x3
+    2   2    +0.00000e+00 # Rdhae2x2
+    2   3    +0.00000e+00 # Rdhae2x3
+    3   3    +0.00000e+00 # Rdhae3x3
+
+BLOCK MBxdhad
+    1   1    +0.00000e+00 # Rdhad1x1
+    1   2    +0.00000e+00 # Rdhad1x2
+    1   3    +0.00000e+00 # Rdhad1x3
+    2   2    +0.00000e+00 # Rdhad2x2
+    2   3    +0.00000e+00 # Rdhad2x3
+    3   3    +0.00000e+00 # Rdhad3x3
+
+BLOCK MBxdad
+    1   1    +0.00000e+00 # Rdad1x1
+    1   2    +0.00000e+00 # Rdad1x2
+    1   3    +0.00000e+00 # Rdad1x3
+    2   2    +0.00000e+00 # Rdad2x2
+    2   3    +0.00000e+00 # Rdad2x3
+    3   3    +0.00000e+00 # Rdad3x3
+
+BLOCK MBxdae
+    1   1    +0.00000e+00 # Rdae1x1
+    1   2    +0.00000e+00 # Rdae1x2
+    1   3    +0.00000e+00 # Rdae1x3
+    2   2    +0.00000e+00 # Rdae2x2
+    2   3    +0.00000e+00 # Rdae2x3
+    3   3    +0.00000e+00 # Rdae3x3
+
+BLOCK IMMBxdGRhwq
+    1   1    +0.00000e+00 # IdGRhwq1x1
+    1   2    +0.00000e+00 # IdGRhwq1x2
+    1   3    +0.00000e+00 # IdGRhwq1x3
+    2   1    +0.00000e+00 # IdGRhwq2x1
+    2   2    +0.00000e+00 # IdGRhwq2x2
+    2   3    +0.00000e+00 # IdGRhwq2x3
+    3   1    +0.00000e+00 # IdGRhwq3x1
+    3   2    +0.00000e+00 # IdGRhwq3x2
+    3   3    +0.00000e+00 # IdGRhwq3x3
+
+BLOCK MBxdze
+    1   1    +0.00000e+00 # Rdze1x1
+    1   2    +0.00000e+00 # Rdze1x2
+    1   3    +0.00000e+00 # Rdze1x3
+    2   2    +0.00000e+00 # Rdze2x2
+    2   3    +0.00000e+00 # Rdze2x3
+    3   3    +0.00000e+00 # Rdze3x3
+
+BLOCK MBxdzd
+    1   1    +0.00000e+00 # Rdzd1x1
+    1   2    +0.00000e+00 # Rdzd1x2
+    1   3    +0.00000e+00 # Rdzd1x3
+    2   2    +0.00000e+00 # Rdzd2x2
+    2   3    +0.00000e+00 # Rdzd2x3
+    3   3    +0.00000e+00 # Rdzd3x3
+
+BLOCK MBxdhau
+    1   1    +0.00000e+00 # Rdhau1x1
+    1   2    +0.00000e+00 # Rdhau1x2
+    1   3    +0.00000e+00 # Rdhau1x3
+    2   2    +0.00000e+00 # Rdhau2x2
+    2   3    +0.00000e+00 # Rdhau2x3
+    3   3    +0.00000e+00 # Rdhau3x3
+
+BLOCK IMMBxdGLzd
+    1   2    +0.00000e+00 # IdGLzd1x2
+    1   3    +0.00000e+00 # IdGLzd1x3
+    2   3    +0.00000e+00 # IdGLzd2x3
+
+BLOCK MBxdzu
+    1   1    +0.00000e+00 # Rdzu1x1
+    1   2    +0.00000e+00 # Rdzu1x2
+    1   3    +0.00000e+00 # Rdzu1x3
+    2   2    +0.00000e+00 # Rdzu2x2
+    2   3    +0.00000e+00 # Rdzu2x3
+    3   3    +0.00000e+00 # Rdzu3x3
+
+BLOCK IMMBxdGLze
+    1   2    +0.00000e+00 # IdGLze1x2
+    1   3    +0.00000e+00 # IdGLze1x3
+    2   3    +0.00000e+00 # IdGLze2x3
+
+BLOCK IMMBxdhze
+    1   2    +0.00000e+00 # Idhze1x2
+    1   3    +0.00000e+00 # Idhze1x3
+    2   3    +0.00000e+00 # Idhze2x3
+
+BLOCK IMMBxdhau
+    1   2    +0.00000e+00 # Idhau1x2
+    1   3    +0.00000e+00 # Idhau1x3
+    2   3    +0.00000e+00 # Idhau2x3
+
+BLOCK MBxtdhwq
+    1   1    +0.00000e+00 # Rtdhwq1x1
+    1   2    +0.00000e+00 # Rtdhwq1x2
+    1   3    +0.00000e+00 # Rtdhwq1x3
+    2   1    +0.00000e+00 # Rtdhwq2x1
+    2   2    +0.00000e+00 # Rtdhwq2x2
+    2   3    +0.00000e+00 # Rtdhwq2x3
+    3   1    +0.00000e+00 # Rtdhwq3x1
+    3   2    +0.00000e+00 # Rtdhwq3x2
+    3   3    +0.00000e+00 # Rtdhwq3x3
+
+BLOCK IMMBxdhae
+    1   2    +0.00000e+00 # Idhae1x2
+    1   3    +0.00000e+00 # Idhae1x3
+    2   3    +0.00000e+00 # Idhae2x3
+
+BLOCK IMMBxdhad
+    1   2    +0.00000e+00 # Idhad1x2
+    1   3    +0.00000e+00 # Idhad1x3
+    2   3    +0.00000e+00 # Idhad2x3
+
+BLOCK MBxtdhwl
+    1   1    +0.00000e+00 # Rtdhwl1x1
+    1   2    +0.00000e+00 # Rtdhwl1x2
+    1   3    +0.00000e+00 # Rtdhwl1x3
+    2   1    +0.00000e+00 # Rtdhwl2x1
+    2   2    +0.00000e+00 # Rtdhwl2x2
+    2   3    +0.00000e+00 # Rtdhwl2x3
+    3   1    +0.00000e+00 # Rtdhwl3x1
+    3   2    +0.00000e+00 # Rtdhwl3x2
+    3   3    +0.00000e+00 # Rtdhwl3x3
+
+BLOCK IMMBxdhzu
+    1   2    +0.00000e+00 # Idhzu1x2
+    1   3    +0.00000e+00 # Idhzu1x3
+    2   3    +0.00000e+00 # Idhzu2x3
+
+BLOCK MBxSu
+    1   1    +0.00000e+00 # Su1x1
+    1   2    +0.00000e+00 # Su1x2
+    1   3    +0.00000e+00 # Su1x3
+    2   1    +0.00000e+00 # Su2x1
+    2   2    +0.00000e+00 # Su2x2
+    2   3    +0.00000e+00 # Su2x3
+    3   1    +0.00000e+00 # Su3x1
+    3   2    +0.00000e+00 # Su3x2
+    3   3    +0.00000e+00 # Su3x3
+
+BLOCK IMMBxdGLzv
+    1   2    +0.00000e+00 # IdGLzv1x2
+    1   3    +0.00000e+00 # IdGLzv1x3
+    2   3    +0.00000e+00 # IdGLzv2x3
+
+BLOCK MBxdhzd
+    1   1    +0.00000e+00 # Rdhzd1x1
+    1   2    +0.00000e+00 # Rdhzd1x2
+    1   3    +0.00000e+00 # Rdhzd1x3
+    2   2    +0.00000e+00 # Rdhzd2x2
+    2   3    +0.00000e+00 # Rdhzd2x3
+    3   3    +0.00000e+00 # Rdhzd3x3
+
+BLOCK MBxtdzu
+    1   1    +0.00000e+00 # Rtdzu1x1
+    1   2    +0.00000e+00 # Rtdzu1x2
+    1   3    +0.00000e+00 # Rtdzu1x3
+    2   2    +0.00000e+00 # Rtdzu2x2
+    2   3    +0.00000e+00 # Rtdzu2x3
+    3   3    +0.00000e+00 # Rtdzu3x3
+
+BLOCK MBxdhze
+    1   1    +0.00000e+00 # Rdhze1x1
+    1   2    +0.00000e+00 # Rdhze1x2
+    1   3    +0.00000e+00 # Rdhze1x3
+    2   2    +0.00000e+00 # Rdhze2x2
+    2   3    +0.00000e+00 # Rdhze2x3
+    3   3    +0.00000e+00 # Rdhze3x3
+
+BLOCK MBxdGRhwq
+    1   1    +0.00000e+00 # RdGRhwq1x1
+    1   2    +0.00000e+00 # RdGRhwq1x2
+    1   3    +0.00000e+00 # RdGRhwq1x3
+    2   1    +0.00000e+00 # RdGRhwq2x1
+    2   2    +0.00000e+00 # RdGRhwq2x2
+    2   3    +0.00000e+00 # RdGRhwq2x3
+    3   1    +0.00000e+00 # RdGRhwq3x1
+    3   2    +0.00000e+00 # RdGRhwq3x2
+    3   3    +0.00000e+00 # RdGRhwq3x3
+
+BLOCK MBxtdhgu
+    1   1    +0.00000e+00 # Rtdhgu1x1
+    1   2    +0.00000e+00 # Rtdhgu1x2
+    1   3    +0.00000e+00 # Rtdhgu1x3
+    2   2    +0.00000e+00 # Rtdhgu2x2
+    2   3    +0.00000e+00 # Rtdhgu2x3
+    3   3    +0.00000e+00 # Rtdhgu3x3
+
+BLOCK MBxtdzd
+    1   1    +0.00000e+00 # Rtdzd1x1
+    1   2    +0.00000e+00 # Rtdzd1x2
+    1   3    +0.00000e+00 # Rtdzd1x3
+    2   2    +0.00000e+00 # Rtdzd2x2
+    2   3    +0.00000e+00 # Rtdzd2x3
+    3   3    +0.00000e+00 # Rtdzd3x3
+
+BLOCK MBxtdze
+    1   1    +0.00000e+00 # Rtdze1x1
+    1   2    +0.00000e+00 # Rtdze1x2
+    1   3    +0.00000e+00 # Rtdze1x3
+    2   2    +0.00000e+00 # Rtdze2x2
+    2   3    +0.00000e+00 # Rtdze2x3
+    3   3    +0.00000e+00 # Rtdze3x3
+
+BLOCK IMMBxdGRzu
+    1   2    +0.00000e+00 # IdGRzu1x2
+    1   3    +0.00000e+00 # IdGRzu1x3
+    2   3    +0.00000e+00 # IdGRzu2x3
+
+BLOCK MBxSe
+    1   1    +0.00000e+00 # Se1x1
+    1   2    +0.00000e+00 # Se1x2
+    1   3    +0.00000e+00 # Se1x3
+    2   1    +0.00000e+00 # Se2x1
+    2   2    +0.00000e+00 # Se2x2
+    2   3    +0.00000e+00 # Se2x3
+    3   1    +0.00000e+00 # Se3x1
+    3   2    +0.00000e+00 # Se3x2
+    3   3    +0.00000e+00 # Se3x3
+
+BLOCK IMMBxtdae
+    1   2    +0.00000e+00 # Itdae1x2
+    1   3    +0.00000e+00 # Itdae1x3
+    2   3    +0.00000e+00 # Itdae2x3
+
+BLOCK IMMBxtdad
+    1   2    +0.00000e+00 # Itdad1x2
+    1   3    +0.00000e+00 # Itdad1x3
+    2   3    +0.00000e+00 # Itdad2x3
+
+BLOCK IMMBxdGRhzu
+    1   2    +0.00000e+00 # IdGRhzu1x2
+    1   3    +0.00000e+00 # IdGRhzu1x3
+    2   3    +0.00000e+00 # IdGRhzu2x3
+
+BLOCK IMMBxdze
+    1   2    +0.00000e+00 # Idze1x2
+    1   3    +0.00000e+00 # Idze1x3
+    2   3    +0.00000e+00 # Idze2x3
+
+BLOCK MBxdwq
+    1   1    +0.00000e+00 # Rdwq1x1
+    1   2    +0.00000e+00 # Rdwq1x2
+    1   3    +0.00000e+00 # Rdwq1x3
+    2   1    +0.00000e+00 # Rdwq2x1
+    2   2    +0.00000e+00 # Rdwq2x2
+    2   3    +0.00000e+00 # Rdwq2x3
+    3   1    +0.00000e+00 # Rdwq3x1
+    3   2    +0.00000e+00 # Rdwq3x2
+    3   3    +0.00000e+00 # Rdwq3x3
+
+BLOCK MBxdYd
+    1   1    +0.00000e+00 # dYd1x1
+    1   2    +0.00000e+00 # dYd1x2
+    1   3    +0.00000e+00 # dYd1x3
+    2   1    +0.00000e+00 # dYd2x1
+    2   2    +0.00000e+00 # dYd2x2
+    2   3    +0.00000e+00 # dYd2x3
+    3   1    +0.00000e+00 # dYd3x1
+    3   2    +0.00000e+00 # dYd3x2
+    3   3    +0.00000e+00 # dYd3x3
+
+BLOCK MBxdYe
+    1   1    +0.00000e+00 # dYe1x1
+    1   2    +0.00000e+00 # dYe1x2
+    1   3    +0.00000e+00 # dYe1x3
+    2   1    +0.00000e+00 # dYe2x1
+    2   2    +0.00000e+00 # dYe2x2
+    2   3    +0.00000e+00 # dYe2x3
+    3   1    +0.00000e+00 # dYe3x1
+    3   2    +0.00000e+00 # dYe3x2
+    3   3    +0.00000e+00 # dYe3x3
+
+BLOCK IMMBxdzd
+    1   2    +0.00000e+00 # Idzd1x2
+    1   3    +0.00000e+00 # Idzd1x3
+    2   3    +0.00000e+00 # Idzd2x3
+
+BLOCK IMMBxdGRzd
+    1   2    +0.00000e+00 # IdGRzd1x2
+    1   3    +0.00000e+00 # IdGRzd1x3
+    2   3    +0.00000e+00 # IdGRzd2x3
+
+BLOCK IMMBxdGRze
+    1   2    +0.00000e+00 # IdGRze1x2
+    1   3    +0.00000e+00 # IdGRze1x3
+    2   3    +0.00000e+00 # IdGRze2x3
+
+BLOCK MBxdwl
+    1   1    +0.00000e+00 # Rdwl1x1
+    1   2    +0.00000e+00 # Rdwl1x2
+    1   3    +0.00000e+00 # Rdwl1x3
+    2   1    +0.00000e+00 # Rdwl2x1
+    2   2    +0.00000e+00 # Rdwl2x2
+    2   3    +0.00000e+00 # Rdwl2x3
+    3   1    +0.00000e+00 # Rdwl3x1
+    3   2    +0.00000e+00 # Rdwl3x2
+    3   3    +0.00000e+00 # Rdwl3x3
+
+BLOCK IMMBxdGRhze
+    1   2    +0.00000e+00 # IdGRhze1x2
+    1   3    +0.00000e+00 # IdGRhze1x3
+    2   3    +0.00000e+00 # IdGRhze2x3
+
+BLOCK IMMBxdGRhzd
+    1   2    +0.00000e+00 # IdGRhzd1x2
+    1   3    +0.00000e+00 # IdGRhzd1x3
+    2   3    +0.00000e+00 # IdGRhzd2x3
+
+BLOCK IMMBxdzu
+    1   2    +0.00000e+00 # Idzu1x2
+    1   3    +0.00000e+00 # Idzu1x3
+    2   3    +0.00000e+00 # Idzu2x3
+
+BLOCK MBxdYu
+    1   1    +0.00000e+00 # dYu1x1
+    1   2    +0.00000e+00 # dYu1x2
+    1   3    +0.00000e+00 # dYu1x3
+    2   1    +0.00000e+00 # dYu2x1
+    2   2    +0.00000e+00 # dYu2x2
+    2   3    +0.00000e+00 # dYu2x3
+    3   1    +0.00000e+00 # dYu3x1
+    3   2    +0.00000e+00 # dYu3x2
+    3   3    +0.00000e+00 # dYu3x3
+
+BLOCK MBxdGRwq
+    1   1    +0.00000e+00 # RdGRwq1x1
+    1   2    +0.00000e+00 # RdGRwq1x2
+    1   3    +0.00000e+00 # RdGRwq1x3
+    2   1    +0.00000e+00 # RdGRwq2x1
+    2   2    +0.00000e+00 # RdGRwq2x2
+    2   3    +0.00000e+00 # RdGRwq2x3
+    3   1    +0.00000e+00 # RdGRwq3x1
+    3   2    +0.00000e+00 # RdGRwq3x2
+    3   3    +0.00000e+00 # RdGRwq3x3
+
+BLOCK MBxdGLwl
+    1   1    +0.00000e+00 # RdGLwl1x1
+    1   2    +0.00000e+00 # RdGLwl1x2
+    1   3    +0.00000e+00 # RdGLwl1x3
+    2   2    +0.00000e+00 # RdGLwl2x2
+    2   3    +0.00000e+00 # RdGLwl2x3
+    3   3    +0.00000e+00 # RdGLwl3x3
+
+BLOCK MBxdGLhwl
+    1   1    +0.00000e+00 # RdGLhwl1x1
+    1   2    +0.00000e+00 # RdGLhwl1x2
+    1   3    +0.00000e+00 # RdGLhwl1x3
+    2   2    +0.00000e+00 # RdGLhwl2x2
+    2   3    +0.00000e+00 # RdGLhwl2x3
+    3   3    +0.00000e+00 # RdGLhwl3x3
+
+BLOCK IMMBxtdhgu
+    1   2    +0.00000e+00 # Itdhgu1x2
+    1   3    +0.00000e+00 # Itdhgu1x3
+    2   3    +0.00000e+00 # Itdhgu2x3
+
+BLOCK MBxdgd
+    1   1    +0.00000e+00 # Rdgd1x1
+    1   2    +0.00000e+00 # Rdgd1x2
+    1   3    +0.00000e+00 # Rdgd1x3
+    2   2    +0.00000e+00 # Rdgd2x2
+    2   3    +0.00000e+00 # Rdgd2x3
+    3   3    +0.00000e+00 # Rdgd3x3
+
+BLOCK MBxdau
+    1   1    +0.00000e+00 # Rdau1x1
+    1   2    +0.00000e+00 # Rdau1x2
+    1   3    +0.00000e+00 # Rdau1x3
+    2   2    +0.00000e+00 # Rdau2x2
+    2   3    +0.00000e+00 # Rdau2x3
+    3   3    +0.00000e+00 # Rdau3x3
+
+BLOCK MBxdGLhwq
+    1   1    +0.00000e+00 # RdGLhwq1x1
+    1   2    +0.00000e+00 # RdGLhwq1x2
+    1   3    +0.00000e+00 # RdGLhwq1x3
+    2   2    +0.00000e+00 # RdGLhwq2x2
+    2   3    +0.00000e+00 # RdGLhwq2x3
+    3   3    +0.00000e+00 # RdGLhwq3x3
+
+BLOCK IMMBxtdhgd
+    1   2    +0.00000e+00 # Itdhgd1x2
+    1   3    +0.00000e+00 # Itdhgd1x3
+    2   3    +0.00000e+00 # Itdhgd2x3
+
+BLOCK MBxdhzu
+    1   1    +0.00000e+00 # Rdhzu1x1
+    1   2    +0.00000e+00 # Rdhzu1x2
+    1   3    +0.00000e+00 # Rdhzu1x3
+    2   2    +0.00000e+00 # Rdhzu2x2
+    2   3    +0.00000e+00 # Rdhzu2x3
+    3   3    +0.00000e+00 # Rdhzu3x3
+
+BLOCK MBxdGLwq
+    1   1    +0.00000e+00 # RdGLwq1x1
+    1   2    +0.00000e+00 # RdGLwq1x2
+    1   3    +0.00000e+00 # RdGLwq1x3
+    2   2    +0.00000e+00 # RdGLwq2x2
+    2   3    +0.00000e+00 # RdGLwq2x3
+    3   3    +0.00000e+00 # RdGLwq3x3
+
+BLOCK MBxdgu
+    1   1    +0.00000e+00 # Rdgu1x1
+    1   2    +0.00000e+00 # Rdgu1x2
+    1   3    +0.00000e+00 # Rdgu1x3
+    2   2    +0.00000e+00 # Rdgu2x2
+    2   3    +0.00000e+00 # Rdgu2x3
+    3   3    +0.00000e+00 # Rdgu3x3
+
+BLOCK MBxtdwq
+    1   1    +0.00000e+00 # Rtdwq1x1
+    1   2    +0.00000e+00 # Rtdwq1x2
+    1   3    +0.00000e+00 # Rtdwq1x3
+    2   1    +0.00000e+00 # Rtdwq2x1
+    2   2    +0.00000e+00 # Rtdwq2x2
+    2   3    +0.00000e+00 # Rtdwq2x3
+    3   1    +0.00000e+00 # Rtdwq3x1
+    3   2    +0.00000e+00 # Rtdwq3x2
+    3   3    +0.00000e+00 # Rtdwq3x3
+
+BLOCK IMMBxtdau
+    1   2    +0.00000e+00 # Itdau1x2
+    1   3    +0.00000e+00 # Itdau1x3
+    2   3    +0.00000e+00 # Itdau2x3
+
+BLOCK IMMBxtdwl
+    1   1    +0.00000e+00 # Itdwl1x1
+    1   2    +0.00000e+00 # Itdwl1x2
+    1   3    +0.00000e+00 # Itdwl1x3
+    2   1    +0.00000e+00 # Itdwl2x1
+    2   2    +0.00000e+00 # Itdwl2x2
+    2   3    +0.00000e+00 # Itdwl2x3
+    3   1    +0.00000e+00 # Itdwl3x1
+    3   2    +0.00000e+00 # Itdwl3x2
+    3   3    +0.00000e+00 # Itdwl3x3
+
+BLOCK MBxtdwl
+    1   1    +0.00000e+00 # Rtdwl1x1
+    1   2    +0.00000e+00 # Rtdwl1x2
+    1   3    +0.00000e+00 # Rtdwl1x3
+    2   1    +0.00000e+00 # Rtdwl2x1
+    2   2    +0.00000e+00 # Rtdwl2x2
+    2   3    +0.00000e+00 # Rtdwl2x3
+    3   1    +0.00000e+00 # Rtdwl3x1
+    3   2    +0.00000e+00 # Rtdwl3x2
+    3   3    +0.00000e+00 # Rtdwl3x3
+
+BLOCK IMMBxtdwq
+    1   1    +0.00000e+00 # Itdwq1x1
+    1   2    +0.00000e+00 # Itdwq1x2
+    1   3    +0.00000e+00 # Itdwq1x3
+    2   1    +0.00000e+00 # Itdwq2x1
+    2   2    +0.00000e+00 # Itdwq2x2
+    2   3    +0.00000e+00 # Itdwq2x3
+    3   1    +0.00000e+00 # Itdwq3x1
+    3   2    +0.00000e+00 # Itdwq3x2
+    3   3    +0.00000e+00 # Itdwq3x3
+
+BLOCK MBxdGLzd
+    1   1    +0.00000e+00 # RdGLzd1x1
+    1   2    +0.00000e+00 # RdGLzd1x2
+    1   3    +0.00000e+00 # RdGLzd1x3
+    2   2    +0.00000e+00 # RdGLzd2x2
+    2   3    +0.00000e+00 # RdGLzd2x3
+    3   3    +0.00000e+00 # RdGLzd3x3
+
+BLOCK MBxdGLze
+    1   1    +0.00000e+00 # RdGLze1x1
+    1   2    +0.00000e+00 # RdGLze1x2
+    1   3    +0.00000e+00 # RdGLze1x3
+    2   2    +0.00000e+00 # RdGLze2x2
+    2   3    +0.00000e+00 # RdGLze2x3
+    3   3    +0.00000e+00 # RdGLze3x3
+
+BLOCK MBxtdgd
+    1   1    +0.00000e+00 # Rtdgd1x1
+    1   2    +0.00000e+00 # Rtdgd1x2
+    1   3    +0.00000e+00 # Rtdgd1x3
+    2   2    +0.00000e+00 # Rtdgd2x2
+    2   3    +0.00000e+00 # Rtdgd2x3
+    3   3    +0.00000e+00 # Rtdgd3x3
+
+BLOCK IMMBxdwq
+    1   1    +0.00000e+00 # Idwq1x1
+    1   2    +0.00000e+00 # Idwq1x2
+    1   3    +0.00000e+00 # Idwq1x3
+    2   1    +0.00000e+00 # Idwq2x1
+    2   2    +0.00000e+00 # Idwq2x2
+    2   3    +0.00000e+00 # Idwq2x3
+    3   1    +0.00000e+00 # Idwq3x1
+    3   2    +0.00000e+00 # Idwq3x2
+    3   3    +0.00000e+00 # Idwq3x3
+
+BLOCK MBxdGRzd
+    1   1    +0.00000e+00 # RdGRzd1x1
+    1   2    +0.00000e+00 # RdGRzd1x2
+    1   3    +0.00000e+00 # RdGRzd1x3
+    2   2    +0.00000e+00 # RdGRzd2x2
+    2   3    +0.00000e+00 # RdGRzd2x3
+    3   3    +0.00000e+00 # RdGRzd3x3
+
+BLOCK MBxdGRze
+    1   1    +0.00000e+00 # RdGRze1x1
+    1   2    +0.00000e+00 # RdGRze1x2
+    1   3    +0.00000e+00 # RdGRze1x3
+    2   2    +0.00000e+00 # RdGRze2x2
+    2   3    +0.00000e+00 # RdGRze2x3
+    3   3    +0.00000e+00 # RdGRze3x3
+
+BLOCK MBxdGLzv
+    1   1    +0.00000e+00 # RdGLzv1x1
+    1   2    +0.00000e+00 # RdGLzv1x2
+    1   3    +0.00000e+00 # RdGLzv1x3
+    2   2    +0.00000e+00 # RdGLzv2x2
+    2   3    +0.00000e+00 # RdGLzv2x3
+    3   3    +0.00000e+00 # RdGLzv3x3
+
+BLOCK MBxdGLzu
+    1   1    +0.00000e+00 # RdGLzu1x1
+    1   2    +0.00000e+00 # RdGLzu1x2
+    1   3    +0.00000e+00 # RdGLzu1x3
+    2   2    +0.00000e+00 # RdGLzu2x2
+    2   3    +0.00000e+00 # RdGLzu2x3
+    3   3    +0.00000e+00 # RdGLzu3x3
+
+BLOCK MBxtdgu
+    1   1    +0.00000e+00 # Rtdgu1x1
+    1   2    +0.00000e+00 # Rtdgu1x2
+    1   3    +0.00000e+00 # Rtdgu1x3
+    2   2    +0.00000e+00 # Rtdgu2x2
+    2   3    +0.00000e+00 # Rtdgu2x3
+    3   3    +0.00000e+00 # Rtdgu3x3
+
+BLOCK IMMBxdwl
+    1   1    +0.00000e+00 # Idwl1x1
+    1   2    +0.00000e+00 # Idwl1x2
+    1   3    +0.00000e+00 # Idwl1x3
+    2   1    +0.00000e+00 # Idwl2x1
+    2   2    +0.00000e+00 # Idwl2x2
+    2   3    +0.00000e+00 # Idwl2x3
+    3   1    +0.00000e+00 # Idwl3x1
+    3   2    +0.00000e+00 # Idwl3x2
+    3   3    +0.00000e+00 # Idwl3x3
+
+BLOCK MBxdGRzu
+    1   1    +0.00000e+00 # RdGRzu1x1
+    1   2    +0.00000e+00 # RdGRzu1x2
+    1   3    +0.00000e+00 # RdGRzu1x3
+    2   2    +0.00000e+00 # RdGRzu2x2
+    2   3    +0.00000e+00 # RdGRzu2x3
+    3   3    +0.00000e+00 # RdGRzu3x3
+
+BLOCK MBxdGLhze
+    1   1    +0.00000e+00 # RdGLhze1x1
+    1   2    +0.00000e+00 # RdGLhze1x2
+    1   3    +0.00000e+00 # RdGLhze1x3
+    2   2    +0.00000e+00 # RdGLhze2x2
+    2   3    +0.00000e+00 # RdGLhze2x3
+    3   3    +0.00000e+00 # RdGLhze3x3
+
+BLOCK MBxdGLhzd
+    1   1    +0.00000e+00 # RdGLhzd1x1
+    1   2    +0.00000e+00 # RdGLhzd1x2
+    1   3    +0.00000e+00 # RdGLhzd1x3
+    2   2    +0.00000e+00 # RdGLhzd2x2
+    2   3    +0.00000e+00 # RdGLhzd2x3
+    3   3    +0.00000e+00 # RdGLhzd3x3
+
+BLOCK MBxdGLhzv
+    1   1    +0.00000e+00 # RdGLhzv1x1
+    1   2    +0.00000e+00 # RdGLhzv1x2
+    1   3    +0.00000e+00 # RdGLhzv1x3
+    2   2    +0.00000e+00 # RdGLhzv2x2
+    2   3    +0.00000e+00 # RdGLhzv2x3
+    3   3    +0.00000e+00 # RdGLhzv3x3
+
+BLOCK MBxdGLhzu
+    1   1    +0.00000e+00 # RdGLhzu1x1
+    1   2    +0.00000e+00 # RdGLhzu1x2
+    1   3    +0.00000e+00 # RdGLhzu1x3
+    2   2    +0.00000e+00 # RdGLhzu2x2
+    2   3    +0.00000e+00 # RdGLhzu2x3
+    3   3    +0.00000e+00 # RdGLhzu3x3
+
+BLOCK IMMBxtdhau
+    1   2    +0.00000e+00 # Itdhau1x2
+    1   3    +0.00000e+00 # Itdhau1x3
+    2   3    +0.00000e+00 # Itdhau2x3
+
+BLOCK IMMBxtdgu
+    1   2    +0.00000e+00 # Itdgu1x2
+    1   3    +0.00000e+00 # Itdgu1x3
+    2   3    +0.00000e+00 # Itdgu2x3
+
+BLOCK IMMBxdGLhzv
+    1   2    +0.00000e+00 # IdGLhzv1x2
+    1   3    +0.00000e+00 # IdGLhzv1x3
+    2   3    +0.00000e+00 # IdGLhzv2x3
+
+BLOCK IMMBxdGLhzu
+    1   2    +0.00000e+00 # IdGLhzu1x2
+    1   3    +0.00000e+00 # IdGLhzu1x3
+    2   3    +0.00000e+00 # IdGLhzu2x3
+
+BLOCK IMMBxtdhad
+    1   2    +0.00000e+00 # Itdhad1x2
+    1   3    +0.00000e+00 # Itdhad1x3
+    2   3    +0.00000e+00 # Itdhad2x3
+
+BLOCK IMMBxtdhae
+    1   2    +0.00000e+00 # Itdhae1x2
+    1   3    +0.00000e+00 # Itdhae1x3
+    2   3    +0.00000e+00 # Itdhae2x3
+
+BLOCK IMMBxtdgd
+    1   2    +0.00000e+00 # Itdgd1x2
+    1   3    +0.00000e+00 # Itdgd1x3
+    2   3    +0.00000e+00 # Itdgd2x3
+
+BLOCK IMMBxdGLhze
+    1   2    +0.00000e+00 # IdGLhze1x2
+    1   3    +0.00000e+00 # IdGLhze1x3
+    2   3    +0.00000e+00 # IdGLhze2x3
+
+BLOCK IMMBxdGLhzd
+    1   2    +0.00000e+00 # IdGLhzd1x2
+    1   3    +0.00000e+00 # IdGLhzd1x3
+    2   3    +0.00000e+00 # IdGLhzd2x3
+
+BLOCK IMMBxdau
+    1   2    +0.00000e+00 # Idau1x2
+    1   3    +0.00000e+00 # Idau1x3
+    2   3    +0.00000e+00 # Idau2x3
+
+BLOCK IMMBxdGRwq
+    1   1    +0.00000e+00 # IdGRwq1x1
+    1   2    +0.00000e+00 # IdGRwq1x2
+    1   3    +0.00000e+00 # IdGRwq1x3
+    2   1    +0.00000e+00 # IdGRwq2x1
+    2   2    +0.00000e+00 # IdGRwq2x2
+    2   3    +0.00000e+00 # IdGRwq2x3
+    3   1    +0.00000e+00 # IdGRwq3x1
+    3   2    +0.00000e+00 # IdGRwq3x2
+    3   3    +0.00000e+00 # IdGRwq3x3
+
+BLOCK IMMBxdad
+    1   2    +0.00000e+00 # Idad1x2
+    1   3    +0.00000e+00 # Idad1x3
+    2   3    +0.00000e+00 # Idad2x3
+
+BLOCK IMMBxdae
+    1   2    +0.00000e+00 # Idae1x2
+    1   3    +0.00000e+00 # Idae1x3
+    2   3    +0.00000e+00 # Idae2x3
+
+BLOCK IMMBxtdhze
+    1   2    +0.00000e+00 # Itdhze1x2
+    1   3    +0.00000e+00 # Itdhze1x3
+    2   3    +0.00000e+00 # Itdhze2x3
+
+BLOCK IMMBxtdhzd
+    1   2    +0.00000e+00 # Itdhzd1x2
+    1   3    +0.00000e+00 # Itdhzd1x3
+    2   3    +0.00000e+00 # Itdhzd2x3
+
+BLOCK MBxdhwl
+    1   1    +0.00000e+00 # Rdhwl1x1
+    1   2    +0.00000e+00 # Rdhwl1x2
+    1   3    +0.00000e+00 # Rdhwl1x3
+    2   1    +0.00000e+00 # Rdhwl2x1
+    2   2    +0.00000e+00 # Rdhwl2x2
+    2   3    +0.00000e+00 # Rdhwl2x3
+    3   1    +0.00000e+00 # Rdhwl3x1
+    3   2    +0.00000e+00 # Rdhwl3x2
+    3   3    +0.00000e+00 # Rdhwl3x3
+
+BLOCK MBxtdae
+    1   1    +0.00000e+00 # Rtdae1x1
+    1   2    +0.00000e+00 # Rtdae1x2
+    1   3    +0.00000e+00 # Rtdae1x3
+    2   2    +0.00000e+00 # Rtdae2x2
+    2   3    +0.00000e+00 # Rtdae2x3
+    3   3    +0.00000e+00 # Rtdae3x3
+
+BLOCK MBxtdad
+    1   1    +0.00000e+00 # Rtdad1x1
+    1   2    +0.00000e+00 # Rtdad1x2
+    1   3    +0.00000e+00 # Rtdad1x3
+    2   2    +0.00000e+00 # Rtdad2x2
+    2   3    +0.00000e+00 # Rtdad2x3
+    3   3    +0.00000e+00 # Rtdad3x3
+
+BLOCK IMMBxtdhzu
+    1   2    +0.00000e+00 # Itdhzu1x2
+    1   3    +0.00000e+00 # Itdhzu1x3
+    2   3    +0.00000e+00 # Itdhzu2x3
+
+BLOCK MBxdhwq
+    1   1    +0.00000e+00 # Rdhwq1x1
+    1   2    +0.00000e+00 # Rdhwq1x2
+    1   3    +0.00000e+00 # Rdhwq1x3
+    2   1    +0.00000e+00 # Rdhwq2x1
+    2   2    +0.00000e+00 # Rdhwq2x2
+    2   3    +0.00000e+00 # Rdhwq2x3
+    3   1    +0.00000e+00 # Rdhwq3x1
+    3   2    +0.00000e+00 # Rdhwq3x2
+    3   3    +0.00000e+00 # Rdhwq3x3
+
+BLOCK MBxtdau
+    1   1    +0.00000e+00 # Rtdau1x1
+    1   2    +0.00000e+00 # Rtdau1x2
+    1   3    +0.00000e+00 # Rtdau1x3
+    2   2    +0.00000e+00 # Rtdau2x2
+    2   3    +0.00000e+00 # Rtdau2x3
+    3   3    +0.00000e+00 # Rtdau3x3
+
+BLOCK MBxdGRhze
+    1   1    +0.00000e+00 # RdGRhze1x1
+    1   2    +0.00000e+00 # RdGRhze1x2
+    1   3    +0.00000e+00 # RdGRhze1x3
+    2   2    +0.00000e+00 # RdGRhze2x2
+    2   3    +0.00000e+00 # RdGRhze2x3
+    3   3    +0.00000e+00 # RdGRhze3x3
+
+BLOCK MBxdGRhzd
+    1   1    +0.00000e+00 # RdGRhzd1x1
+    1   2    +0.00000e+00 # RdGRhzd1x2
+    1   3    +0.00000e+00 # RdGRhzd1x3
+    2   2    +0.00000e+00 # RdGRhzd2x2
+    2   3    +0.00000e+00 # RdGRhzd2x3
+    3   3    +0.00000e+00 # RdGRhzd3x3
+
+BLOCK IMMBxdhwq
+    1   1    +0.00000e+00 # Idhwq1x1
+    1   2    +0.00000e+00 # Idhwq1x2
+    1   3    +0.00000e+00 # Idhwq1x3
+    2   1    +0.00000e+00 # Idhwq2x1
+    2   2    +0.00000e+00 # Idhwq2x2
+    2   3    +0.00000e+00 # Idhwq2x3
+    3   1    +0.00000e+00 # Idhwq3x1
+    3   2    +0.00000e+00 # Idhwq3x2
+    3   3    +0.00000e+00 # Idhwq3x3
+
+BLOCK IMMBxdGLwq
+    1   2    +0.00000e+00 # IdGLwq1x2
+    1   3    +0.00000e+00 # IdGLwq1x3
+    2   3    +0.00000e+00 # IdGLwq2x3
+
+BLOCK IMMBxdhwl
+    1   1    +0.00000e+00 # Idhwl1x1
+    1   2    +0.00000e+00 # Idhwl1x2
+    1   3    +0.00000e+00 # Idhwl1x3
+    2   1    +0.00000e+00 # Idhwl2x1
+    2   2    +0.00000e+00 # Idhwl2x2
+    2   3    +0.00000e+00 # Idhwl2x3
+    3   1    +0.00000e+00 # Idhwl3x1
+    3   2    +0.00000e+00 # Idhwl3x2
+    3   3    +0.00000e+00 # Idhwl3x3
+
+BLOCK MBxdGRhzu
+    1   1    +0.00000e+00 # RdGRhzu1x1
+    1   2    +0.00000e+00 # RdGRhzu1x2
+    1   3    +0.00000e+00 # RdGRhzu1x3
+    2   2    +0.00000e+00 # RdGRhzu2x2
+    2   3    +0.00000e+00 # RdGRhzu2x3
+    3   3    +0.00000e+00 # RdGRhzu3x3
+
+BLOCK MBxdhgu
+    1   1    +0.00000e+00 # Rdhgu1x1
+    1   2    +0.00000e+00 # Rdhgu1x2
+    1   3    +0.00000e+00 # Rdhgu1x3
+    2   2    +0.00000e+00 # Rdhgu2x2
+    2   3    +0.00000e+00 # Rdhgu2x3
+    3   3    +0.00000e+00 # Rdhgu3x3
+
+BLOCK IMMBxdhgd
+    1   2    +0.00000e+00 # Idhgd1x2
+    1   3    +0.00000e+00 # Idhgd1x3
+    2   3    +0.00000e+00 # Idhgd2x3
+
+BLOCK IMMBxdgd
+    1   2    +0.00000e+00 # Idgd1x2
+    1   3    +0.00000e+00 # Idgd1x3
+    2   3    +0.00000e+00 # Idgd2x3
+
+BLOCK MBxdhgd
+    1   1    +0.00000e+00 # Rdhgd1x1
+    1   2    +0.00000e+00 # Rdhgd1x2
+    1   3    +0.00000e+00 # Rdhgd1x3
+    2   2    +0.00000e+00 # Rdhgd2x2
+    2   3    +0.00000e+00 # Rdhgd2x3
+    3   3    +0.00000e+00 # Rdhgd3x3
+
+BLOCK IMMBxdhgu
+    1   2    +0.00000e+00 # Idhgu1x2
+    1   3    +0.00000e+00 # Idhgu1x3
+    2   3    +0.00000e+00 # Idhgu2x3
+
+BLOCK IMMBxdgu
+    1   2    +0.00000e+00 # Idgu1x2
+    1   3    +0.00000e+00 # Idgu1x3
+    2   3    +0.00000e+00 # Idgu2x3

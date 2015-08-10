@@ -48,7 +48,7 @@ class MassBasis(Basis.Basis):
         'MBxdGRzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRzd'},
         # W Vertex Corrections [Eqn (3.4)]
         'MBxdGLwl': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLwl'},
-        'MBxdGLwq': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLwq'},
+        'MBxdGLwq': {'kind':'general', 'domain':'complex', 'cname':'dGLwq'},
         'MBxdGRwq': {'kind':'general', 'domain':'complex', 'cname':'dGRwq'},
         # Dipole interactions with single gauge bosons [Eqn. (3.5)]
         'MBxdgu': {'kind':'hermitian', 'domain':'complex', 'cname':'dgu'},
@@ -87,7 +87,7 @@ class MassBasis(Basis.Basis):
         'MBxdGLhzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhzd'},
         'MBxdGRhzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRhzd'},
         'MBxdGLhwl': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhwl'},
-        'MBxdGLhwq': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhwq'},
+        'MBxdGLhwq': {'kind':'general', 'domain':'complex', 'cname':'dGLhwq'},
         'MBxdGRhwq': {'kind':'general', 'domain':'complex', 'cname':'dGRhwq'},
         # Dipole interactions with single higgs and gauge boson [Eqn. (3.11)]
         'MBxdhgu': {'kind':'hermitian', 'domain':'complex', 'cname':'dhgu'},
@@ -115,6 +115,7 @@ class MassBasis(Basis.Basis):
         'MBxY2d': {'kind':'general', 'domain':'complex', 'cname':'Y2d'},
         'MBxY2e': {'kind':'general', 'domain':'complex', 'cname':'Y2e'}
     }
+    # All parameters independent
     independent = ( [c for v in blocks.values() for c in v] + 
                     [c for c in flavoured.keys()] )
     # all other undefined behavoiur inherited from Basis.Basis by default

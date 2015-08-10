@@ -34,7 +34,7 @@ instance and are set to default PDG values if not found.
 The absolute path to the local eHDECAY directory containing the executable 
 should be specified in config.txt as:
 
-eHDECAY_dir /PATH/TO/eHDECAY
+eHDECAY_dir     /PATH/TO/eHDECAY
  
 '''
 ################################################################################
@@ -62,8 +62,8 @@ def run(basis, electroweak=True):
     
     # translate to silh instance
     thesilh = basis.translate(target='silh',verbose=False)
-    # instance of eHDECAY_SILH namedtuple
-    
+
+    thesilh.set_flavour(thesilh.flavour, 'general')
     inp = from_silh(thesilh, ew = electroweak) 
         
     # create temporary directory
@@ -135,13 +135,13 @@ def from_silh(silh_instance, ew=True):
     def conv(cf,PID):
         yuk = sqrt(2)*mass[PID]/vev
         return 2.*cf/(2.*yuk - cf)
-        
-    SILH['Ctaubar'] = conv(si['se33Re'],15)
-    SILH['Cmubar'] = conv(si['se22Re'],13)
-    SILH['Ctbar'] = conv(si['su33Re'],6)
-    SILH['Ccbar'] = conv(si['su22Re'],4)
-    SILH['Cbbar'] = conv(si['sd33Re'],5)
-    SILH['Csbar'] = conv(si['sd22Re'],3)
+    
+    SILH['Ctaubar'] = conv(si['SBxe'][3,3].real,15)
+    SILH['Cmubar'] = conv(si['SBxe'][2,2].real,13)
+    SILH['Ctbar'] = conv(si['SBxu'][3,3].real,6)
+    SILH['Ccbar'] = conv(si['SBxu'][2,2].real,4)
+    SILH['Cbbar'] = conv(si['SBxd'][3,3].real,5)
+    SILH['Csbar'] = conv(si['SBxd'][2,2].real,3)
     
     return SILH
 
@@ -181,8 +181,7 @@ def create_input(inp):
     '''
     Write out input file for eHDECAY.
     '''
-    # '{MH}'.format(inp)
-    # values = inp._asdict().values()
+
     return \
 '''SLHAIN   = 0
 SLHAOUT  = 0
@@ -288,125 +287,3 @@ Cgbar    = {Cgbar}
 fermrepr = 2
 xi       = 0.D0
 '''.format(**inp)
-
-
-
-
-
-
-
-
-
-# def create_input(inp):
-#     '''
-#     Write out input file for eHDECAY.
-#     '''
-#     values = inp._asdict().values()
-#     return \
-# '''SLHAIN   = 0
-# SLHAOUT  = 0
-# COUPVAR  = 1
-# HIGGS    = 0
-# SM4      = 0
-# FERMPHOB = 0
-# MODEL    = 1
-# TGBET    = 1.D0
-# MABEG    = {}
-# MAEND    = 1000.D0
-# NMA      = 1
-# ALS(MZ)  = {}
-# MSBAR(2) = 0.100D0
-# MC       = {}
-# MB       = {}
-# MT       = {}
-# MTAU     = {}
-# MMUON    = {}
-# 1/ALPHA  = {}
-# GF       = {}
-# GAMW     = {}
-# GAMZ     = {}
-# MZ       = {}
-# MW       = {}
-# VUS      = 0.2253D0
-# VCB      = 0.0410D0
-# VUB/VCB  = 0.0846D0
-# ********************* 4TH GENERATION *************************************
-#   SCENARIO FOR ELW. CORRECTIONS TO H -> GG (EVERYTHING IN GEV):
-#   GG_ELW = 1: MTP = 500    MBP = 450    MNUP = 375    MEP = 450
-#   GG_ELW = 2: MBP = MNUP = MEP = 600    MTP = MBP+50*(1+LOG(M_H/115)/5)
-#
-# GG_ELW   = 1
-# MTP      = 500.D0
-# MBP      = 450.D0
-# MNUP     = 375.D0
-# MEP      = 450.D0
-# **************************************************************************
-# SUSYSCALE= 1000.D0
-# MU       = 1000.D0
-# M2       = 1000.D0
-# MGLUINO  = 1000.D0
-# MSL1     = 1000.D0
-# MER1     = 1000.D0
-# MQL1     = 1000.D0
-# MUR1     = 1000.D0
-# MDR1     = 1000.D0
-# MSL      = 1000.D0
-# MER      = 1000.D0
-# MSQ      = 1000.D0
-# MUR      = 1000.D0
-# MDR      = 1000.D0
-# AL       = 1000.D0
-# AU       = 1000.D0
-# AD       = 1000.D0
-# NNLO (M) = 0
-# ON-SHELL = 0
-# ON-SH-WZ = 0
-# IPOLE    = 0
-# OFF-SUSY = 0
-# INDIDEC  = 0
-# NF-GG    = 5
-# IGOLD    = 0
-# MPLANCK  = 2.4D18
-# MGOLD    = 1.D-13
-# ************** LAGRANGIAN 0 - chiral  1 - SILH  2 - MCHM4/5 **************
-# LAGPARAM = 1
-# **** Turn off (0) or on (1) the elw corrections for LAGPARAM = 1 or 2 ****
-# IELW     = {}
-# ******************* VARIATION OF HIGGS COUPLINGS *************************
-# CW       = 0D0
-# CZ       = 0D0
-# Ctau     = 0D0
-# Cmu      = 0D0
-# Ct       = 0D0
-# Cb       = 0D0
-# Cc       = 0D0
-# Cs       = 0D0
-# Cgaga    = 0D0
-# Cgg      = 0D0
-# CZga     = 0D0
-# CWW      = 0D0
-# CZZ      = 0D0
-# CWdW     = 0D0
-# CZdZ     = 0D0
-# **************************** SILH Lagrangian *****************************
-# CHbar    = {}
-# CTbar    = {}
-# Ctaubar  = {}
-# Cmubar   = {}
-# Ctbar    = {}
-# Cbbar    = {}
-# Ccbar    = {}
-# Csbar    = {}
-# CWbar    = {}
-# CBbar    = {}
-# CHWbar   = {}
-# CHBbar   = {}
-# Cgambar  = {}
-# Cgbar    = {}
-# ******** MCHM4 (fermrepr=1), MCHM5 (fermrepr=2) parametrisation ********
-# fermrepr = 2
-# xi       = 0.D0
-# '''.format(*values)
-#
-#
-#

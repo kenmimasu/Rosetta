@@ -1,7 +1,7 @@
 from internal import Basis
 from internal import default_masses, default_inputs, PID
-################################################################################
-flavmat = Basis.flavour_matrix
+from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
+
 ################################################################################
 class TemplateBasis(Basis.Basis):
     '''
@@ -14,17 +14,20 @@ class TemplateBasis(Basis.Basis):
     name = 'template'
     ##########################
     # declare coefficients
-    flavoured = flavmat('e', kind='symmetric', domain='real')
+    # flavoured = flavmat('e', kind='symmetric', domain='real')
     ########################## 
-    independent = ['a','b','c'] + flavoured
+    independent = ['a','b','c','AA']
     
     required_masses = {1,2,3,4,5,6} # quark masses rquired
     
     required_inputs = {1, 4} # aEWM1, MZ
     
     blocks = {'newcoup':['a','b','c'],
-              'dep':['d'],
-              'flavoured':flavoured }
+              'dep':['d']}
+    
+    flavoured = {'AA':{'domain':'complex', 'kind':'general', 'cname':'cAA'},
+                 'BB':{'domain':'complex', 'kind':'general', 'cname':'cBB'},
+                 'CC':{'domain':'complex', 'kind':'general', 'cname':'cCC'}}
               
     ##########################
     # This can be overridden if you want but is typically unneccesary. Exclude 
@@ -45,7 +48,12 @@ class TemplateBasis(Basis.Basis):
         '''
         p = self
         p['d'] = p['a']+ p['b']*p['c']
-    
+        # element-wise asssignment for matrix BB: BB[i,j] = -A[i,j]/4.
+        for k, v in p['AA'].iteritems():
+            p['BB'][k] = -v/4.
+        # matrix multiplication function assigning CC -> AA.BB
+        matrix_mult(p['AA'], p['BB'], p['CC'])
+        
     @Basis.translation('silh')
     def to_silh(self, instance):
         '''
@@ -56,7 +64,7 @@ class TemplateBasis(Basis.Basis):
         B = instance
         # set all values of silh basis coeffs to 0.01:
         # coeff_d*m_top*a_EW
-        for k in B.all_coeffs: 
+        for k in B: 
             B[k] = 0.001
         self.mass[23]=91.19 # MZ in newmass
         self.inputs[8]=126. # MH in newinput
@@ -75,7 +83,7 @@ class TemplateBasis(Basis.Basis):
         
         # set all values of mass basis coeffs according to nonsense formula 
         # y = d*m_top*a_EW
-        for k in B.all_coeffs: 
+        for k in B: 
             B[k] = self.myfunc( A['d'], self.mass[6], self.inputs['aEWM1'] )
         self.mass[24]=91.19 # MZ in newmass
         self.inputs[8]=126. # MH in newinput

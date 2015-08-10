@@ -1,4 +1,4 @@
-# Imports all modules in the Rosetta bas directory
+# Imports all modules in the Rosetta base directory
 from Rosetta import __all__ as basisnames
 from Rosetta import *
 import inspect
@@ -68,18 +68,19 @@ for bas,inst in bases.iteritems():
 relationships = relate(translations)
 ################################################################################
 if __name__=='__main__':
-    mydict = {
-             'A':{'B':'A.Bfunc','C':'A.Cfunc'},
-             'B':{'C':'B.Cfunc','D':'B.Dfunc'},
-             'C':{'A':'C.Afunc','D':'C.Dfunc','B':'CBfunc'},
-             'D':{'A':'D.Afunc'},
-             'E':{'D':'E.Dfunc'},
-             'F':{'C':'F.Cfunc','E':'F.Efunc'},
-             'G':{'E':'G.Efunc'}
-             }
-
-    relations =  relate(mydict)
-    for k,v in relations.items():
-        print k,v
-    print '\n\n'
-    print get_path('A','C',relations)
+    pass
+    # mydict = {
+    #          'A':{'B':'A.Bfunc','C':'A.Cfunc'},
+    #          'B':{'C':'B.Cfunc','D':'B.Dfunc'},
+    #          'C':{'A':'C.Afunc','D':'C.Dfunc','B':'CBfunc'},
+    #          'D':{'A':'D.Afunc'},
+    #          'E':{'D':'E.Dfunc'},
+    #          'F':{'C':'F.Cfunc','E':'F.Efunc'},
+    #          'G':{'E':'G.Efunc'}
+    #          }
+    #
+    # relations =  relate(mydict)
+    # for k,v in relations.items():
+    #     print k,v
+    # print '\n\n'
+    # print get_path('A','C',relations)

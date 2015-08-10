@@ -16,29 +16,35 @@ parser = argparse.ArgumentParser(
         )
 parser.add_argument("param_card", metavar="PARAMCARD",  
                      type=str, help="Input parameter card.")
-# parser.add_argument("basis", metavar="BASIS", type=str,
-#                     help= ("Basis of coefficients in parameter card" +
-#                            " (one of: {}).".format(', '.join(bases.keys()))))
+                     
 parser.add_argument("-o", "--output", metavar="OUTPUT", type=str, default='',
                     help="Output file name. Default: [PARAMCARD]_new")
+                    
 parser.add_argument("-t", "--target", metavar="TARGETBASIS", type=str, 
                     default='mass', 
                     help=("Basis into which to translate (one of: " +
                           "{}). Default: mass".format(', '.join(existing))))
+                          
 parser.add_argument("-w", "--overwrite", action='store_true', 
                     help="Overwrite any pre-existing output file.")
-parser.add_argument("-e", "--ehdecay", action='store_true', 
-                    help="Interface with eHDECAY for Higgs branching fractions.")
+                    
+parser.add_argument("-s", "--silent", action='store_true', 
+                    help=("Suppress all warnings and take default answers to" 
+                          "all questions."))
+                    
 parser.add_argument("-f", "--flavour", type=str, default = "general", 
                     help=("Specify flavour structure ('general', "
-                          "'diagonal', 'minimal'). Default : 'general'"))
+                          "'diagonal', 'universal'). Default : 'general'"))
+                          
+parser.add_argument("-e", "--ehdecay", action='store_true', 
+                    help="Interface with eHDECAY for Higgs branching fractions.")
 ################################################################################
 args = parser.parse_args()
 print ''
 print '########## Rosetta ##########'
 # Read basis class from paramerter card, 
 # must be defined in Rosetta.implemented.bases
-print 'Reading "{}"'.format(args.param_card)
+print 'Reading "{}"\n'.format(args.param_card)
 thecard = SLHA.read(args.param_card)
 if 'basis' not in thecard.blocks:
     raise RosettaError('\n\tParameter card {} '.format(args.param_card) + 
@@ -66,12 +72,14 @@ if not args.output: # output file name
 else:
     new_param_card = args.output
 
-print 'Basis class used to read in param card:\n\t{}'.format(mybasis)
-# create instance of mybasis
+print 'Basis class used to read in param card:\n\t{}\n'.format(mybasis)
+print 'Flavour structure: {}\n'.format(args.flavour)
+# create instance of mybasis, atuomatically translating to target basis
 basis_instance = mybasis(param_card=args.param_card, 
                          output_basis=args.target,
                          ehdecay=args.ehdecay,
-                         flavour=args.flavour)
+                         flavour=args.flavour,
+                         silent=args.silent)
 
 if basis_instance.write_param_card(new_param_card, overwrite=args.overwrite): # 
     print '#############################'

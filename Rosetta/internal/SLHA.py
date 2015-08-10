@@ -2,6 +2,33 @@ from collections import OrderedDict, MutableMapping
 from operator import itemgetter
 import sys
 import re
+import os
+
+class CaseInsensitiveDict(MutableMapping):
+    
+    def __init__(self, data=None, **kwargs):
+        self._data = {}
+        if data is None:
+            data = {}
+        self.update(data, **kwargs)
+    
+    def __setitem__(self, key, value):
+        self._data[key.lower()] = (key, value)
+
+    def __getitem__(self, key):
+        return self._data[key.lower()][1]
+
+    def __delitem__(self, key):
+        del self._data[key.lower()]
+
+    def __iter__(self):
+        return (casedkey for casedkey, mappedvalue in self._data.values())
+
+    def __len__(self):
+        return len(self._data)
+    
+    def __repr__(self):
+        return repr([(k,v) for (k,v) in self._data.values()])
 
 class CaseInsensitiveOrderedDict(MutableMapping):
     
@@ -26,8 +53,10 @@ class CaseInsensitiveOrderedDict(MutableMapping):
     def __len__(self):
         return len(self._data)
     
-        
-class Block(OrderedDict):
+    def __repr__(self):
+        return repr([(k,v) for (k,v) in self._data.values()])
+    
+class Block(MutableMapping):
     '''    
     Container class for SLHA block with a single counter. A subclass of 
     `collections.OrderedDict`with a restriction on integer keys and a modified 
@@ -47,7 +76,7 @@ class Block(OrderedDict):
     
     def __cast__(self, val):
         '''
-        Attempts to cast values to type specified in 'dtype' keyword argument 
+        Attempts to cast values to type specified in 'vtype' keyword argument 
         of constructor.
         '''
         try:
@@ -55,8 +84,8 @@ class Block(OrderedDict):
         except ValueError:
             return val
     
-    def __init__(self, name=None, data=None, 
-                 decimal=5, dtype=float, preamble=''):
+    def __init__(self, name=None, decimal=5, ktype=int, vtype=float, 
+                       preamble='', data=None):
         '''    Intialisation keyword arguments:
             name - A name for the block that will appear 
                    in the __str__ and __repr__ methods.
@@ -64,27 +93,40 @@ class Block(OrderedDict):
                    to initialize Block values.
             decimal - Number of decimal points with which 
                       to write out parameter values.
-            dtype - a function to cast parameter values if 
+            vtype - a function to cast parameter values if 
                     read in as strings i.e. int, float.
             preamble - Some text to print before the __str__ output.
         '''
-        super(Block, self).__init__()
+        self._data = OrderedDict()
         self.name = name
-        self.cast = dtype # value casting function
+        self.keytype = ktype
+        self.cast = vtype # value casting function
         self.fmt = ':+.{}e'.format(decimal) # format string
         self.preamble = preamble
-        self.keytype = int
         if data is not None:
-            for k,v in data.iteritems():
-                self[k]=v
-                
-    def __setitem__(self,key,value):
-        return super(Block, self).__setitem__(self.__checkkey__(key),
-                                              self.__cast__(value))
+            self._data.update(data)
+            
+    def __setitem__(self, key,value):
+        self._data[self.__checkkey__(key)] = self.__cast__(value)
+    
+    def __getitem__(self, key):
+        return self._data[self.__checkkey__(key)]
+
+    def __contains__(self, key):
+        return key in self._data
+    
+    def __delitem__(self, key):
+        del self._data[self.__checkkey__(key)]
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
 
     def __repr__(self):
-        return ('<SHLA Block: "{}"; {} entries.>'.format(self.name, len(self)))
-
+        return ('<{}: "{}"; {} entries.>'.format(self.__class__, 
+                                                      self.name, len(self)))
     def __str__(self):
         content = []
         sortitems = sorted(self.items())
@@ -100,12 +142,12 @@ class Block(OrderedDict):
             
         string = (self.preamble+'\n'
                   +'BLOCK {}\n'.format(self.name)
-                  + ''.join(content) + '\n')
+                  + ''.join(content))
         return string
     
     def dict(self):
         '''Return SHLA Block data as a regular python dict.'''
-        return {k:v for k,v in self.iteritems()}
+        return self._data
 
 class Matrix(Block):
     '''    
@@ -118,18 +160,9 @@ class Matrix(Block):
     like a numpy multi dimensional array ( x[i,j,k,...] ).
     '''
     
-    def __init__(self,*args,**kwargs):
+    def __init__(self, *args, **kwargs):
+        kwargs['ktype'] = tuple        
         super(Matrix, self).__init__(*args, **kwargs)
-        self.keytype = tuple
-    
-    def __setitem__(self, key, value):
-        return super(Matrix, self).__setitem__(key, value)
-    
-    def __getitem__(self, key):
-        return super(Matrix, self).__getitem__(self.__checkkey__(key))
-
-    def __repr__(self):
-        return ('<SHLA Matrix: "{}"; {} entries.>'.format(self.name, len(self)))
 
     def __str__(self):
         content = []
@@ -149,10 +182,36 @@ class Matrix(Block):
                   + ''.join(content) )
         return string
     
-    def array(self):
-        pass
     def dimension(self):
-        pass
+        indx = []
+        for i,k in enumerate(self.keys()):
+            if i==0:
+                indx = [[] for _ in k]
+            for j, l in enumerate(k):
+                indx[j].append(l)
+        
+        isets = [sorted(list(set(x))) for x in indx]
+    
+        for i,s in enumerate(isets):
+            smin, smax = min(s), max(s)
+            
+            if not s == range(smin,smax+1):
+                strs = [str(x) for x in s]
+                err = ('subdimension {} of array '.format(i) +
+                       '{}, ({}), is not complete range.'.format(repr(self),
+                                                                ','.join(strs)))
+                raise SLHAError(err)
+        
+        return tuple( [len(x) for x in isets] )
+        
+    def array(self):
+        array = []
+        for k,v in self.iteritems():
+            if isinstance(v,Matrix):
+                array.append(v.array())
+            else:
+                array.append([v for v in v.values()])
+        return array
 
 class NamedBlock(Block):
     '''
@@ -179,8 +238,8 @@ class NamedBlock(Block):
         else:
             return key
     
-    def __init__(self, name=None, data=None, 
-                 comment='', decimal=5, dtype=float, preamble=''):
+    def __init__(self, name=None, comment='', decimal=5, data = None,
+                       ktype=int, vtype=float, preamble=''):
         '''    
         Same as the SLHA.Block constructor but additionally checks if the data 
         keyword argument has a "_names" attribute (i.e. if it is an existing 
@@ -196,17 +255,17 @@ class NamedBlock(Block):
                 raise ValueError('"names" keyword argument must be a'
                                  'dictionary or support iteritems() method.')
         else:
-            self._names, self._numbers = {}, CaseInsensitiveOrderedDict()
+            self._names, self._numbers = {}, CaseInsensitiveDict()
 
         self.comment = comment
 
         return super(NamedBlock, self).__init__(name=name, data=data, 
-                                                decimal=decimal, dtype=dtype,
+                                                ktype=ktype, vtype=vtype,
+                                                decimal=decimal, 
                                                 preamble = preamble)
                                                 
     def __setitem__(self, key, value):
-        return super(NamedBlock, self).__setitem__(self.__parse__(key),
-                                                   self.__cast__(value))
+        return super(NamedBlock, self).__setitem__(self.__parse__(key), value)
 
     def __getitem__(self, key):
         return super(NamedBlock, self).__getitem__(self.__parse__(key))
@@ -216,7 +275,6 @@ class NamedBlock(Block):
         
         # Additional cleanup needed for _names and _numbers lookup dicts.
         if type(key) is str:
-            # key = key.lower()
             try:
                 del self._names[self._numbers[key]]
                 del self._numbers[key]
@@ -236,8 +294,10 @@ class NamedBlock(Block):
             return False
         
     def __repr__(self):
-        return ('<SHLA NamedBlock: "{}"; {} entries, {} named.>'.format(
-                                        self.name, len(self), len(self._names)))
+        return ('< {}: "{}", {} entries ({} named). >'.format(self.__class__, 
+                                                              self.name, 
+                                                              len(self),
+                                                              len(self._names)))
     def __str__(self):
         content = []
         sortitems = sorted(self.items(), key=itemgetter(0))
@@ -248,14 +308,14 @@ class NamedBlock(Block):
                 strval = v
 
             if k in self._names:
-                content.append('    {: <4} {} # {}'.format(k, strval,
+                content.append('    {: <4} {} # {}\n'.format(k, strval,
                                                            self._names[k]))
             else:
-                content.append('    {: <4} {}'.format(k,strval))
+                content.append('    {: <4} {}\n'.format(k,strval))
 
         string = (self.preamble + '\n'
                   + 'BLOCK {} # {}\n'.format(self.name, self.comment)
-                  + '\n'.join(content) + '\n')
+                  + ''.join(content))
         return string
 
     def get_name(self, key, default=''):
@@ -304,11 +364,7 @@ class NamedMatrix(Matrix, NamedBlock):
     
     def __getitem__(self, key):
         return super(NamedMatrix, self).__getitem__(self.__parse__(key))
-                                            
-    def __repr__(self):
-        return ('<SHLA NamedMatrix: "{}"; {} entries.>'.format(self.name, 
-                                                               len(self)))
-                                                               
+    
     def __str__(self):
         content = []
         sortitems = sorted(self.items(), key=itemgetter(0,0))
@@ -330,7 +386,152 @@ class NamedMatrix(Matrix, NamedBlock):
                   + ''.join(content) )
         return string
 
-class Decay(OrderedDict):
+class CBlock(Block):
+    container = Block
+    def __init__(self, *args):
+        if not args:
+            re, im = self.container(name='_re'), self.container(name='_im')
+            self.__init__(re,im)
+            return
+        else:
+            try:
+                real, imag = args
+            except ValueError:
+                err = ('{}.__init__() takes 0 '.format(self.__class__)+
+                       'or 2 arguments ({} given)'.format(len(args)))
+                raise TypeError(err)
+        assert type(real) is self.container and type(imag) is self.container, (
+                ' Cblock constructor takes 2 {} '.format(self.container)
+                + 'objects as arguments')
+        name, decimal, preamble = real.name, int(real.fmt[-2]), real.preamble
+        super(CBlock, self).__init__(name=name, decimal=decimal, 
+                                     preamble=preamble, vtype=complex)
+        self.fill(real, imag)
+        
+    def fill(self, real, imag):
+        '''
+        Fill a CBlock from two Block instances containing the
+        real and imaginary parts
+        '''
+        self._re, self._im = real, imag
+        for k, re in real.iteritems():
+            try:
+                im = imag[k]
+                entry = complex(re,im)
+            except KeyError:
+                entry = re
+            self[k] = entry
+    
+    def __setitem__(self, key, value):
+        cval = complex(value)
+        re, im = value.real, value.imag
+        self._re[key], self._im[key] = re, im
+        super(CBlock, self).__setitem__(key, cval)
+        
+    def __str__(self):
+        return str(self._re) + str(self._im)
+
+class CMatrix(CBlock, Matrix):
+    container = Matrix
+    
+class CNamedBlock(CBlock, NamedBlock):
+    container = NamedBlock
+    
+    def _part(self, key):
+        if key in self._re:
+            return self._re
+        elif key in self._im:
+            return self._im
+        else:
+            raise KeyError('Key "{}" not found in {} "{}"'.format(key,
+                                                            self.__class__,
+                                                            self.name))
+                                                            
+    def fill(self, real, imag):
+        '''
+        Fill a CBlock from two Block instances containing the
+        real and imaginary parts
+        '''
+        self._re, self._im = real, imag
+        for k, re in real.iteritems():
+            try:
+                im = imag[k]
+                entry = complex(re,im)
+            except KeyError:
+                entry = re
+                
+            try:
+                cname = real._names[k]
+                cname = 'C'+cname[1:] if cname.startswith('R') else 'C'+cname
+            except (AttributeError, KeyError):
+                index = 'x'.join(map(str,k))
+                cname = 'C{}{}'.format(real.name, index)
+                
+            self.new_entry(k, entry, name=cname)
+            
+        for k, im in imag.iteritems():
+            if k not in real:
+                try:
+                    cname = imag._names[k]
+                    cname = 'C'+cname[1:] if cname.startswith('I') else 'C'+cname
+                except (AttributeError, KeyError):
+                    index = 'x'.join(map(str,k))
+                    cname = 'C{}{}'.format(imag.name, index)
+                    
+                self.new_entry(k, entry, name=cname)
+    
+    def __setitem__(self, key, value):
+        if type(key) is str and (key in self._re or key in self._im):
+                part = self._part(key)
+                key = part.__parse__(key)
+                part.__setitem__(key, value)
+                if part is self._re:
+                    self[key] = complex(value, self[key].imag)
+                elif part is self._im:
+                    self[key] = complex(self[key].real, value)
+        else:
+            key = self.__parse__(key)
+            cval = complex(value)
+            re, im = value.real, value.imag
+            self._re[key], self._im[key] = re, im
+            super(CBlock, self).__setitem__(key, cval)
+    
+    def __getitem__(self, key):
+        if type(key) is str and (key in self._re or key in self._im):
+                part = self._part(key)
+                return part.__getitem__(key)
+        else:
+            return super(CNamedBlock, self).__getitem__(key)
+    
+    def __delitem__(self, key):
+        if type(key) is str and (key in self._re or key in self._im):
+            part = self._part(key)
+            key = part.__parse__(key)
+            if part is self._re:
+                self[key] = complex(0., self[key].imag)
+            elif part is self._im:
+                self[key] = complex(self[key].real, 0.)
+            part.__delitem__(key)
+        else:            
+            key = self.__parse__(key)
+            del self._re[key]
+            del self._im[key]
+            super(CNamedBlock, self).__delitem__(key)
+        
+    def __contains__(self, key):
+        if type(key) is str:
+            return (key in self._re or key in self._im or 
+                    super(CNamedBlock, self).__contains__(key))
+        else:
+            return super(CNamedBlock, self).__contains__(key)
+        
+    def __str__(self):
+        return str(self._re) + str(self._im)
+                                                      
+class CNamedMatrix(CNamedBlock, NamedMatrix):
+    container = NamedMatrix 
+    
+class Decay(MutableMapping):
     '''
     Container class for SLHA Decay blocks. A subclass of `collections.OrderedDict` 
     with a restriction on tuple keys and float values less than 1. A modified 
@@ -377,7 +578,6 @@ class Decay(OrderedDict):
                       to write out width and BRs.
             preamble - Some text to print before the __str__ output.'''
             
-        super(Decay, self).__init__()
         try:
             self.PID=int(PID)
         except ValueError:
@@ -398,26 +598,33 @@ class Decay(OrderedDict):
         self._decimal = decimal
         self._comments = {}
         self.preamble = preamble
-        
+        self._data = OrderedDict()
         if data is not None:
-            for k,v in data.iteritems():
-                self[k]=v
+            self._data.update(data)
+
                 
     def __setitem__(self, key, value):
-        super(Decay,self).__setitem__(self.__checkkey__(key),
-                                      self.__checkval__(value))
+        self._data[self.__checkkey__(key)] = self.__checkval__(value)
         self._BRtot+=self.__checkval__(value)
         if self._BRtot > 1.:
             print '!!! ERROR !!!'
             print self
             raise ValueError("SLHA Decay object for PID = {}. ".format(self.PID)
-                            + "Sum of branching ratios > 1!")            
+                            + "Sum of branching ratios > 1!")  
+                                      
+    def __getitem__(self, key):
+        return self._data[self.__checkkey__(key)]
     
     def __delitem__(self, key):
-        super(Decay,self).__delitem__(self.__checkkey__( key ),
-                                      self.__checkval__(value))
+        del self._data[self.__checkkey__( key )]
         self._BRtot-=self.__checkval__(self[key])
-        
+    
+    def __iter__(self):
+        return iter(self._data)
+    
+    def __len__(self):
+        return len(self._data)
+    
     def __repr__(self):
         return ( '<SHLA Decay: PID={}; {} entries.>'.format(self.PID, 
                                                             len(self)) )
@@ -472,10 +679,18 @@ class Card(object):
         containing that name and finally searches in self.blocks for a block 
         containing that name. Otherwise raises Key error.
         '''
+        
         if self.has_matrix(key): return self.matrices
         
         for block in self.matrices.values():
             if key in block: return block
+            try:
+                if key in block._re:
+                    return block._re
+                if key in block._im: 
+                    return block._im
+            except AttributeError:
+                pass
             
         for block in self.blocks.values():
             if key in block: return block
@@ -489,7 +704,7 @@ class Card(object):
         '''
         if type(key) is int:
             return self.decays
-        elif type(key) is str:
+        elif type(key) is str:            
             return self._parent_block(key.lower())
         else:
             err = ('SLHA Card has integer keys for '
@@ -506,7 +721,7 @@ class Card(object):
         name - card name'''
         
         self.blocks = CaseInsensitiveOrderedDict()
-        self.decays = CaseInsensitiveOrderedDict()
+        self.decays = OrderedDict()
         self.matrices = CaseInsensitiveOrderedDict()
         self.name = name if name is not None else ''
         if blocks is not None:
@@ -548,7 +763,10 @@ class Card(object):
             raise KeyError(err)
         
     def add_block(self, block, preamble=''):
-        '''Append an SLHA.Block or NamedBlock to self.blocks.'''
+        '''
+        Append an SLHA.Block, NamedBlock, Matrix or NamedMatrix to 
+        self.blocks or self.matrices depending on the type.
+        '''
         block.preamble = preamble
         if isinstance(block,Matrix):
             self.matrices[block.name] = block
@@ -626,9 +844,12 @@ class Card(object):
         with open(filename,'w') as out:
             out.write(preamble)
             
+            blockorder = [x.lower() for x in blockorder]
+            
             allblocks = self.blocks.keys() + self.matrices.keys()
-            other_blocks = [b for b in allblocks if b not in blockorder]
-
+            
+            other_blocks = [b for b in allblocks if b.lower() not in blockorder]
+            
             for block in blockorder:
                 if self.has_block(block):
                     out.write(str(self.blocks[block]))
@@ -644,11 +865,60 @@ class Card(object):
             for decay in self.decays.values():
                 out.write(str(decay))
             out.write(postamble)
+            
+    def set_complex(self):
+        '''
+        Processes self.blocks and self.matrices to find real and imaginary 
+        pairs, upgrading them to a single complex version.
+        '''
+        
+        cplx = []
+        for imkey in self.blocks.keys():
+            if imkey.lower().startswith('im'):
+                rekey = imkey[2:]
+                if rekey in self.blocks:
+                    if not isinstance(self.blocks[rekey], CBlock):
+                        cplx.append((rekey,imkey))
+                    
+        for rekey, imkey in cplx:
+            reblk = self.blocks.get(rekey, None)
+            imblk = self.blocks.pop(imkey, None)
+            container = type(reblk)
+            if container is Block:
+                ctype = CBlock
+            elif container is NamedBlock:
+                ctype = CNamedBlock
+            
+            cblk = ctype(reblk, imblk)
+            self.blocks[rekey] = cblk
+        
+        cplx = []
+        for imkey in self.matrices.keys():
+            if imkey.lower().startswith('im'):
+                rekey = imkey[2:]
+                if rekey in self.matrices:
+                    if not isinstance(self.matrices[rekey], CBlock):
+                        cplx.append((rekey,imkey))
 
-class SLHAReadError(Exception): # Custom error name for reader
+        for rekey, imkey in cplx:
+            reblk = self.matrices.get(rekey, None)
+            imblk = self.matrices.pop(imkey, None)
+            
+            container = type(reblk)
+            if container is Matrix:
+                ctype = CMatrix
+            elif container is NamedMatrix:
+                ctype = CNamedMatrix
+            
+            cblk = ctype(reblk, imblk)
+            self.matrices[rekey] = cblk
+                    
+            
+class SLHAError(Exception): # Custom error name 
     pass
 
-def read(card):
+
+def read(card, set_cplx=True):
     '''
     SLHA formatted card reader. Blocks and Decay structures are read 
     into an SLHA.Card object which is returned. Comments are specified by the # 
@@ -688,7 +958,7 @@ def read(card):
                 except AttributeError:
                     err = ('Invalid block format encountered ' + 
                           'in line {} of {}.'.format(counter, card) )
-                    raise SLHAReadError(err)
+                    raise SLHAError(err)
                     
                 bname = block_details.split('#')[0].strip()
                 
@@ -797,7 +1067,10 @@ def read(card):
             
     except StopIteration:
         pcard.close()
-
+    
+    if set_cplx:
+        thecard.set_complex()
+    
     return thecard
 
 def read_until(lines, here, *args):
@@ -828,14 +1101,10 @@ def read_until(lines, here, *args):
         if stopiter:
             return lines_read, '', stopiter
         else:
-            return lines_read[:-1],lines_read[-1], stopiter
+            return lines_read[:-1], lines_read[-1], stopiter
     except IndexError:
         return [],'',stopiter
 
 if __name__=='__main__':
-    b= CaseInsensitiveOrderedDict()
-    b['buMs']=1
-    print 'bums' in b
-    print b.keys()
-    # a = CaseInsensitiveOrderedDict({'oNe':1,'twO':2,'THRee':3})
     pass
+

@@ -69,7 +69,8 @@ def higgs_basis_check(MyBasis,param_card,tolerance=1e-4):
                          output_basis='mass',silent=True)
     myinstance.write_param_card(out_card)
         
-    HB_instance = HB.HiggsBasis(param_card=out_card,silent=True,translate=False)
+    HB_instance = HB.HiggsBasis(param_card=out_card, silent=True, 
+                                translate=False)
     MB_instance = MB.MassBasis(param_card=out_card, silent=True)
     
     compare_inputs(HB_instance, MB_instance, tolerance=tolerance)
@@ -78,27 +79,38 @@ def higgs_basis_check(MyBasis,param_card,tolerance=1e-4):
     os.remove(out_card)
     os.rmdir(tmpdir)
 
-def two_way_test(basis, card ,target,tolerance=1e-4):
-    first = basis(param_card=card, silent=True, translate = False)
+def two_way_test(basis, card ,target, tolerance=1e-4, flavour='general'):
+    
+    first = basis(param_card=card, silent=True, translate=False, 
+                  flavour=flavour)
     intermediate = first.translate(target=target)
-        
+    intermediate.set_flavour(intermediate.flavour, 'general')
+    intermediate.flavour='general'
     second = intermediate.translate(target=basis.name)
+    
+    first.set_flavour('general',flavour)
+    second.set_flavour('general',flavour)
 
     compare_coeffs(first , second, tolerance=tolerance)
     compare_inputs(first , second, tolerance=tolerance)
 
-def circle_test(basis, card, tolerance=1e-4, reverse=False):
+def circle_test(basis, card, tolerance=1e-4, reverse=False, flavour='general'):
     others = [x for x in ('silh','warsaw', 'higgs') if x is not basis.name]
     
-    one = basis(param_card=card, silent=True, translate=False)
+    one = basis(param_card=card, silent=True, translate=False, flavour=flavour)
     if not reverse:
         two = one.translate(target=others[0])
         three = two.translate(target=others[1])
     else:
         two = one.translate(target=others[1])
         three = two.translate(target=others[0])
-        
+    
+    two.set_flavour(two.flavour, 'general')
+    three.set_flavour(three.flavour, 'general')
+    
     four = three.translate(target=basis.name)
+    four.set_flavour('general',flavour)
+
     compare_inputs(one , four, tolerance=tolerance)
     compare_coeffs(one , four, tolerance=tolerance)
     
@@ -171,37 +183,39 @@ def generate_frdef(basis_class,filename):
     print 'wrote ',filename
 
 if __name__=='__main__':
-
-    
-    # pass
-    # os.chdir('/Users/Ken/GoogleDrive/Work/Rosetta')
-    # instance = MUF.MufBasis()
-    # print instance._thedict
+    pass
 
 ################################################################################
-# # card writers
-#     for flav in ('general',):
-#     # for flav in ('minimal',):
-#     # for flav in ('diagonal',):
-#         if flav =='general':
-#             tail = ''
-#         else:
-#             tail = '_%s' % flav
-#
-#         instance = HB.HiggsBasis(flavour=flav)
-#         instance.write_template_card('Cards/HiggsBasis{}.dat'.format(tail))
-#         instance.write_template_card('HiggsBasis{}_rand.dat'.format(tail), value='random')
-#
-#         instance = WB.WarsawBasis(flavour=flav)
-#         instance.write_template_card('Cards/WarsawBasis{}.dat'.format(tail))
-#         instance.write_template_card('WarsawBasis{}_rand.dat'.format(tail), value='random')
-#     #
-#         instance = SB.SILHBasis(flavour=flav)
-#         instance.write_template_card('Cards/SILHBasis{}.dat'.format(tail))
-#         instance.write_template_card('SILHBasis{}_rand.dat'.format(tail), value='random')
-#     # instance = MB.MassBasis()
-#     # instance.write_template_card('MassBasis.dat')
-#     # #
+# card writers
+    # for flav in ('general',):
+    # for flav in ('universal',):
+    for flav in ('diagonal',):
+        if flav =='general':
+            tail = ''
+        else:
+            tail = '_%s' % flav
+
+        instance = TB.TemplateBasis(flavour=flav)
+        instance.write_template_card('Cards/TemplateBasis{}.dat'.format(tail))
+
+
+    #     instance = HB.HiggsBasis(flavour=flav)
+    #     instance.write_template_card('Cards/HiggsBasis{}.dat'.format(tail))
+    #     instance.write_template_card('HiggsBasis{}_rand.dat'.format(tail), value='random')
+    #     instance.write_template_card('HiggsBasis{}_1e-3.dat'.format(tail), value=0.001)
+    #
+    #     instance = WB.WarsawBasis(flavour=flav)
+    #     instance.write_template_card('Cards/WarsawBasis{}.dat'.format(tail))
+    #     instance.write_template_card('WarsawBasis{}_rand.dat'.format(tail), value='random')
+    #     instance.write_template_card('WarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
+    # #
+    #     instance = SB.SILHBasis(flavour=flav)
+    #     instance.write_template_card('Cards/SILHBasis{}.dat'.format(tail))
+    #     instance.write_template_card('SILHBasis{}_rand.dat'.format(tail), value='random')
+    #     instance.write_template_card('SILHBasis{}_1e-3.dat'.format(tail), value=0.001)
+    # instance = MB.MassBasis()
+    # instance.write_template_card('MassBasis.dat')
+    # #
 ################################################################################
 # translation testers   
     # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs',tolerance=1e-14)
@@ -210,10 +224,10 @@ if __name__=='__main__':
     # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','silh')
     # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','warsaw')
     #
-    two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','higgs')
+    # two_way_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','higgs',flavour='diagonal')
     # two_way_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat','silh')
     
-    # circle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat')
+    # circle_test(HB.HiggsBasis,'HiggsBasis_rand.dat')
     # circle_test(HB.HiggsBasis,'Cards/param_card_HiggsBasis.dat',reverse=True)
     # circle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat')
     # circle_test(SB.SILHBasis,'Cards/param_card_SILHBasis.dat',reverse=True)
