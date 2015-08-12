@@ -29,7 +29,7 @@ parser.add_argument("-w", "--overwrite", action='store_true',
                     help="Overwrite any pre-existing output file.")
                     
 parser.add_argument("-s", "--silent", action='store_true', 
-                    help=("Suppress all warnings and take default answers to" 
+                    help=("Suppress all warnings and take default answers to " 
                           "all questions."))
                     
 parser.add_argument("-f", "--flavour", type=str, default = "general", 
@@ -81,7 +81,8 @@ basis_instance = mybasis(param_card=args.param_card,
                          flavour=args.flavour,
                          silent=args.silent)
 
-if basis_instance.write_param_card(new_param_card, overwrite=args.overwrite): # 
+if basis_instance.write_param_card(new_param_card, 
+                                   overwrite=args.overwrite or args.silent): # 
     print '#############################'
     print ''
 else:

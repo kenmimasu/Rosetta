@@ -1,15 +1,30 @@
 import SLHA
 from itertools import product
 from collections import OrderedDict
+import re
 ################################################################################
 # Special 2D Matrices
+
 class TwoDMatrix(SLHA.NamedMatrix):
-    
+    mask = tuple()
+    def __strkeymap__(self, key):
+        if not re.match(r'.*\dx\d$', key):
+            err = ('{}.__strkeymap__: Key {} '.format(self.__class__, key)
+                  +'does not have format NAMEixj.')
+            raise KeyError(err)
+        intkeys = self.__parse__(key)
+        i, j = self.__keymap__(intkeys)
+        try:
+            return self._names[(j,i)]
+        except KeyError:
+            return key[:-3]+'{}x{}'.format(j,i)
+        
     def __keymap__(self, key):
-        if key in self._names:
-            return self.__parse__(key)
-        else:
-            return key
+        '''
+        Returns the modified key according to the properties of the matrix i.e. 
+        if it is symmetric etc.
+        '''
+        return key
             
     def __valuemap__(self, key, value):
         return value
@@ -30,32 +45,75 @@ class TwoDMatrix(SLHA.NamedMatrix):
         self._names = {k:v for k,v in matrix._names.items()}
         self._numbers = SLHA.CaseInsensitiveDict({k:v for k,v in 
                                                   matrix._numbers.items()})
-        for k,v in self.iteritems():
+                                                  
+        for k,v in self.items()[::-1]:
             self[k] = v
-        # assert len(self.dimension())==2, 'TwoDMatrix must have dimension 2'
 
     def __setitem__(self, key, value):
-        super(TwoDMatrix, self).__setitem__(self.__keymap__(key), 
-                                            self.__valuemap__(key, value))
+        intkey = self.get_number(key) if type(key) is str else key
+        if intkey in self.mask:
+            if type(key) is str:
+                newkey = self.__strkeymap__(key) 
+            else:
+                newkey = self.__keymap__(intkey)
+        else:
+            newkey = key
+        super(TwoDMatrix, self).__setitem__(newkey,
+                                            self.__valuemap__(intkey, value))
                                                  
     def __getitem__(self, key):
-        value = super(TwoDMatrix, self).__getitem__(self.__keymap__(key))
-        return self.__valuemap__(key, value)
+        intkey = self.get_number(key) if type(key) is str else key
+        if intkey in self.mask:
+            if type(key) is str:
+                newkey = self.__strkeymap__(key) 
+            else:
+                newkey = self.__keymap__(key)
+        else:
+            newkey = key
+        value = super(TwoDMatrix, self).__getitem__(newkey)
+        return self.__valuemap__(intkey, value)
 
     def __contains__(self, key):
         try:
-            return super(TwoDMatrix, self).__contains__(self.__keymap__(key))
-        except (ValueError, KeyError):
+            intkey = self.get_number(key) if type(key) is str else key
+            if intkey in self.mask:
+                if type(key) is str:
+                    newkey = self.__strkeymap__(key) 
+                else:
+                    newkey = self.__keymap__(key)
+            else:
+                newkey = key
+            return super(TwoDMatrix, self).__contains__(newkey)
+        except (ValueError, KeyError) as e:
             return False
 
     def __delitem__(self, key):
-        return super(TwoDMatrix, self).__delitem__(self.__keymap__(key))
+        key =  self.get_number(key) if type(key) is str else key
+        return super(TwoDMatrix, self).__delitem__(key)
 
 class CTwoDMatrix(TwoDMatrix, SLHA.CNamedMatrix):
-    
+    mask = tuple()    
+    def __strkeymap__(self, key):
+        if not re.match(r'.*\dx\d$', key):
+            err = ('{}.__strkeymap__: Key {} '.format(self.__class__, key)
+                  +'does not have format NAMEixj.')
+            raise KeyError(err)
+        
+        if key in self._re or key in self._im:
+            part = self._part(key)
+        else:
+            part = self
+        
+        intkeys = part.__parse__(key)
+        i, j = self.__keymap__(intkeys)
+        try:
+            return part._names[(j,i)]
+        except KeyError:
+            return key[:-3]+'{}x{}'.format(i,j)
+        
     def __keymap__(self, key):
-        return self.__parse__(key)
-    
+        return key
+            
     def __setreal__(self, real):
         return TwoDMatrix(real)
     
@@ -72,9 +130,24 @@ class CTwoDMatrix(TwoDMatrix, SLHA.CNamedMatrix):
         self._re = self.__setreal__(matrix._re)
         self._im = self.__setimag__(matrix._im)
         super(CTwoDMatrix, self).__init__(matrix)
+        
+    def __setitem__(self, key, value):
+        return super(CTwoDMatrix, self).__setitem__(key, value)
+        
+    def __getitem__(self, key):
+        if type(key) is str and (key in self._re or key in self._im):
+            return self._part(key).__getitem__(key)
+        else:
+            return super(CTwoDMatrix, self).__getitem__(key)
+    
+    def __delitem__(self, key):
+        return super(CTwoDMatrix, self).__delitem__(key)
+    
+    def __contains__(self, key):
+        return super(CTwoDMatrix, self).__contains__(key)
 
 class SymmetricMatrix(TwoDMatrix):
-
+    mask = ((2,1),(3,1),(3,2))
     def __keymap__(self, key):
         key = super(SymmetricMatrix, self).__keymap__(key)
         i, j = key
@@ -84,7 +157,7 @@ class SymmetricMatrix(TwoDMatrix):
         return value
 
 class AntisymmetricMatrix(TwoDMatrix):
-
+    mask = ((2,1),(3,1),(3,2))
     def __keymap__(self, key):
         key = super(AntisymmetricMatrix, self).__keymap__(key)
         i, j = key
@@ -111,7 +184,7 @@ class CAntisymmetricMatrix(CTwoDMatrix, AntisymmetricMatrix):
         return AntisymmetricMatrix(imag)
         
 class HermitianMatrix(CTwoDMatrix):
-    
+    mask = ((2,1),(3,1),(3,2))
     def __setreal__(self, real):
         return SymmetricMatrix(real)
     
@@ -119,12 +192,10 @@ class HermitianMatrix(CTwoDMatrix):
         return AntisymmetricMatrix(imag)
         
     def __keymap__(self, key):
-        key = self.__parse__(key)
         i, j = key
         return (i, j) if i <= j else (j, i)
         
     def __valuemap__(self, key, value):
-        key = self.__parse__(key)
         i, j = key
         if i==j:
             return complex(value.real, 0.)

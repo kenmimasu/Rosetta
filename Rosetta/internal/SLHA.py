@@ -233,7 +233,7 @@ class NamedBlock(Block):
                 return self._numbers[key]
             except KeyError:
                 err = ('Name "{}" has not been assigned to a '.format(key) +
-                       'key in SLHA.NamedBlock {}._names'.format(self.name))
+                       'key in {} {}._names'.format(self.__class__, self.name))
                 raise KeyError(err)
         else:
             return key
@@ -321,7 +321,7 @@ class NamedBlock(Block):
     def get_name(self, key, default=''):
         return self._names.get(key, default)
         
-    def get_number(self, name, default=-1):
+    def get_number(self, name, default=None):
         return self._numbers.get(name, default)
     
     def new_entry(self, key, value, name=None):
@@ -385,7 +385,7 @@ class NamedMatrix(Matrix, NamedBlock):
                   +'BLOCK {}\n'.format(self.name)
                   + ''.join(content) )
         return string
-
+    
 class CBlock(Block):
     container = Block
     def __init__(self, *args):
@@ -430,7 +430,7 @@ class CBlock(Block):
         
     def __str__(self):
         return str(self._re) + str(self._im)
-
+    
 class CMatrix(CBlock, Matrix):
     container = Matrix
     
@@ -514,8 +514,15 @@ class CNamedBlock(CBlock, NamedBlock):
             part.__delitem__(key)
         else:            
             key = self.__parse__(key)
-            del self._re[key]
-            del self._im[key]
+            try:
+                del self._re[key]
+            except KeyError:
+                pass
+            try:
+                del self._im[key]
+            except KeyError:
+                pass
+                
             super(CNamedBlock, self).__delitem__(key)
         
     def __contains__(self, key):
@@ -527,7 +534,14 @@ class CNamedBlock(CBlock, NamedBlock):
         
     def __str__(self):
         return str(self._re) + str(self._im)
-                                                      
+        
+    def get_number(self, name, default=None):
+        if (name in self._re or name in self._im):
+            part = self._part(name)
+        else:
+            part = self
+        return part._numbers.get(name, default)
+        
 class CNamedMatrix(CNamedBlock, NamedMatrix):
     container = NamedMatrix 
     

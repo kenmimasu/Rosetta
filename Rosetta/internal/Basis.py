@@ -371,32 +371,6 @@ class Basis(MutableMapping):
                     cname = blk.get_name(k)
                     self.card.add_entry(bname, k, v, name = cname)
 
-        
-    def get_other_blocks(self, card, ignore):
-        other_blocks = {k:v for k,v in card.blocks.iteritems() 
-                        if not (k in ignore or k.lower()=='basis')}
-        
-        other_matrices = {k:v for k,v in card.matrices.iteritems() 
-                          if k not in ignore}
-                        
-        for block in other_blocks:
-            theblock = card.blocks[block]
-            self.card.add_block(theblock)
-        
-        for matrix in other_matrices:
-            theblock = card.matrices[matrix]
-            self.card.add_block(theblock)
-        
-        for decay in card.decays.values():
-            self.card.add_decay(decay, preamble = decay.preamble)
-        
-        if card.has_block('mass'):
-            self.mass=self.card.blocks['mass']
-        if card.has_block('sminputs'):
-            self.inputs=self.card.blocks['sminputs']
-            
-        self.ckm = card.matrices['vckm']
-
     def read_param_card(self):
         '''
         Call SLHA.read() and set up the Basis instance accordingly.
@@ -1025,12 +999,14 @@ class Basis(MutableMapping):
             for entry in to_add:
                 i,j = int(entry[-3]), int(entry[-1])
                 index = (i, j)
-                if self.flavoured[bname]['domain']=='complex':              
-                    self.card.add_entry(bname, index, 0., name='R'+entry[1:])
-                    self.card.add_entry('IM'+bname, index, 0., 
-                                         name='I'+entry[1:])
+                if self.flavoured[bname]['domain']=='complex':      
+                    value = complex(0.,0.)        
+                    # self.card.add_entry(bname, index, 0., name='R'+entry[1:])
+                    # self.card.add_entry('IM'+bname, index, 0.,
+                    #                      name='I'+entry[1:])
                 else:
-                    self.card.add_entry(bname, index, 0., name = entry)
+                    value = 0.
+                self.card.add_entry(bname, index, 0., name = entry)
                     
         self.card.set_complex()
         self.fix_matrices()
@@ -1139,7 +1115,6 @@ class Basis(MutableMapping):
             current.check_masses(required_masses, message=message)
             # call translation function
             new = function(current, instance)
-            
             # update new basis instance with non-EFT blocks, decays
             all_coeffs = (current.blocks.keys() + current.flavoured.keys())
             new.get_other_blocks(current.card, all_coeffs)
@@ -1159,7 +1134,34 @@ class Basis(MutableMapping):
             current.set_flavour('general', self.flavour)            
         
         return current
+
+    def get_other_blocks(self, card, ignore):
+        ignore = [x.lower() for x in ignore]    
+        other_blocks = {k:v for k,v in card.blocks.iteritems() 
+                        if not (k in ignore or k.lower()=='basis')}
+        
+        other_matrices = {k:v for k,v in card.matrices.iteritems() 
+                          if ((k.lower() not in ignore) 
+                              or ('im'+k.lower() not in ignore))}
+                        
+        for block in other_blocks:
+            theblock = card.blocks[block]
+            self.card.add_block(theblock)
+        
+        for matrix in other_matrices:
+            theblock = card.matrices[matrix]
+            self.card.add_block(theblock)
+        
+        for decay in card.decays.values():
+            self.card.add_decay(decay, preamble = decay.preamble)
+        
+        if card.has_block('mass'):
+            self.mass=self.card.blocks['mass']
+        if card.has_block('sminputs'):
+            self.inputs=self.card.blocks['sminputs']
             
+        self.ckm = card.matrices['vckm']
+
     def run_eHDECAY(self):
         '''
         Interface Rosetta with eHDECAY to calculate Higgs widths and branching 

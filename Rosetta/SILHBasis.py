@@ -56,7 +56,7 @@ class SILHBasis(Basis.Basis):
         'SBxHud' : {'cname':'sHud', 'kind':'general', 'domain':'complex'}
     }
 
-    independent = [c for c in blocks.keys()] + [c for c in flavoured.keys()]
+    independent = blocks.keys() + flavoured.keys()
                   
     # two coefficients are zero by construction (set in calculate_dependent())
     dependent = ['CsHl1x1', 'CsHpl1x1']
