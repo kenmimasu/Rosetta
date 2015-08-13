@@ -85,11 +85,18 @@ class TemplateBasis(Basis.Basis):
         # y = d*m_top*a_EW
         for k in B: 
             B[k] = self.myfunc( A['d'], self.mass[6], self.inputs['aEWM1'] )
-        self.mass[24]=91.19 # MZ in newmass
-        self.inputs[8]=126. # MH in newinput
-        
         return B
-        
+    
+    def modify_inputs(self):
+        if 24 in self.mass:
+            self.mass[24]=91.19 # MW = MZ 
+        else:
+            self.mass.new_entry(24, 91.19, name='MW')
+        if 25 in self.inputs:
+            self.inputs[25]=126. # MH in newinput
+        else:
+            self.inputs.new_entry(25, 126., name='MH')
+            
     @staticmethod # pure function, no access to class instance
     def myfunc(x,y,z):
         return x*y/z

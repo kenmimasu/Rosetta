@@ -60,7 +60,7 @@ class Basis(MutableMapping):
         >>    name = 'mybasis'
         >>    independent = {'A','B','C','1','2','3'}
         >>    required_inputs = {1,2,4}   # a_{EW}^{-1}, Gf and MZ required
-        >>    required_masses = {24,25,6} # Z, Higgs and top masses required
+        >>    required_masses = {23,25,6} # Z, Higgs and top masses required
         >>    blocks = {'letters':['A','B','C','D']
         >>              'numbers':['1','2','3','4']} # Expected block structure
     
@@ -176,6 +176,7 @@ class Basis(MutableMapping):
             self.check_param_data(silent=silent)
             self.check_flavoured_data(silent=silent)
             # generalises potentially reduced flavour structure
+            
             self.set_flavour(self.flavour, 'general')
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
@@ -193,7 +194,10 @@ class Basis(MutableMapping):
             else:
                 # do nothing!
                 newbasis = self
-                
+            
+            newbasis.modify_inputs()
+            newbasis.check_modified_inputs()
+            
             # set new SLHA card
             self.newcard = newbasis.card 
             self.newname = newbasis.name
@@ -240,12 +244,6 @@ class Basis(MutableMapping):
         
     def __iter__(self):
         return iter(self._thedict)
-    #
-    # def items(self):
-    #     return self._thedict.items()
-    #
-    # def iteritems(self):
-    #     return self._thedict.iteritems()
     
     def _gen_thedict(self):
         thedict = SLHA.CaseInsensitiveOrderedDict()
@@ -586,10 +584,10 @@ class Basis(MutableMapping):
                                 + 'value specified in block mass '
                                 + '[{}] ({:.5e}).\n'.format(i,float(v2))
                                 + 'Rosetta will keep value from sminputs.')
-                                self.mass[k]=v
+                                self.mass[i]=v
                         else:
                             mstring = 'M{}'.format(particle_names[i])
-                            self.mass.new_entry(i, v,name=mstring)
+                            self.mass.new_entry(i, v, name=mstring)
                             
                 masses = set(self.mass.keys())
                 required = set(required_masses)
@@ -741,6 +739,10 @@ class Basis(MutableMapping):
                 else:
                     print 'Exit'
                     sys.exit()
+                    
+            if len(inputblock)==0:
+                del self.card.blocks[inputblock.name]
+    
     
     def check_flavoured_data(self, silent=False):
         '''
@@ -759,7 +761,6 @@ class Basis(MutableMapping):
                assigned values. If not, the user is given the option to 
                continue with them set to 0.
         '''
-
         for bname, defined in self.fblocks.iteritems():
             # collect block info
             inputblock = self.card.matrices.get(bname, None)
@@ -778,7 +779,6 @@ class Basis(MutableMapping):
                            if v in self.independent or bname in self.independent}
             dependent = {k:v for k,v in defined_block.iteritems() 
                            if v in self.dependent}
-                           
             # check for unrecognised coefficient numbers              
             unknown = input_eles.difference(defined_eles)
             if unknown:
@@ -817,7 +817,7 @@ class Basis(MutableMapping):
                                'will be renamed to {}'.format(name))
                     inputblock._names[index] = name
                     inputblock._numbers[name] = index
-            
+
             # check if coefficients defined as dependent 
             # have been assigned values
             defined_dependent = set(dependent).intersection(input_eles)
@@ -841,7 +841,7 @@ class Basis(MutableMapping):
                 else:
                     print 'Exit'
                     sys.exit()
-            
+
             # check if all independent coefficients are assigned values
             missing = set(independent).difference(input_eles).difference(set(dependent))
             if missing: # Deal with unassigned independent coefficients
@@ -863,6 +863,10 @@ class Basis(MutableMapping):
                 else:
                     print 'Exit'
                     sys.exit()
+            
+            if len(inputblock)==0:
+                del self.card.matrices[inputblock.name]
+
         
     def write_param_card(self, filename, overwrite=False):
         '''Write contents of self.newcard to filename'''
@@ -996,20 +1000,28 @@ class Basis(MutableMapping):
             theblock = self.card.matrices.get(bname,[])
             to_add = [f for f in fields if f in self.dependent 
                                         and f not in theblock]
+
             for entry in to_add:
-                i,j = int(entry[-3]), int(entry[-1])
-                index = (i, j)
+                index = (int(entry[-3]), int(entry[-1]))
                 if self.flavoured[bname]['domain']=='complex':      
-                    value = complex(0.,0.)        
-                    # self.card.add_entry(bname, index, 0., name='R'+entry[1:])
-                    # self.card.add_entry('IM'+bname, index, 0.,
-                    #                      name='I'+entry[1:])
+                    theblock = self.card.matrices.get(bname, None)
+                    if not (isinstance(theblock, SLHA.CMatrix) 
+                         or isinstance(theblock, SLHA.CNamedMatrix)):
+                        self.card.add_entry(bname, index, 0., 
+                                            name='R'+entry[1:])
+                        self.card.add_entry('IM'+bname, index, 0.,
+                                            name='I'+entry[1:])
+                    else:
+                        self.card.add_entry(bname, index, complex(0.,0.), 
+                                            name=entry)
+                        
                 else:
                     value = 0.
-                self.card.add_entry(bname, index, 0., name = entry)
-                    
+        
         self.card.set_complex()
         self.fix_matrices()
+        # for k,v in self.card.matrices.items():
+        #     print k,type(v)
         
     def check_calculated_data(self):
         '''
@@ -1032,18 +1044,9 @@ class Basis(MutableMapping):
             print 'Calculated coefficients match those defined '\
                   'in {}.dependent.'.format(self.__class__.__name__) 
     
-    def calculate_dependent(self):
-        '''
-        Default behavoiur of calculate_dependent(). Called if a subclass of 
-        Basis has not implemeneted the function.
-        '''
-        print 'Nothing done for {}.calculate_'\
-              'dependent()'.format(self.__class__.__name__)
-    
     def fix_matrices(self, card=None):
         if card is None:
             card = self.card
-            
         for name, matrix in card.matrices.iteritems():
             if name not in self.flavoured:
                 continue
@@ -1105,12 +1108,14 @@ class Basis(MutableMapping):
         
         required_inputs = current.required_inputs
         required_masses = current.required_masses
+        
         for target, function in chain:
             # new target basis instance
             instance = bases[target]()
             # ensure required inputs are present
             message = 'translation ({} -> {})'.format(current.name, 
                                                       instance.name)
+            
             current.check_sminputs(required_inputs, message=message)
             current.check_masses(required_masses, message=message)
             # call translation function
@@ -1119,12 +1124,10 @@ class Basis(MutableMapping):
             all_coeffs = (current.blocks.keys() + current.flavoured.keys())
             new.get_other_blocks(current.card, all_coeffs)
             
-            
             # prepare for next step
             required_inputs = set(instance.required_inputs)
             required_masses = set(instance.required_masses)
             current = new
-            
 
         if verbose:
             print 'Translation successful.\n'
@@ -1136,14 +1139,16 @@ class Basis(MutableMapping):
         return current
 
     def get_other_blocks(self, card, ignore):
-        ignore = [x.lower() for x in ignore]    
-        other_blocks = {k:v for k,v in card.blocks.iteritems() 
-                        if not (k in ignore or k.lower()=='basis')}
+        ignore = [x.lower() for x in ignore] 
         
-        other_matrices = {k:v for k,v in card.matrices.iteritems() 
-                          if ((k.lower() not in ignore) 
-                              or ('im'+k.lower() not in ignore))}
-                        
+        other_blocks, other_matrices = {}, {}
+        for k, v in card.blocks.iteritems():
+            if k.lower() != 'basis' and k.lower() not in ignore:
+                other_blocks[k]=v
+        for k, v in card.matrices.iteritems():
+            if k.lower() != 'basis' and k.lower() not in ignore:
+                other_matrices[k]=v
+
         for block in other_blocks:
             theblock = card.blocks[block]
             self.card.add_block(theblock)
@@ -1219,6 +1224,57 @@ class Basis(MutableMapping):
         else:
             self.newcard.decays[25] = decayblock
         print '#############################\n'
+        
+    def calculate_dependent(self):
+        '''
+        Default behavoiur of calculate_dependent(). Called if a subclass of 
+        Basis has not implemented the function.
+        '''
+        print 'Nothing done for {}.calculate_'\
+              'dependent()\n'.format(self.__class__.__name__)
+              
+    def modify_inputs(self):
+        '''
+        Default behavoiur of calculate_dependent(). Called if a subclass of 
+        Basis has not implemented the function.
+        '''
+        print 'Nothing done for {}.modify_'\
+              'inputs()\n'.format(self.__class__.__name__)
+    
+    def check_modified_inputs(self, silent=False):
+        for k,v in [(i,j) for i,j in self.inputs.iteritems() 
+                    if i in (4,5,6,7,25)]:
+            i = input_to_PID[k]
+            if i in self.mass:
+                v2 = float(self.mass[i])
+                if v!=v2:
+                    if not silent:
+                        print ('Warning: M{} '.format(particle_names[i])
+                    + 'in block sminputs[{}] '.format(k)
+                    + '({:.5e}) not consistent with '.format(v)
+                    + 'value specified in block mass'
+                    + '[{}] ({:.5e}) '.format(i,float(v2))
+                    + 'after modify_inputs().\n')
+                    
+                        keep_from_input = Y_or_N('Keep value from sminputs?')
+                    else:
+                        keep_from_input = True
+                        
+                    if keep_from_input:
+                        if not silent:
+                            print ('Modified M{} '.format(particle_names[i]) +
+                                   'in block mass[{}]'.format(i))
+                        self.mass[i]=v
+                    else:
+                        if not silent:
+                            print ('Modified M{} '.format(particle_names[i]) +
+                                   'in block sminputs[{}]'.format(k))
+                        self.inputs[k]=v2
+                        
+            else:
+                mstring = 'M{}'.format(particle_names[i])
+                self.mass.new_entry(i, v,name=mstring)
+        
         
 ################################################################################
 class TranslationError(Exception):

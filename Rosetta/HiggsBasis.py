@@ -199,7 +199,6 @@ class HiggsBasis(Basis.Basis):
         A['cll1221'] = (A['HBxdGLwl'][1,1].real 
                       + A['HBxdGLwl'][2,2].real - 2.*A['dM'])*2.
         
-        A.mass[24] = MW + A['dM']
         
     @Basis.translation('mass')        
     def to_mass(self, instance):
@@ -394,6 +393,18 @@ class HiggsBasis(Basis.Basis):
                 im = yuk*sin*sqrt(2.*mi*mj)/vev
                 S['SBx'+f][i,j] = complex(re, im)
 
-        
         return S
+    
+    def modify_inputs(self):
+        '''
+        W mass modification from dM.
+        '''
+        s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
+        MW = MZ*sqrt(c2w)
+        if 24 in self.mass:
+            self.mass[24] = MW + self['dM']
+        else:
+            self.mass.new_entry(24, MW + self['dM'], name = 'MW')
+        
+        
 ################################################################################ 

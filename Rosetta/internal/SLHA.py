@@ -804,18 +804,24 @@ class Card(object):
             self.matrices[blockname].new_entry(key, value, name=name)
         else:
             if type(key) is tuple:
-                container = Matrix
-                namedcontainer = NamedMatrix
+                container = Matrix if name is None else NamedMatrix
+                cplxcontainer = CMatrix if name is None else NamedMatrix
             else:
-                container = Block
-                namedcontainer = NamedBlock
-                
-            if name is not None:
-                theblock = namedcontainer(name=blockname)
-                theblock.new_entry(key, value, name=name)
+                container = Block if name is None else NamedBlock
+                cplxcontainer = CBlock if name is None else NamedBlock
+            
+            
+            if type(value) is complex:
+                reblock = container(name=blockname)
+                imblock = container(name='IM'+blockname)
+                theblock = cplxcontainer(reblock, imblock)
             else:
                 theblock = container(name=blockname)
+                
+            if name is None:
                 theblock.new_entry(key, value)
+            else:
+                theblock.new_entry(key, value, name=name)
                 
             self.add_block(theblock)
                 

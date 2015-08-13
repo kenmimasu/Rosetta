@@ -262,8 +262,6 @@ class SILHBasis(Basis.Basis):
         M['cll1221'] = gw2*S['s2W']
         M['cpuu3333'] = (1./3.)*gs2*S['s2G']
         
-        self.mass[24] = MW + M['dM']
-
         return M
     
     @Basis.translation('higgs')        
@@ -449,8 +447,6 @@ class SILHBasis(Basis.Basis):
         H['cll1221'] = gw2*S['s2W']
         H['cpuu3333'] = (1./3.)*gs2*S['s2G']
         
-        self.mass[24] = MW + H['dM']
-
         return H
         
     @Basis.translation('warsaw')

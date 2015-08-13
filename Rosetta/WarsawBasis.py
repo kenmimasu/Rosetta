@@ -232,10 +232,6 @@ class WarsawBasis(Basis.Basis):
         M['cpuu3333'] = W['cpuu3333']
         M['cll1221'] = W['cll1221']
         
-        # print B.card.blocks
-        # print B.card.blocks['mbvertex']
-        # W mass shift
-        self.mass[24] = MW + M['dM']
         return M
     
     @Basis.translation('higgs')        
@@ -405,7 +401,6 @@ class WarsawBasis(Basis.Basis):
         H['cpuu3333'] = W['cpuu3333']
         H['cll1221'] = W['cll1221']
         
-        self.mass[24] = MW + H['dM']
         return H
         
     @Basis.translation('silh')
