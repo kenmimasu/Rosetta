@@ -459,7 +459,6 @@ class WarsawBasis(Basis.Basis):
             yuk = mass/vev/sqrt(2.)
             return W[wc][i,j] - delta(i,j)*yuk*(W['cll1221'] 
                   - 4.*W['WBxHpl'][1,1,].real)
-
             
         # [eqn (5.9)]
         for f in ('u','d','e'): # fermion loop

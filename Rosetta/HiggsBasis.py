@@ -121,7 +121,7 @@ class HiggsBasis(Basis.Basis):
         # dependent dgV coeffs [eqn (3.5)]
         matrix_add(A['HBxdGLze'], A['HBxdGLwl'], A['HBxdGLzv'])
 
-        # dGLwq = VCKM.dGLzu - VCKM.dGLzd
+        # dGLwq = dGLzu.VCKM - VCKM.dGLzd
         matrix_sub(matrix_mult(A['HBxdGLzu'], A.ckm),
                    matrix_mult(A.ckm, A['HBxdGLzd']),
                    A['HBxdGLwq'])

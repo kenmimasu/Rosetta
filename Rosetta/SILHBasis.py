@@ -23,13 +23,10 @@ class SILHBasis(Basis.Basis):
     name = 'silh'
     ##########################
     # declare coefficients
-    
-    # operators present in SILH but not Warsaw, see [Sec. 5].
-    # cWW, ctWW, cWB, ctWB, cHl11, cpHl11, cll1221, cll1122, cpuu3333 
-    # absent compared to Warsaw.
-    SBNOTWARSAW = ['sW','sB','sHW','sHB','tsHW','tsHB','s2W','s2B','s2G']
+    # SBNOTWARSAW = ['sW','sB','sHW','sHB','tsHW','tsHB','s2W','s2B','s2G']
     # [Tab. 1]
-    SBV2H2 = ['sGG','tsGG','sBB', 'tsBB']
+    SBV2H2 = ['sGG','sBB','sW','sB','sHW','sHB','s2W','s2B','s2G',
+              'tsGG','tsBB','tsHW','tsHB']
     
     SBH4D2 = ['sH','sT']
     
@@ -39,8 +36,8 @@ class SILHBasis(Basis.Basis):
 
     ##########################
     # block structure
-    blocks = {'SBxV2H2':SBV2H2, 'SBxH4D2':SBH4D2, 'SBxH6':SBH6,
-              'SBxV3D3':SBV3D3, 'SBxNOTWARSAW':SBNOTWARSAW}    
+    blocks = {'SBxV2H2':SBV2H2, 'SBxH4D2':SBH4D2, 
+              'SBxH6':SBH6, 'SBxV3D3':SBV3D3} 
     
     flavoured={
         'SBxu': {'cname':'su', 'kind':'general', 'domain':'complex'},

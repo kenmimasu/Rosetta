@@ -187,9 +187,9 @@ if __name__=='__main__':
 
 ################################################################################
 # card writers
-    for flav in ('general',):
+    # for flav in ('general',):
     # for flav in ('universal',):
-    # for flav in ('diagonal',):
+    for flav in ('diagonal',):
         if flav =='general':
             tail = ''
         else:

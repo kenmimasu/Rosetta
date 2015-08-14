@@ -1,4 +1,6 @@
 from internal import Basis
+import math
+from math import sqrt
 ################################################################################
 class MassBasis(Basis.Basis):
     '''
@@ -118,5 +120,21 @@ class MassBasis(Basis.Basis):
     # All parameters independent
     independent = ( [c for v in blocks.values() for c in v] + 
                     [c for c in flavoured.keys()] )
+    required_inputs = {1, 2, 4}
     # all other undefined behavoiur inherited from Basis.Basis by default
+################################################################################
+    def modify_inputs(self):
+        '''
+        W mass modification from dM.
+        '''
+        ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared
+        Gf, MZ = self.inputs['Gf'], self.inputs['MZ']
+        s2w = (1.- sqrt(1. - ee2/(sqrt(2.)*Gf*MZ**2)))/2. # sin^2(theta_W)
+        c2w = (1.-s2w)
+        MW = MZ*sqrt(c2w)
+
+        if 24 in self.mass:
+            self.mass[24] = MW + self['dM']
+        else:
+            self.mass.new_entry(24, MW + self['dM'], name = 'MW')
 ################################################################################

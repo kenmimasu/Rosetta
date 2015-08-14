@@ -147,9 +147,10 @@ class Basis(MutableMapping):
         # remove overlaps
         self.independent = [c for c in self.independent 
                             if c not in self.dependent]
-                            
+
         self.dependent.extend([c for c in self.all_coeffs if (c not in
                                self.independent and c not in self.dependent)])
+
         # check for block names in independent
         for k,v in self.blocks.iteritems():
             if k in self.independent and k not in self.dependent:
@@ -160,9 +161,9 @@ class Basis(MutableMapping):
                         self.dependent.remove(fld)
                     except ValueError:
                         pass
-        
+
         self.set_fblocks(self.flavour)
-        
+
         # read param card (sets self.inputs, self.mass, self.name, self.card)
         if param_card is not None: 
             assert os.path.exists(self.param_card), \
@@ -271,13 +272,14 @@ class Basis(MutableMapping):
     def set_fblocks(self, option='general'):
         self.fblocks = dict()
         for name, opt in self.flavoured.iteritems():
-            opt['flavour']=option
+            opt['flavour'] = option
             coeffs = flavour_coeffs(name, **opt)
             self.fblocks[name] = coeffs
             if name not in (self.independent + self.dependent):
-                self.dependent.extend([c for c in coeffs 
-                                       if (c not in self.independent  
+                self.dependent.extend([c for c in coeffs
+                                       if (c not in self.independent
                                        and c not in self.dependent)])
+                    
     
     def default_card(self, dependent=True):
         '''
@@ -506,7 +508,7 @@ class Basis(MutableMapping):
             vckm = self.card.matrices.get('vckm', None)
             if vckm is None:
                 print 'Block "VCKM" not found, will use default values.\n'
-                vckm = default_ckm()
+                vckm = self.default_ckm()
                 self.card.add_block(vckm)
             self.ckm = vckm
                 
@@ -761,6 +763,7 @@ class Basis(MutableMapping):
                assigned values. If not, the user is given the option to 
                continue with them set to 0.
         '''
+
         for bname, defined in self.fblocks.iteritems():
             # collect block info
             inputblock = self.card.matrices.get(bname, None)
