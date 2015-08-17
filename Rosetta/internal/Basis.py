@@ -132,7 +132,7 @@ class Basis(MutableMapping):
             translate    - Whether to call the translate method when reading in 
                            from a parameter card.
             flavour      - flavour structure of matrices: 'diagonal, 'universal' 
-                           or 'general'.
+                           , 'MFV' or 'general'.
             dependent    - when param_card is None, whether or not to include 
                            dependent parameters in the SLHA.Card attribute of 
                            the basis instance.
@@ -1297,9 +1297,9 @@ def flavour_coeffs(name, kind='hermitian', domain='real', flavour='general',
     index = (1, 2, 3)
     if cname is None: cname = name
     
-    if flavour == 'diagonal':
+    if flavour.lower() == 'diagonal':
         include = lambda i,j: i == j 
-    elif flavour == 'universal':
+    elif flavour.lower() in ('universal','mfv'):
         include = lambda i,j: i == 1 and j == 1
     else:
         include = lambda i,j: True

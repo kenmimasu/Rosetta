@@ -17,19 +17,19 @@ class MassBasis(Basis.Basis):
     # kinetic terms [Eqn. (3.3)]
     MBxMASS = ['dM']
     # triple gauge couplings [Eqn. (3.6)]
-    MBxTGC = ['dKa', 'tKa', 'dG1z', 'dKz', 'tKz', 
-              'La', 'tLa', 'Lz', 'tLz', 'C3g', 'tC3g']
+    MBxTGC = ['dKa', 'dKz', 'dG1z', 'La', 'Lz', 'C3g', 
+              'tKa', 'tKz', 'tLa', 'tLz', 'tC3g']
     # quartic gauge couplings [Eqn. (3.7)]
     MBxQGC = ['dGw4','dGw2z2','dGw2za', 
               'Lw4', 'Lw2z2', 'Lw2a2', 'Lw2az', 'Lw2za', 'C4g',
               'tLw4', 'tLw2z2', 'tLw2a2', 'tLw2az', 'tLw2za', 'tC4g']
     # single Higgs couplings [Eqn. (3.8)]
-    MBxh = ['dCw', 'dCz', 'Cww', 'Cwbx', 
-            'Cgg', 'Caa', 'Cza', 'Czz', 'Czbx', 'Cabx',
+    MBxh = ['dCw', 'dCz', 'Cww', 'Cgg', 'Caa', 'Cza', 'Czz', 
+            'Cwbx', 'Czbx', 'Cabx',
             'tCww', 'tCgg', 'tCaa', 'tCza', 'tCzz']
     # double Higgs couplings [Eqn. (3.13)]
-    MBxhh =  ['dCw2', 'dCz2', 'Cww2', 'Cwbx2', 
-            'Cgg2', 'Caa2', 'Cza2', 'Czz2', 'Czbx2', 'Cabx2',
+    MBxhh = ['dCw2', 'dCz2', 'Cww2', 'Cgg2', 'Caa2', 'Cza2', 'Czz2', 
+            'Cwbx2', 'Czbx2', 'Cabx2',
             'tCww2', 'tCgg2', 'tCaa2', 'tCza2', 'tCzz2']
     # Higgs self couplings [Eqn. (3.12)]
     MBxhself = ['dL3', 'dL4']

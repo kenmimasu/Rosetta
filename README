@@ -46,7 +46,7 @@ etc. through k.mimasu@sussex.ac.uk.
 ################################################################################
 2) Prerequisites
 ################################################################################
-Python 2.7 or above
+Python 2.7 or above in the 2.X series (not python 3).
 
 ################################################################################
 3) Package Contents
@@ -94,6 +94,12 @@ Rosetta/    # Python package containing implementation of the basis
                             # inspired by pySLHA (A. Buckley, arXiv:1305.4194).
         --> eHDECAY.py      # Interface with eHDECAY program (arXiv:1403.3381)
         --> machinery.py    # Constructs translation paths between bases.
+        --> matrices.py     # Higher level matrix objects inheriting from 
+                            # structures in SLHA.py that can impose restrictions 
+                            # on the matrix properties such as herimticity etc. 
+                            # Also contains a number of matrix operations such 
+                            # as multiplication and element-wise addition for 
+                            # use in translation functions.
         --> settings.py     # Reader for config.txt
         --> decorators.py   # the @translation decorator used to identify 
                             # translation functions and their target basis in 
@@ -103,11 +109,17 @@ Rosetta/    # Python package containing implementation of the basis
 
 Cards/    # Sample MG5-style parameter cards to be used as input.
 
-    param_card_HiggsBasis.dat       # Sample HiggsBasis input parameter card
-    param_card_MassBasis.dat        # Sample MassBasis parameter card, needn't 
-                                    # be used as input
-    param_card_TemplateBasis.dat    # Sample TemplateBasis input parameter card
-    param_card_WarsawBasis.dat      # Sample WarsawBasis input parameter card
+    HiggsBasis.dat       # Sample HiggsBasis input parameter card
+    WarsawBasis.dat      # Sample WarsawBasis input parameter card
+    SILHBasis.dat        # Sample SILHBasis input parameter card
+    TemplateBasis.dat    # Sample TemplateBasis input parameter card
+
+_diagonal and _universal versions of thee card are also included reflecting the 
+simplified input formats one can use when employing the --flavour option of 
+translate
+
+    MassBasis.dat        # Sample MassBasis output parameter card, needn't 
+                         # be used as input
     
 translate   # Command line tool to perform basis translation based on the
             # implementations in Rosetta
