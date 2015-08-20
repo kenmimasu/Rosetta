@@ -3,7 +3,7 @@ import math
 from math import sqrt
 from itertools import combinations_with_replacement as comb
 from itertools import product
-from internal import PID
+from internal.constants import PID
 from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
 class SILHBasis(Basis.Basis):
@@ -38,7 +38,7 @@ class SILHBasis(Basis.Basis):
     blocks = {'SBxV2H2':SBV2H2, 'SBxH4D2':SBH4D2, 
               'SBxH6':SBH6, 'SBxV3D3':SBV3D3} 
     
-    flavoured={
+    flavored={
         'SBxu': {'cname':'su', 'kind':'general', 'domain':'complex'},
         'SBxd': {'cname':'sd', 'kind':'general', 'domain':'complex'},
         'SBxe': {'cname':'se', 'kind':'general', 'domain':'complex'},
@@ -52,7 +52,7 @@ class SILHBasis(Basis.Basis):
         'SBxHud' : {'cname':'sHud', 'kind':'general', 'domain':'complex'}
     }
 
-    independent = blocks.keys() + flavoured.keys()
+    independent = blocks.keys() + flavored.keys()
                   
     # two coefficients are zero by construction (set in calculate_dependent())
     dependent = ['CsHl1x1', 'CsHpl1x1']
@@ -79,7 +79,7 @@ class SILHBasis(Basis.Basis):
     def to_MB_or_HB(self, instance, target='mass'):
         '''
         Translation function to Mass basis or Higgs basis, which differs only in 
-        the prefix of the flavoured blocks.
+        the prefix of the flavored blocks.
         '''
         # prefix switch depending on target
         if target == 'mass':
@@ -338,7 +338,7 @@ class SILHBasis(Basis.Basis):
         # [eqn (5.9)]
         for f in ('u','d','e'): # fermion loop
             wmatrix, smatrix = 'WBx'+f, 'SBx'+f
-            for i,j in S[smatrix].keys(): # flavour loop
+            for i,j in S[smatrix].keys(): # flavor loop
                 W[wmatrix][i,j] = cf(smatrix, i, j)
         
         # [eqn (5.10)]

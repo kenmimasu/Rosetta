@@ -3,7 +3,7 @@ import math
 from math import sqrt
 from itertools import combinations_with_replacement as comb
 from itertools import product
-from internal import PID
+from internal.constants import PID
 from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
 class WarsawBasis(Basis.Basis):
@@ -20,7 +20,7 @@ class WarsawBasis(Basis.Basis):
     name = 'warsaw'
     ###### 
     # [Tab. 1]
-    WBV2H2 = ['cGG','tcGG','cWW','tcWW','cBB','tcBB','cWB','tcWB']
+    WBV2H2 = ['cGG','cWW','cBB','cWB','tcGG','tcWW','tcBB','tcWB']
     
     WBH4D2 = ['cH','cT']
     
@@ -34,7 +34,7 @@ class WarsawBasis(Basis.Basis):
     blocks = {'WBxV2H2':WBV2H2, 'WBxH4D2':WBH4D2, 'WBxH6':WBH6, 
               'WBxV3D3':WBV3D3, 'WBx4F':WB4F}
               
-    flavoured = {
+    flavored = {
         'WBxu': {'cname':'cu', 'kind':'general', 'domain':'complex'},
         'WBxd': {'cname':'cd', 'kind':'general', 'domain':'complex'},
         'WBxe': {'cname':'ce', 'kind':'general', 'domain':'complex'},
@@ -48,7 +48,7 @@ class WarsawBasis(Basis.Basis):
         'WBxHud' : {'cname':'cHud', 'kind':'general', 'domain':'complex'}
     }
     
-    independent = [c for c in blocks.keys()] + [c for c in flavoured.keys()]
+    independent = [c for c in blocks.keys()] + [c for c in flavored.keys()]
     
     # required_masses = set([y for x in PID.values() for y in x.values()])
     required_masses = {25}    
@@ -68,7 +68,7 @@ class WarsawBasis(Basis.Basis):
     def to_MB_or_HB(self, instance, target='mass'):
         '''
         Translation function to Mass basis or Higgs basis, which differs only in 
-        the prefix of the flavoured blocks.
+        the prefix of the flavored blocks.
         '''
         # prefix switch depending on target
         if target == 'mass':
@@ -309,7 +309,7 @@ class WarsawBasis(Basis.Basis):
         # [eqn (5.9)]
         for f in ('u','d','e'): # fermion loop
             wmatrix, smatrix = 'WBx'+f, 'SBx'+f
-            for i,j in W[wmatrix].keys(): # flavour loop
+            for i,j in W[wmatrix].keys(): # flavor loop
                 S[smatrix][i,j] = sf(wmatrix, i, j)
 
         # trivial translation, sX==cX

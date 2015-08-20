@@ -3,7 +3,11 @@ from operator import itemgetter
 import sys
 import re
 import os
-
+__doc__ = '''
+Module for parsing SLHA style input cards and storing BLOCK and DECAY structures 
+into python dict-like objects that can be indexed and iterated over in a case 
+insensitive way.
+'''
 class CaseInsensitiveDict(MutableMapping):
     
     def __init__(self, data=None, **kwargs):

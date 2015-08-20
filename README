@@ -81,7 +81,8 @@ Rosetta/    # Python package containing implementation of the basis
                             # of the calculate_dependent() and translation
                             # methods are implemented.
     internal/
-        --> __init__.py     # Stores a number of useful dictionaries mapping PDG
+        --> __init__.py     # Python module prerequisite.
+        --> constants.py    # Stores a number of useful dictionaries mapping PDG
                             # particle IDs and SLHA input numbers to names, 
                             # default values for SM inputs and particle masses
                             # etc.
@@ -115,7 +116,7 @@ Cards/    # Sample MG5-style parameter cards to be used as input.
     TemplateBasis.dat    # Sample TemplateBasis input parameter card
 
 _diagonal and _universal versions of thee card are also included reflecting the 
-simplified input formats one can use when employing the --flavour option of 
+simplified input formats one can use when employing the --flavor option of 
 translate
 
     MassBasis.dat        # Sample MassBasis output parameter card, needn't 
@@ -132,8 +133,10 @@ cards provided in Cards/ directory) in a particular basis and outputs a new
 card in the specified basis (default is Mass Basis).  
 
 Command line documentation:
-    
-    >> usage: translate [-h] [-o OUTPUT] [-t TARGETBASIS] [-w] [-e] PARAMCARD
+
+    >> usage: translate [-h] [-o OUTPUT] [-t {silh,higgs,mass,template,warsaw}] 
+    >>                  [-w] [-s] [-f {general,diagonal,universal,MFV}] [-e]
+    >>                  PARAMCARD
     >> 
     >> Read in an SLHA format parameter card in a particular basis and write a 
     >> new card in another implemented basis.
@@ -145,17 +148,20 @@ Command line documentation:
     >>   -h, --help            show this help message and exit
     >>   -o OUTPUT, --output OUTPUT
     >>                         Output file name. Default: [PARAMCARD]_new
-    >>   -t TARGETBASIS, --target TARGETBASIS
-    >>                         Basis into which to translate (one of: silh, 
-    >>                         higgs, mass, template, warsaw). Default: mass
+    >>   -t {silh,higgs,mass,template,warsaw}, --target {silh,higgs,mass,
+    >>                                                   template,warsaw}
+    >>                         Basis into which to translate, default: mass
     >>   -w, --overwrite       Overwrite any pre-existing output file.
+    >>   -s, --silent          Suppress all warnings and take default answers to
+    >>                         all questions.
+    >>   -f {general,diagonal,universal,MFV}, --flavour {general,diagonal,
+    >>                                                   universal,MFV}
+    >>                         Specify flavour structure, default : 'general'
     >>   -e, --ehdecay         Interface with eHDECAY for Higgs branching 
     >>                         fractions.
-    >> -f FLAVOUR, --flavour FLAVOUR
-                               Specify flavour structure ('general', 'diagonal',
-                               'minimal'). Default : 'general'
 
-Rosetta will read the SLHA card, look for the 0th element of block "basis", and 
+
+Rosetta will read the SLHA card, look for the 1st element of block "basis", and 
 see if any implemented basis classes have this unique identifier. If so, Rosetta 
 will fill an instance of this class with the values of the parameters specified 
 in the parameter card and perform certain consistency checks, making sure all 
@@ -180,45 +186,42 @@ specify 'warsaw' as the target basis:
  
 ./translate -o my_out_warsaw.dat -t warsaw my_input.dat
 
-Example usage with the flavour option:
+Example usage with the flavor option:
 
-The flavour option '-f' currently accepts the arguments 'general', 'diagonal' 
-and 'minimal'. It tells Rosetta to assume a particular flavour structure in the 
+The flavor option '-f' currently accepts the arguments 'general', 'diagonal' 
+and 'universal'. It tells Rosetta to assume a particular flavor structure in the 
 input file. When a translation to a basis which is NOT the mass basis is 
 specified via the '-t' option, the output file block structure also reflects 
-this choice on the flavour structure. 
+this choice on the flavor structure. 
 
-- 'general' : The default setting corresponding to the full flavour structure.
-- 'diagonal': Keep only the diagonal terms in the flavour matrices i.e. the 
+- 'general' : The default setting corresponding to the full flavor structure.
+- 'diagonal': Keep only the diagonal terms in the flavor matrices i.e. the 
               11,22,33 entries.
-- 'minimal' : Suppress all flavour indices. Coefficients are all flavour 
+- 'universal' : Suppress all flavor indices. Coefficients are all flavor 
               diagonal and universal.
 
 Thsi has been implemented in a simple way that relies on a particular naming 
-convention for the flavoured coefficients. Namely, entries of a coefficient 
-'XXX' should be appended to the name i.e. 'XXX11', 'XXX23' etc. If the 
-coefficient is complex, the real and imaginary components should be labelled 
-AFTER the flavour indices e.g.'XXX12Re', 'XXX12Im'. 
-The function 'flavour_matrix' defined in Rosetta/internal/Basis.py is meant to 
-help one generate flavour indices of a given coefficient according to the naming 
-convention by specifying its properties such as 'hermitian' or 'symmetric' 
-etc. It is used in the implementations of HiggsBasis, SILHBasis and WarsawBasis.
+convention for the flavored coefficients. Namely, entries of a coefficient 
+'XXX' should be appended to the name i.e. 'XXX1x1', 'XXX2x3' etc. If the 
+coefficient is complex, the real and imaginary components should be prefixed as 
+'RXXX12' and 'IXXX12' respectively while the complex elements is prefixed with 
+'C'. 
 
 As an example, taking Cards/WarsawBasis_diagonal.dat as a template input, the 
 command:
 
 ./translate -f diagonal -o my_out_diag.dat my_input_diagonal.dat
 
-Will generate a Mass basis param card with only the diagonal flavour 
+Will generate a Mass basis param card with only the diagonal flavor 
 components non-zero. On the other hand,
 
 ./translate -t silh -f diagonal -o my_out_diag_silh.dat my_input_diagonal.dat
 
-Will generate a SILH basis parameter card respecting the original flavour 
+Will generate a SILH basis parameter card respecting the original flavor 
 structure, i.e. that of Cards/SILHBasis_diagonal.dat.
 
 In general, one should ensure that the block structure of the input card 
-respects the flavour option specified, otherwise, Rosetta will crash.
+respects the flavor option specified, otherwise, Rosetta will crash.
 
 Example usage with the eHDECAY option:
 
@@ -466,6 +469,12 @@ second argument alongside the default "self" argument for a class method. In
 this way, Rosetta can universally and automatically detect and use intended 
 translation functions.
 
+Additional modifications to e.g. SM input parameters or marticle masses should 
+be implemented in the modify_inputs() function.
+
+    >> def modify_inputs(self):
+    >>     self.mass[24]= 100.
+    
 Any python module saved in the root directory of the Rosetta package is 
 assumed to be a basis implementation. Furthermore, the class name of the 
 basis implementation MUST be the same as the file name of the python 

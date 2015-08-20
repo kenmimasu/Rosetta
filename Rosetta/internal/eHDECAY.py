@@ -63,7 +63,7 @@ def run(basis, electroweak=True):
     # translate to silh instance
     thesilh = basis.translate(target='silh',verbose=False)
 
-    thesilh.set_flavour(thesilh.flavour, 'general')
+    thesilh.set_flavor(thesilh.flavor, 'general')
     inp = from_silh(thesilh, ew = electroweak) 
         
     # create temporary directory

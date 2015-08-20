@@ -14,10 +14,15 @@ from query import query_yes_no as Y_or_N
 from decorators import translation
 from matrices import (TwoDMatrix, CTwoDMatrix, HermitianMatrix, 
                       SymmetricMatrix, AntisymmetricMatrix)
-from __init__ import (PID, default_inputs, default_masses, input_names, VCKM, 
+from constants import (PID, default_inputs, default_masses, input_names, VCKM, 
                       IMVCKM, VCKMele, particle_names, input_to_PID, 
-                      PID_to_input, RosettaError)
+                      PID_to_input)
+from __init__ import RosettaError
 ################################################################################
+__doc__ = '''
+Base class for Rosetta bases as well as some utility functions for defining the 
+names of flavor block elements and sorting blocks names for writing SLHA output.
+'''
 # Base Basis class
 class Basis(MutableMapping):
     '''
@@ -113,12 +118,12 @@ class Basis(MutableMapping):
     blocks = dict()
     independent = []
     dependent = []
-    flavoured = dict()
+    flavored = dict()
     required_inputs, required_masses = set(),set()
     
     def __init__(self, param_card=None, output_basis='mass', 
                  ehdecay=False, silent=False, translate=True,
-                 flavour = 'general', dependent=True):
+                 flavor = 'general', dependent=True):
         '''
         Keyword arguments:
             param_card   - SLHA formatted card conforming to the definitions in 
@@ -131,14 +136,14 @@ class Basis(MutableMapping):
                            all questions.
             translate    - Whether to call the translate method when reading in 
                            from a parameter card.
-            flavour      - flavour structure of matrices: 'diagonal, 'universal' 
+            flavor      - flavor structure of matrices: 'diagonal, 'universal' 
                            , 'MFV' or 'general'.
             dependent    - when param_card is None, whether or not to include 
                            dependent parameters in the SLHA.Card attribute of 
                            the basis instance.
         '''
         
-        self.flavour = flavour
+        self.flavor = flavor
 
         self.param_card = param_card
         self.output_basis = output_basis
@@ -162,7 +167,7 @@ class Basis(MutableMapping):
                     except ValueError:
                         pass
 
-        self.set_fblocks(self.flavour)
+        self.set_fblocks(self.flavor)
 
         # read param card (sets self.inputs, self.mass, self.name, self.card)
         if param_card is not None: 
@@ -175,10 +180,10 @@ class Basis(MutableMapping):
             self.check_sminputs(self.required_inputs) 
             self.check_masses(self.required_masses, silent=silent) 
             self.check_param_data(silent=silent)
-            self.check_flavoured_data(silent=silent)
-            # generalises potentially reduced flavour structure
+            self.check_flavored_data(silent=silent)
+            # generalises potentially reduced flavor structure
             
-            self.set_flavour(self.flavour, 'general')
+            self.set_flavor(self.flavor, 'general')
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
             self._gen_thedict()
@@ -271,9 +276,9 @@ class Basis(MutableMapping):
     
     def set_fblocks(self, option='general'):
         self.fblocks = dict()
-        for name, opt in self.flavoured.iteritems():
-            opt['flavour'] = option
-            coeffs = flavour_coeffs(name, **opt)
+        for name, opt in self.flavored.iteritems():
+            opt['flavor'] = option
+            coeffs = flavor_coeffs(name, **opt)
             self.fblocks[name] = coeffs
             if name not in (self.independent + self.dependent):
                 self.dependent.extend([c for c in coeffs
@@ -284,7 +289,7 @@ class Basis(MutableMapping):
     def default_card(self, dependent=True):
         '''
         Create a new default SLHA.Card instance according to the self.blocks 
-        and self.flavoured structure of the basis class specified in the 
+        and self.flavored structure of the basis class specified in the 
         implementaion. The dependent option allows one to switch on or off the 
         inclusion of dependent parameters in the default card. By default they 
         are included.
@@ -297,9 +302,9 @@ class Basis(MutableMapping):
             + '###################################\n')
         thecard.blocks['basis'].preamble=preamble
 
-        # default behaviour: create one 'newcoup' block, ignoring flavoured
+        # default behaviour: create one 'newcoup' block, ignoring flavored
         if not self.blocks: 
-            omit = ([] if not self.flavoured else 
+            omit = ([] if not self.flavored else 
                     [c for (k,v) in self.fblocks.items() for c in v+[k]])
             
             all_coeffs = [c for c in self.independent if c not in omit]
@@ -312,13 +317,13 @@ class Basis(MutableMapping):
                                  and fld not in self.dependent):
                     thecard.add_entry(blk, i+1, 0., name = fld)
 
-        # deal with flavoured
+        # deal with flavored
         for blk, flds in self.fblocks.iteritems():
             for fld in flds:
                 index = (int(fld[-3]), int(fld[-1])) # XBcoeff(I)x(J)               
                 if dependent or (blk not in self.dependent 
                                  and fld not in self.dependent):
-                    if self.flavoured[blk]['domain']=='complex':              
+                    if self.flavored[blk]['domain']=='complex':              
                         thecard.add_entry(blk, index, 0., name = 'R'+fld[1:])
                         thecard.add_entry('IM'+blk, index, 0., name = 'I'+fld[1:])
                     else:
@@ -331,17 +336,17 @@ class Basis(MutableMapping):
         self.fix_matrices(card = thecard)
         return thecard
     
-    def set_flavour(self, _from, to):
+    def set_flavor(self, _from, to):
         if _from == to: return
 
-        self.set_fblocks(to) # reset fblocks according to flavour option
+        self.set_fblocks(to) # reset fblocks according to flavor option
         newcard = self.default_card(dependent=False) 
         
         if (_from, to) in (('general', 'universal'), ('general', 'diagonal')):
             blks_to_del = []
             for bname, blk in self.card.matrices.iteritems():
-                # only consider declared flavour matrices
-                if bname not in self.flavoured: continue
+                # only consider declared flavor matrices
+                if bname not in self.flavored: continue
                 # only consider independent blocks
                 if not newcard.has_matrix(bname):
                     blks_to_del.append(bname) 
@@ -359,8 +364,8 @@ class Basis(MutableMapping):
                         
         elif to=='general':
             for bname, blk in newcard.matrices.iteritems():
-                # only consider declared flavour matrices
-                if bname not in self.flavoured: continue
+                # only consider declared flavor matrices
+                if bname not in self.flavored: continue
                 # Add blocks absent in self.card but present in default card
                 if not self.card.has_matrix(bname):
                     self.card.add_block(blk)
@@ -409,7 +414,7 @@ class Basis(MutableMapping):
         
         to_add = []
         for bname, blk in self.card.matrices.iteritems():
-            is_cplx = self.flavoured.get(bname,{}).get('domain','')=='complex'
+            is_cplx = self.flavored.get(bname,{}).get('domain','')=='complex'
             if is_cplx:
                 if bname.lower().startswith('im'):
                     other_part = bname[2:]
@@ -752,9 +757,9 @@ class Basis(MutableMapping):
                 del self.card.blocks[inputblock.name]
     
     
-    def check_flavoured_data(self, silent=False):
+    def check_flavored_data(self, silent=False):
         '''
-        Cross check of flavoured part of parameter data read in the SLHA 
+        Cross check of flavored part of parameter data read in the SLHA 
         formatted card. Compares lists of coefficients declared in 
         self.independent and self.dependent to those read in from self.param_card.
            1)  Deals with unrecognised names by removing them from the block
@@ -950,7 +955,7 @@ class Basis(MutableMapping):
                 print ('In write_template_card: "value" keyword argument '
                        'must either be a number or the string, "random".')  
                 sys.exit()          
-        newinstance = bases[self.name](flavour=self.flavour, dependent=False)
+        newinstance = bases[self.name](flavor=self.flavor, dependent=False)
         for k in newinstance.keys():            
                 try:
                     if rand:
@@ -1020,7 +1025,7 @@ class Basis(MutableMapping):
 
             for entry in to_add:
                 index = (int(entry[-3]), int(entry[-1]))
-                if self.flavoured[bname]['domain']=='complex':      
+                if self.flavored[bname]['domain']=='complex':      
                     theblock = self.card.matrices.get(bname, None)
                     if not (isinstance(theblock, SLHA.CMatrix) 
                          or isinstance(theblock, SLHA.CNamedMatrix)):
@@ -1065,10 +1070,10 @@ class Basis(MutableMapping):
         if card is None:
             card = self.card
         for name, matrix in card.matrices.iteritems():
-            if name not in self.flavoured:
+            if name not in self.flavored:
                 continue
             else:
-                opt = self.flavoured[name]
+                opt = self.flavored[name]
                 kind, domain = opt['kind'], opt['domain']
                 if (kind, domain) == ('hermitian', 'complex'):
                     MatrixType = HermitianMatrix
@@ -1138,7 +1143,7 @@ class Basis(MutableMapping):
             # call translation function
             new = function(current, instance)
             # update new basis instance with non-EFT blocks, decays
-            all_coeffs = (current.blocks.keys() + current.flavoured.keys())
+            all_coeffs = (current.blocks.keys() + current.flavored.keys())
             new.get_other_blocks(current.card, all_coeffs)
             
             # prepare for next step
@@ -1150,8 +1155,8 @@ class Basis(MutableMapping):
             print 'Translation successful.\n'
         
         if current.name!='mass':
-            current.flavour = self.flavour
-            current.set_flavour('general', self.flavour)            
+            current.flavor = self.flavor
+            current.set_flavor('general', self.flavor)            
         return current
 
     def get_other_blocks(self, card, ignore):
@@ -1298,10 +1303,10 @@ class TranslationError(Exception):
     pass
 ################################################################################
     
-def flavour_coeffs(name, kind='hermitian', domain='real', flavour='general', 
+def flavor_coeffs(name, kind='hermitian', domain='real', flavor='general', 
                          cname = None):
     '''
-    Function to create flavour components of a coefficient according to its 
+    Function to create flavor components of a coefficient according to its 
     properties. Takes a parameter name as an arguement and returns a tuple of 
     lists corresponding to the real and imaginary parts of the matrix elements. 
     The naming convention for real coefficients is to suffix the coefficient 
@@ -1310,9 +1315,9 @@ def flavour_coeffs(name, kind='hermitian', domain='real', flavour='general',
     index = (1, 2, 3)
     if cname is None: cname = name
     
-    if flavour.lower() == 'diagonal':
+    if flavor.lower() == 'diagonal':
         include = lambda i,j: i == j 
-    elif flavour.lower() in ('universal','mfv'):
+    elif flavor.lower() in ('universal','mfv'):
         include = lambda i,j: i == 1 and j == 1
     else:
         include = lambda i,j: True
@@ -1344,7 +1349,7 @@ def flavour_coeffs(name, kind='hermitian', domain='real', flavour='general',
                 product(index,index) if include(i,j)]
         
     else:
-        print ('flavour_matrix function got and unrecognised combination of '
+        print ('flavor_matrix function got and unrecognised combination of '
                '"kind" and "domain" keyword arguments')
         return [name]
     

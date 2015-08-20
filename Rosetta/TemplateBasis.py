@@ -1,12 +1,12 @@
 from internal import Basis
-from internal import default_masses, default_inputs, PID
+from internal.constants import default_masses, default_inputs, PID
 from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
 
 ################################################################################
 class TemplateBasis(Basis.Basis):
     '''
     Toy implementation of a user defined basis class. Makes use of the internal 
-    function flavour_matrix to generate indexed coefficients e11,e12,...,e33. A 
+    function flavor_matrix to generate indexed coefficients e11,e12,...,e33. A 
     template input card can be fond in the Cards directory or can be generated 
     with write_template_card().
     '''
@@ -14,7 +14,7 @@ class TemplateBasis(Basis.Basis):
     name = 'template'
     ##########################
     # declare coefficients
-    # flavoured = flavmat('e', kind='symmetric', domain='real')
+    # flavored = flavmat('e', kind='symmetric', domain='real')
     ########################## 
     independent = ['a','b','c','AA']
     
@@ -25,7 +25,7 @@ class TemplateBasis(Basis.Basis):
     blocks = {'newcoup':['a','b','c'],
               'dep':['d']}
     
-    flavoured = {'AA':{'domain':'complex', 'kind':'general', 'cname':'cAA'},
+    flavored = {'AA':{'domain':'complex', 'kind':'general', 'cname':'cAA'},
                  'BB':{'domain':'complex', 'kind':'general', 'cname':'cBB'},
                  'CC':{'domain':'complex', 'kind':'general', 'cname':'cCC'}}
               
