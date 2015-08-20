@@ -2,6 +2,13 @@ import SLHA
 from itertools import product
 from collections import OrderedDict
 import re
+
+__doc__ = '''
+Module implementing special cases of 2D matrices inheriting from the 
+SLHA.Matrix structures in SLHA.py e.g. Hermitian, Symmetric etc. Some basic 
+operations are also defined here for matrix multiplication, addition 
+subtraction and element-wise assignment.
+'''
 ################################################################################
 # Special 2D Matrices
 

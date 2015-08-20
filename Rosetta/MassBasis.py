@@ -39,7 +39,7 @@ class MassBasis(Basis.Basis):
     blocks = {'MBxMASS':MBxMASS, 'MBxTGC':MBxTGC, 'MBxQGC':MBxQGC, 
               'MBxh':MBxh, 'MBxhh':MBxhh, 'MBxhself':MBxhself, 'MBx4F':MBx4F}
     
-    flavoured = {
+    flavored = {
         # Z Vertex Corrections [Eqn (3.4)]
         'MBxdGLze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLze'},
         'MBxdGRze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRze'},
@@ -119,7 +119,7 @@ class MassBasis(Basis.Basis):
     }
     # All parameters independent
     independent = ( [c for v in blocks.values() for c in v] + 
-                    [c for c in flavoured.keys()] )
+                    [c for c in flavored.keys()] )
     required_inputs = {1, 2, 4}
     # all other undefined behavoiur inherited from Basis.Basis by default
 ################################################################################

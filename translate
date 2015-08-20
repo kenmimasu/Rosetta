@@ -32,9 +32,9 @@ parser.add_argument("-s", "--silent", action='store_true',
                     help=("Suppress all warnings and take default answers to " 
                           "all questions."))
                     
-parser.add_argument("-f", "--flavour", type=str, default = "general", 
+parser.add_argument("-f", "--flavor", type=str, default = "general", 
                     choices=allowed_flav,
-                    help=("Specify flavour structure, default : 'general'"))
+                    help=("Specify flavor structure, default : 'general'"))
                           
 parser.add_argument("-e", "--ehdecay", action='store_true', 
                     help="Interface with eHDECAY for Higgs branching fractions.")
@@ -74,14 +74,14 @@ else:
 
 print 'Basis class used to read in param card:\n\t{}\n'.format(mybasis)
 
-# if args.flavour not in ('general','diagonal','universal','MFV'):
+# if args.flavor not in ('general','diagonal','universal','MFV'):
 
-print 'Flavour structure: {}\n'.format(args.flavour)
+print 'flavor structure: {}\n'.format(args.flavor)
 # create instance of mybasis, atuomatically translating to target basis
 basis_instance = mybasis(param_card=args.param_card, 
                          output_basis=args.target,
                          ehdecay=args.ehdecay,
-                         flavour=args.flavour,
+                         flavor=args.flavor,
                          silent=args.silent)
 
 if basis_instance.write_param_card(new_param_card, 

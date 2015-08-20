@@ -6,7 +6,7 @@ import math, re
 from math import sqrt
 from itertools import combinations_with_replacement as comb
 from itertools import product
-from internal import PID
+from internal.constants import PID
 ################################################################################
 MassBasis = MB.MassBasis
 ################################################################################
@@ -26,7 +26,7 @@ class HiggsBasis(Basis.Basis):
     the Higgs Basis encodes relations between certain parameters to ensure 
     SU(2)xU(1) invariance such that it is consistent with a dimension six 
     operator basis for an effective field theory with linearly realised 
-    electroweak symmetry breaking (in unitary gauge) and a general flavour 
+    electroweak symmetry breaking (in unitary gauge) and a general flavor 
     structure. These relations are implemented in calculate_dependent().
     '''
     
@@ -60,8 +60,8 @@ class HiggsBasis(Basis.Basis):
     blocks = {'HBxMASS':HBxMASS, 'HBxTGC':HBxTGC, 'HBxQGC':HBxQGC, 
               'HBxh':HBxh, 'HBxhh':HBxhh, 'HBxhself':HBxhself, 'HBx4F':HBx4F}
               
-    # copy flavoured block structure from MassBasis.MassBasis          
-    flavoured = {k.replace('MB','HB'):v for k,v in MassBasis.flavoured.iteritems()} 
+    # copy flavored block structure from MassBasis.MassBasis          
+    flavored = {k.replace('MB','HB'):v for k,v in MassBasis.flavored.iteritems()} 
 
     # independent coefficients
     independent = [

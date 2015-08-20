@@ -3,8 +3,17 @@ from Rosetta import __all__ as basisnames
 from Rosetta import *
 import inspect
 ################################################################################
+__doc__ = '''
+Rosetta's machinery for generating the translation paths available for the set 
+of Basis implementations contained in its root directory. relate() builds
+the possible translation paths from one basis to all of the others by looking 
+for translation functions belonging to the class tagged by the translation 
+decorator. The relationships dictionary contains all of this information and 
+is used in the translate() function of the class Basis.
+'''
+
 def relate(mydict):
-    '''build the relations tree for implemented.py'''
+    '''recursively build the relations tree for implemented.py'''
     def traverse(base, state={}, chain=[]):
         
         subset = [(x,f) for x,f in mydict[base].iteritems() 
@@ -44,6 +53,7 @@ def get_path(start,end,rels):
         path += intermediate
         step = intermediate[-1][0]
     return path
+    
 ################################################################################
 # Constructs the relationship dictionary from all .py files in
 modules = {b:v for b,v in globals().iteritems() if b in basisnames}
