@@ -334,17 +334,20 @@ class Basis(MutableMapping):
     def set_flavour(self, _from, to):
         if _from == to: return
 
-        self.set_fblocks(to)
-        newcard = self.default_card(dependent=False)
+        self.set_fblocks(to) # reset fblocks according to flavour option
+        newcard = self.default_card(dependent=False) 
         
         if (_from, to) in (('general', 'universal'), ('general', 'diagonal')):
             blks_to_del = []
             for bname, blk in self.card.matrices.iteritems():
+                # only consider declared flavour matrices
                 if bname not in self.flavoured: continue
+                # only consider independent blocks
                 if not newcard.has_matrix(bname):
                     blks_to_del.append(bname) 
                     continue
                 to_del = []
+                # delete elements not present in default card
                 for k in blk.keys():
                     cname = blk.get_name(k)
                     if k not in newcard.matrices[bname]:
@@ -356,13 +359,16 @@ class Basis(MutableMapping):
                         
         elif to=='general':
             for bname, blk in newcard.matrices.iteritems():
+                # only consider declared flavour matrices
                 if bname not in self.flavoured: continue
+                # Add blocks absent in self.card but present in default card
                 if not self.card.has_matrix(bname):
                     self.card.add_block(blk)
                     continue
                 
                 oneone = self.card.matrices[bname].get((1,1), 0.)
                 for k, v in blk.iteritems():
+                    # only add value if element doesn't already exist in block
                     if k in self.card.matrices[bname]: continue
 
                     diag = (k[0] == k[1])
@@ -873,6 +879,7 @@ class Basis(MutableMapping):
         
     def write_param_card(self, filename, overwrite=False):
         '''Write contents of self.newcard to filename'''
+        
         preamble = ('\n###################################\n'
                     + '## INFORMATION FOR {} BASIS\n'.format(self.newname.upper())
                     + '###################################\n')
@@ -886,20 +893,25 @@ class Basis(MutableMapping):
         for decay in self.newcard.decays.values():
             decay.preamble = dec_preamble
             break
+            
         mass_preamble = ('\n###################################\n'
                        + '## INFORMATION FOR MASS\n'
                        + '###################################\n')
-
         if 'mass' in self.newcard.blocks:
             self.newcard.blocks['mass'].preamble = mass_preamble
                     
         sm_preamble = ('\n###################################\n'
                      + '## INFORMATION FOR SMINPUTS\n'
                      + '###################################\n')
-        
         if 'sminputs' in self.newcard.blocks:
             self.newcard.blocks['sminputs'].preamble = sm_preamble
         
+        ckm_preamble = ('\n###################################\n'
+                      + '## CKM INFORMATION\n'
+                      + '###################################\n')
+        if 'vckm' in self.newcard.matrices:
+            self.newcard.matrices['vckm'].preamble = ckm_preamble
+
         card_preamble = ( '################################################'
                     +'######################\n'
                     +'############# COEFFICIENTS TRANSLATED BY ROSETTA'
@@ -908,11 +920,13 @@ class Basis(MutableMapping):
                      '#\n'.format(datetime.datetime.now().ctime().upper())
                     +'################################################'
                     +'######################\n\n')
+                    
         if os.path.exists(filename) and not overwrite:
             print '{} already exists.'.format(filename)
             carry_on = Y_or_N('Overwrite?', default='no')
         else:
             carry_on=True
+
         if carry_on:
             special_blocks = ['loop','mass','sminputs','yukawa','vckm','basis']
             coefforder = sortblocks(self.newcard, ignore = special_blocks)
@@ -1138,7 +1152,6 @@ class Basis(MutableMapping):
         if current.name!='mass':
             current.flavour = self.flavour
             current.set_flavour('general', self.flavour)            
-        
         return current
 
     def get_other_blocks(self, card, ignore):

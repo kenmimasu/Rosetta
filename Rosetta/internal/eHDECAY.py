@@ -131,17 +131,13 @@ def from_silh(silh_instance, ew=True):
     SILH['CHBbar'] = gw2/4.*si['sHB']
     SILH['Cgambar'] = gw2/16.*si['sBB']
     SILH['Cgbar'] = gw2/16.*si['sGG']
-    # yukawa coefficients... dodgy translation? they might be huge...
-    def conv(cf,PID):
-        yuk = sqrt(2)*mass[PID]/vev
-        return 2.*cf/(2.*yuk - cf)
     
-    SILH['Ctaubar'] = conv(si['SBxe'][3,3].real,15)
-    SILH['Cmubar'] = conv(si['SBxe'][2,2].real,13)
-    SILH['Ctbar'] = conv(si['SBxu'][3,3].real,6)
-    SILH['Ccbar'] = conv(si['SBxu'][2,2].real,4)
-    SILH['Cbbar'] = conv(si['SBxd'][3,3].real,5)
-    SILH['Csbar'] = conv(si['SBxd'][2,2].real,3)
+    SILH['Ctaubar'] = sqrt(2.)*si['SBxe'][3,3].real
+    SILH['Cmubar'] = sqrt(2.)*si['SBxe'][2,2].real
+    SILH['Ctbar'] = sqrt(2.)*si['SBxu'][3,3].real
+    SILH['Ccbar'] = sqrt(2.)*si['SBxu'][2,2].real
+    SILH['Cbbar'] = sqrt(2.)*si['SBxd'][3,3].real
+    SILH['Csbar'] = sqrt(2.)*si['SBxd'][2,2].real
     
     return SILH
 

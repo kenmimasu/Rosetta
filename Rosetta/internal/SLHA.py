@@ -366,6 +366,7 @@ class NamedMatrix(Matrix, NamedBlock):
         return super(NamedMatrix, self).__getitem__(self.__parse__(key))
     
     def __str__(self):
+        
         content = []
         sortitems = sorted(self.items(), key=itemgetter(0,0))
         for k,v in sortitems:
@@ -429,7 +430,7 @@ class CBlock(Block):
         super(CBlock, self).__setitem__(key, cval)
         
     def __str__(self):
-        return str(self._re) + str(self._im)
+        return self.preamble + str(self._re) + str(self._im)
     
 class CMatrix(CBlock, Matrix):
     container = Matrix
@@ -531,9 +532,6 @@ class CNamedBlock(CBlock, NamedBlock):
                     super(CNamedBlock, self).__contains__(key))
         else:
             return super(CNamedBlock, self).__contains__(key)
-        
-    def __str__(self):
-        return str(self._re) + str(self._im)
         
     def get_number(self, name, default=None):
         if (name in self._re or name in self._im):

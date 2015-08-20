@@ -82,7 +82,8 @@ class HiggsBasis(Basis.Basis):
     ]
                 
     # Required inputs/masses             
-    required_masses = {1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 25}
+    # required_masses = {1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 25}
+    required_masses = {25}
     required_inputs = {1, 2, 3, 4} # aEWM1, Gf, aS, MZ
     ########################## 
     
@@ -115,13 +116,13 @@ class HiggsBasis(Basis.Basis):
         A['Cabx'] = (A['Czbx']*2.*gw2 + A['Czz']*(gw2+gp2) 
                     - A['Caa']*ee2 - A['Cza']*(gw2-gp2))/(gw2-gp2)
         
-        # Higgs self couplings
+        # Higgs self couplings [eqn (5.7)]
         A['dL4'] = 3./2.*A['dL3'] - MH**2/vev**2/6.*A['dCz']
         
-        # dependent dgV coeffs [eqn (3.5)]
+        # dependent dgV coeffs [eqn (5.9)]
         matrix_add(A['HBxdGLze'], A['HBxdGLwl'], A['HBxdGLzv'])
 
-        # dGLwq = dGLzu.VCKM - VCKM.dGLzd
+        # dGLwq = dGLzu.VCKM - VCKM.dGLzd [eqn (5.9)]
         matrix_sub(matrix_mult(A['HBxdGLzu'], A.ckm),
                    matrix_mult(A.ckm, A['HBxdGLzd']),
                    A['HBxdGLwq'])
@@ -277,12 +278,11 @@ class HiggsBasis(Basis.Basis):
         for f in ('u','d','e'):
             for i,j in H['HBxdY'+f].keys(): 
                 diag = delta(i,j)*(dCz-2.*cH)/3.
-                mi, mj = self.mass[ PID[f][i] ], self.mass[ PID[f][j] ] 
                 yuk = H['HBxdY'+f][i,j]
                 sin = H['HBxS'+f][i,j]
                 cos = sqrt(1.-sin**2)
-                re = ( yuk*cos - diag )*sqrt(2.*mi*mj)/vev
-                im = yuk*sin*sqrt(2.)*sqrt(mi*mj)/vev
+                re = ( yuk*cos - diag )*sqrt(2.)
+                im = yuk*sin*sqrt(2.)
                 W['WBx'+f][i,j] = complex(re, im)
         
         W['c3G'], W['tc3G'] = H['C3g'], H['tC3g']
@@ -376,21 +376,20 @@ class HiggsBasis(Basis.Basis):
                                 - H['HBxdGLwl'][i,j]) 
             S['SBxHpl'][i,j] = facp + H['HBxdGLwl'][i,j] 
             S['SBxHe'][i,j] = - fac - 2.*H['HBxdGRze'][i,j]
+            
         for k, v in H['HBxdGRwq'].iteritems():
             S['SBxHud'][k] = -2.*v            
         
         for f in ('u','d','e'):
             for i,j in H['HBxdY'+f].keys(): 
                 diag = delta(i,j)*(dCz - H['HBxdGLwl'][1,1].real 
-                                  + H['HBxdGLwl'][2,2].real)
-                mi, mj = self.mass[ PID[f][i] ], self.mass[ PID[f][j] ] 
-                
+                                  + H['HBxdGLwl'][2,2].real)                
                 yuk = H['HBxdY'+f][i,j]
                 sin = H['HBxS'+f][i,j]
                 cos = sqrt(1.-sin**2)
                 
-                re = ( yuk*cos - diag )*sqrt(2.*mi*mj)/vev
-                im = yuk*sin*sqrt(2.*mi*mj)/vev
+                re = ( yuk*cos - diag )*sqrt(2.)
+                im = yuk*sin*sqrt(2.)
                 S['SBx'+f][i,j] = complex(re, im)
 
         return S
