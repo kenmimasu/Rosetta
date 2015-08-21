@@ -7,7 +7,7 @@ import StringIO, os, argparse, sys
 import subprocess as sub
 ################################################################################
 existing = implemented.bases.keys()
-allowed_flav = ('general', 'diagonal', 'universal', 'MFV')
+allowed_flav = ('general', 'diagonal', 'universal')
 ################################################################################
 parser = argparse.ArgumentParser(
                   description=(

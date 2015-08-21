@@ -1150,13 +1150,15 @@ class Basis(MutableMapping):
             required_inputs = set(instance.required_inputs)
             required_masses = set(instance.required_masses)
             current = new
-
+            
         if verbose:
             print 'Translation successful.\n'
-        
-        if current.name!='mass':
+
+        if current.name =='mass':
+            current.expand_matrices()
+        else:
             current.flavor = self.flavor
-            current.set_flavor('general', self.flavor)            
+            current.set_flavor('general', self.flavor)
         return current
 
     def get_other_blocks(self, card, ignore):
@@ -1187,7 +1189,49 @@ class Basis(MutableMapping):
             self.inputs=self.card.blocks['sminputs']
             
         self.ckm = card.matrices['vckm']
-
+    
+    def expand_matrices(self):
+        '''
+        Special function to populate redundant elements of matrix blocks when 
+        translating to the mass basis so that values for all 9 entries are 
+        explicitly stored before writing out the parameter card. This is to 
+        stay in accordance with the SLHA format.
+        The function directly modifies the _data and  _names attributes of the 
+        matrices since matrices with special properties i.e. Hermitian, 
+        Symmetric etc. do not grant direct access to the redundant keys such as 
+        the lower triangle of a Hermitian matrix.
+        '''
+        all_keys = [(1,1), (1,2), (1,3),
+                    (2,1), (2,2), (2,3),
+                    (3,1), (3,2), (3,3)]
+        for matrix in self.card.matrices.values():
+            
+            missing_keys = [k for k in all_keys if k not in matrix._data]
+            
+            if missing_keys:
+                # randomly select parameter name since they all should have 
+                # the same structure
+                elename = matrix._names.values()[0]
+                cname = elename[1:-3]
+                pref = elename[0]
+                for k in missing_keys:
+                    tail = cname + '{}x{}'.format(*k)
+                    matrix._data[k] = matrix[k]
+                    matrix._names[k] = pref + tail
+                    matrix._numbers[pref+tail] = k
+                    try:
+                        matrix._re._data[k] = matrix._re[k]
+                        matrix._re._names[k] = 'R' + tail                        
+                        matrix._re._numbers['R'+tail] = k                        
+                    except AttributeError:
+                        pass
+                    try:
+                        matrix._im._data[k] = matrix._im[k]
+                        matrix._im._names[k] = 'I' + tail
+                        matrix._im._numbers['I'+tail] = k                        
+                    except AttributeError:
+                        pass
+    
     def run_eHDECAY(self):
         '''
         Interface Rosetta with eHDECAY to calculate Higgs widths and branching 

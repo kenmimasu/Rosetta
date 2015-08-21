@@ -12,7 +12,7 @@ import sys
 import re
 import random
 
-__doc__'''
+__doc__='''
 Some tester functions to validate translations, generate sample input cards etc.
 '''
 
@@ -196,9 +196,9 @@ if __name__=='__main__':
 
 ################################################################################
 # # card writers
-#     for flav in ('general',):
+#     # for flav in ('general',):
 #     # for flav in ('universal',):
-#     # for flav in ('diagonal',):
+#     for flav in ('diagonal',):
 #         if flav =='general':
 #             tail = ''
 #         else:
@@ -210,18 +210,18 @@ if __name__=='__main__':
 #
 #         instance = HB.HiggsBasis(flavor=flav)
 #         instance.write_template_card('Cards/HiggsBasis{}.dat'.format(tail))
-#         # instance.write_template_card('HiggsBasis{}_rand.dat'.format(tail), value='random')
-#         # instance.write_template_card('HiggsBasis{}_1e-3.dat'.format(tail), value=0.001)
+#         instance.write_template_card('HiggsBasis{}_rand.dat'.format(tail), value='random')
+#         instance.write_template_card('HiggsBasis{}_1e-3.dat'.format(tail), value=0.001)
 #
 #         instance = WB.WarsawBasis(flavor=flav)
 #         instance.write_template_card('Cards/WarsawBasis{}.dat'.format(tail))
-#         # instance.write_template_card('WarsawBasis{}_rand.dat'.format(tail), value='random')
-#         # instance.write_template_card('WarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
+#         instance.write_template_card('WarsawBasis{}_rand.dat'.format(tail), value='random')
+#         instance.write_template_card('WarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
 #     #
 #         instance = SB.SILHBasis(flavor=flav)
 #         instance.write_template_card('Cards/SILHBasis{}.dat'.format(tail))
-#         # instance.write_template_card('SILHBasis{}_rand.dat'.format(tail), value='random')
-#         # instance.write_template_card('SILHBasis{}_1e-3.dat'.format(tail), value=0.001)
+#         instance.write_template_card('SILHBasis{}_rand.dat'.format(tail), value='random')
+#         instance.write_template_card('SILHBasis{}_1e-3.dat'.format(tail), value=0.001)
 #     # instance = MB.MassBasis()
 #     # instance.write_template_card('MassBasis.dat')
 #     # #
