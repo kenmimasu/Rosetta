@@ -148,25 +148,7 @@ class Basis(MutableMapping):
         self.param_card = param_card
         self.output_basis = output_basis
         self.newname = 'Basis'
-        self.all_coeffs = [c for v in self.blocks.values() for c in v]
-        # remove overlaps
-        self.independent = [c for c in self.independent 
-                            if c not in self.dependent]
-
-        self.dependent.extend([c for c in self.all_coeffs if (c not in
-                               self.independent and c not in self.dependent)])
-
-        # check for block names in independent
-        for k,v in self.blocks.iteritems():
-            if k in self.independent and k not in self.dependent:
-                for fld in v:
-                    if fld not in self.independent:
-                        self.independent.append(fld)
-                    try:
-                        self.dependent.remove(fld)
-                    except ValueError:
-                        pass
-
+        self.set_dependents()
         self.set_fblocks(self.flavor)
 
         # read param card (sets self.inputs, self.mass, self.name, self.card)
@@ -186,32 +168,38 @@ class Basis(MutableMapping):
             self.set_flavor(self.flavor, 'general')
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
-            self._gen_thedict()
-            # user defined function
-            self.calculate_dependent()
-
+            
             # generate internal OrderedDict() object for __len__, __iter__, 
             # items() and iteritems() method
+            self._gen_thedict()
+            
+            # user defined function
+            self.calculate_dependent()
 
             if translate:
                 # translate to new basis (User defined) 
                 # return an instance of a class derived from Basis
-                newbasis = self.translate() 
+                self.newbasis = self.translate() 
             else:
-                # do nothing!
-                newbasis = self
+                # do nothing
+                self.newbasis = self
             
-            newbasis.modify_inputs()
-            newbasis.check_modified_inputs()
+            self.newbasis.modify_inputs()
+            self.newbasis.check_modified_inputs()
             
+            # delete imaginary parts of diagonal elements in hermitian matrices
+            if self.output_basis != 'mass':
+                self.newbasis.reduce_hermitian_matrices()
+                
             # set new SLHA card
-            self.newcard = newbasis.card 
-            self.newname = newbasis.name
+            self.newcard = self.newbasis.card 
+            self.newname = self.newbasis.name
+            
             preamble = ('###################################\n'
                       + '## DECAY INFORMATION\n'
                       + '###################################')
             for decay in self.card.decays.values():
-                decay.preamble=preamble
+                decay.preamble = preamble
                 break
                         
             try: 
@@ -220,6 +208,7 @@ class Basis(MutableMapping):
             except TranslationError as e:
                 print e
                 print 'Translation to SILH Basis required, skipping eHDECAY.'
+            
         # if param_card option not given, instantiate with class name 
         # and all coeffs set to 0 (used for creating an empty basis 
         # instance for use in translate() method)
@@ -274,18 +263,62 @@ class Basis(MutableMapping):
         self._thedict = thedict
         
     
+    def set_dependents(self):
+        '''
+        Populate self.independent and self.dependent lists according to 
+        basis class definition.
+        '''
+        self.all_coeffs = [c for v in self.blocks.values() for c in v]
+        # remove overlaps
+        self.independent = [c for c in self.independent 
+                            if c not in self.dependent]
+
+        self.dependent.extend([c for c in self.all_coeffs if (c not in
+                               self.independent and c not in self.dependent)])
+
+        # check for block names in independent
+        for k,v in self.blocks.iteritems():
+            if k in self.independent and k not in self.dependent:
+                for fld in v:
+                    if fld not in self.independent:
+                        self.independent.append(fld)
+                    try:
+                        self.dependent.remove(fld)
+                    except ValueError:
+                        pass
+                        
+        for name, opt in self.flavored.iteritems():
+            coeffs = flavor_coeffs(name, **opt)
+
+            if name not in (self.independent + self.dependent):
+                dependents, independents = [], []
+                for c in coeffs:
+                    if c in self.dependent:
+                        self.dependent.remove(c)
+                        if c in self.independent: 
+                            independents.append(c)
+                        else:
+                            dependents.append(c)
+                    elif c in self.independent:
+                        independents.append(c)
+                    else:
+                        dependents.append(c)
+                
+                if not independents:
+                    self.dependent.append(name)
+                elif not dependents:
+                    self.independent.append(name)
+                else:
+                    self.dependent.extend(dependents)
+                    self.independent.extend(independents)
+                
     def set_fblocks(self, option='general'):
         self.fblocks = dict()
         for name, opt in self.flavored.iteritems():
             opt['flavor'] = option
             coeffs = flavor_coeffs(name, **opt)
             self.fblocks[name] = coeffs
-            if name not in (self.independent + self.dependent):
-                self.dependent.extend([c for c in coeffs
-                                       if (c not in self.independent
-                                       and c not in self.dependent)])
-                    
-    
+
     def default_card(self, dependent=True):
         '''
         Create a new default SLHA.Card instance according to the self.blocks 
@@ -881,43 +914,43 @@ class Basis(MutableMapping):
             if len(inputblock)==0:
                 del self.card.matrices[inputblock.name]
 
-        
-    def write_param_card(self, filename, overwrite=False):
+    def write_param_card(self, filename, overwrite=False, 
+                                         include_dependent=True):
         '''Write contents of self.newcard to filename'''
-        
+
         preamble = ('\n###################################\n'
                     + '## INFORMATION FOR {} BASIS\n'.format(self.newname.upper())
                     + '###################################\n')
         if 'basis' in self.newcard.blocks:
             self.newcard.blocks['basis'].preamble = preamble
             self.newcard.blocks['basis'][1] = self.newname
-        
+
         dec_preamble = ('\n###################################\n'
                     + '## DECAY INFORMATION\n'
                     + '###################################\n')
         for decay in self.newcard.decays.values():
             decay.preamble = dec_preamble
             break
-            
+
         mass_preamble = ('\n###################################\n'
                        + '## INFORMATION FOR MASS\n'
                        + '###################################\n')
         if 'mass' in self.newcard.blocks:
             self.newcard.blocks['mass'].preamble = mass_preamble
-                    
+
         sm_preamble = ('\n###################################\n'
                      + '## INFORMATION FOR SMINPUTS\n'
                      + '###################################\n')
         if 'sminputs' in self.newcard.blocks:
             self.newcard.blocks['sminputs'].preamble = sm_preamble
-        
+
         ckm_preamble = ('\n###################################\n'
                       + '## CKM INFORMATION\n'
                       + '###################################\n')
         if 'vckm' in self.newcard.matrices:
             self.newcard.matrices['vckm'].preamble = ckm_preamble
 
-        card_preamble = ( '################################################'
+        card_preamble = ('################################################'
                     +'######################\n'
                     +'############# COEFFICIENTS TRANSLATED BY ROSETTA'
                     +' MODULE  #############\n'
@@ -925,13 +958,13 @@ class Basis(MutableMapping):
                      '#\n'.format(datetime.datetime.now().ctime().upper())
                     +'################################################'
                     +'######################\n\n')
-                    
+
         if os.path.exists(filename) and not overwrite:
             print '{} already exists.'.format(filename)
             carry_on = Y_or_N('Overwrite?', default='no')
         else:
             carry_on=True
-
+        
         if carry_on:
             special_blocks = ['loop','mass','sminputs','yukawa','vckm','basis']
             coefforder = sortblocks(self.newcard, ignore = special_blocks)
@@ -939,7 +972,7 @@ class Basis(MutableMapping):
                                          preamble=card_preamble)
             print 'Wrote "{}".'.format(filename)
             return True
-        else: 
+        else:
             return False
     
     def write_template_card(self, filename, value=0.):
@@ -1158,7 +1191,9 @@ class Basis(MutableMapping):
             current.expand_matrices()
         else:
             current.flavor = self.flavor
+            # reduce flavor structure back to user set option
             current.set_flavor('general', self.flavor)
+
         return current
 
     def get_other_blocks(self, card, ignore):
@@ -1204,16 +1239,17 @@ class Basis(MutableMapping):
         all_keys = [(1,1), (1,2), (1,3),
                     (2,1), (2,2), (2,3),
                     (3,1), (3,2), (3,3)]
+                    
         for matrix in self.card.matrices.values():
-            
+            # list of missing elements in _data member of matrix instance
             missing_keys = [k for k in all_keys if k not in matrix._data]
             
             if missing_keys:
                 # randomly select parameter name since they all should have 
-                # the same structure
+                # the same structure: (R|I)NAMEixj
                 elename = matrix._names.values()[0]
-                cname = elename[1:-3]
-                pref = elename[0]
+                cname = elename[1:-3] # matrix name
+                pref = elename[0] 
                 for k in missing_keys:
                     tail = cname + '{}x{}'.format(*k)
                     matrix._data[k] = matrix[k]
@@ -1221,17 +1257,44 @@ class Basis(MutableMapping):
                     matrix._numbers[pref+tail] = k
                     try:
                         matrix._re._data[k] = matrix._re[k]
-                        matrix._re._names[k] = 'R' + tail                        
-                        matrix._re._numbers['R'+tail] = k                        
+                        matrix._re._names[k] = 'R' + tail
+                        matrix._re._numbers['R'+tail] = k
                     except AttributeError:
                         pass
                     try:
                         matrix._im._data[k] = matrix._im[k]
                         matrix._im._names[k] = 'I' + tail
-                        matrix._im._numbers['I'+tail] = k                        
+                        matrix._im._numbers['I'+tail] = k
                     except AttributeError:
                         pass
     
+    def reduce_hermitian_matrices(self):
+        '''
+        Deletes imaginary parts of the diagonal elements of HermitianMatrix 
+        instances belonging to the basis instance.
+        '''
+        for matrix in self.card.matrices.values():
+            if isinstance(matrix, HermitianMatrix):
+                for i,j in matrix.keys():
+                    if i==j: del matrix._im._data[i,j]
+    
+    def delete_dependent(self):
+        '''
+        Deletes all named coefficients present in self.dependent from their 
+        respective containers.
+        '''
+        for container in (self.card.blocks, self.card.matrices):
+            for name, blk in container.iteritems():
+                if name in self.dependent:
+                    del container[name]
+                else:    
+                    for n in blk._numbers:
+                        if n in self.dependent:
+                            del blk[n]
+                    if len(blk)==0:
+                        del container[name]
+        
+        
     def run_eHDECAY(self):
         '''
         Interface Rosetta with eHDECAY to calculate Higgs widths and branching 

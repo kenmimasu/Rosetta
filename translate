@@ -27,6 +27,9 @@ parser.add_argument("-t", "--target", type=str, default='mass',
                           
 parser.add_argument("-w", "--overwrite", action='store_true', 
                     help="Overwrite any pre-existing output file.")
+
+parser.add_argument("-d", "--dependent", action='store_true', 
+                    help=("Also write out dependent parameters to output card"))
                     
 parser.add_argument("-s", "--silent", action='store_true', 
                     help=("Suppress all warnings and take default answers to " 
@@ -83,6 +86,9 @@ basis_instance = mybasis(param_card=args.param_card,
                          ehdecay=args.ehdecay,
                          flavor=args.flavor,
                          silent=args.silent)
+
+if not args.dependent:
+    basis_instance.newbasis.delete_dependent()
 
 if basis_instance.write_param_card(new_param_card, 
                                    overwrite=args.overwrite or args.silent): # 

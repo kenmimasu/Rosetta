@@ -82,7 +82,6 @@ class HiggsBasis(Basis.Basis):
     ]
                 
     # Required inputs/masses             
-    # required_masses = {1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 25}
     required_masses = {25}
     required_inputs = {1, 2, 3, 4} # aEWM1, Gf, aS, MZ
     ########################## 

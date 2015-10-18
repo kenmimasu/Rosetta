@@ -34,7 +34,7 @@ instance and are set to default PDG values if not found.
 The absolute path to the local eHDECAY directory containing the executable 
 should be specified in config.txt as:
 
-eHDECAY_dir     /PATH/TO/eHDECAY
+eHDECAY_dir     /FULL/PATH/TO/eHDECAY
  
 '''
 ################################################################################

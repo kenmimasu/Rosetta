@@ -4,7 +4,7 @@ from Rosetta import WarsawBasis as WB
 from Rosetta import SILHBasis as SB
 from Rosetta import MassBasis as MB
 from Rosetta import TemplateBasis as TB
-from Rosetta import MufBasis as MUF
+# from Rosetta import MufBasis as MUF
 import SLHA
 import tempfile
 import os
@@ -192,39 +192,39 @@ def generate_frdef(basis_class,filename):
     print 'wrote ',filename
 
 if __name__=='__main__':
-    pass
+    # pass
 
 ################################################################################
-# # card writers
-#     # for flav in ('general',):
-#     # for flav in ('universal',):
-#     for flav in ('diagonal',):
-#         if flav =='general':
-#             tail = ''
-#         else:
-#             tail = '_%s' % flav
-#
-#         instance = TB.TemplateBasis(flavor=flav)
-#         instance.write_template_card('Cards/TemplateBasis{}.dat'.format(tail))
-#
-#
-#         instance = HB.HiggsBasis(flavor=flav)
-#         instance.write_template_card('Cards/HiggsBasis{}.dat'.format(tail))
-#         instance.write_template_card('HiggsBasis{}_rand.dat'.format(tail), value='random')
-#         instance.write_template_card('HiggsBasis{}_1e-3.dat'.format(tail), value=0.001)
-#
-#         instance = WB.WarsawBasis(flavor=flav)
-#         instance.write_template_card('Cards/WarsawBasis{}.dat'.format(tail))
-#         instance.write_template_card('WarsawBasis{}_rand.dat'.format(tail), value='random')
-#         instance.write_template_card('WarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
-#     #
-#         instance = SB.SILHBasis(flavor=flav)
-#         instance.write_template_card('Cards/SILHBasis{}.dat'.format(tail))
-#         instance.write_template_card('SILHBasis{}_rand.dat'.format(tail), value='random')
-#         instance.write_template_card('SILHBasis{}_1e-3.dat'.format(tail), value=0.001)
-#     # instance = MB.MassBasis()
-#     # instance.write_template_card('MassBasis.dat')
-#     # #
+# card writers
+    for flav in ('general',):
+    # for flav in ('universal',):
+    # for flav in ('diagonal',):
+        if flav =='general':
+            tail = ''
+        else:
+            tail = '_%s' % flav
+
+        instance = TB.TemplateBasis(flavor=flav)
+        # instance.write_template_card('Cards/TemplateBasis{}.dat'.format(tail))
+
+
+        instance = HB.HiggsBasis(flavor=flav)
+        # instance.write_template_card('Cards/HiggsBasis{}.dat'.format(tail))
+        instance.write_template_card('HiggsBasis{}_rand.dat'.format(tail), value='random')
+        instance.write_template_card('HiggsBasis{}_1e-3.dat'.format(tail), value=0.001)
+
+        instance = WB.WarsawBasis(flavor=flav)
+        # instance.write_template_card('Cards/WarsawBasis{}.dat'.format(tail))
+        instance.write_template_card('WarsawBasis{}_rand.dat'.format(tail), value='random')
+        instance.write_template_card('WarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
+    #
+        instance = SB.SILHBasis(flavor=flav)
+        # instance.write_template_card('Cards/SILHBasis{}.dat'.format(tail))
+        instance.write_template_card('SILHBasis{}_rand.dat'.format(tail), value='random')
+        instance.write_template_card('SILHBasis{}_1e-3.dat'.format(tail), value=0.001)
+    # instance = MB.MassBasis()
+    # instance.write_template_card('MassBasis.dat')
+    # #
 ################################################################################
 # translation testers   
     # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs',tolerance=1e-14)

@@ -9,7 +9,9 @@ into python dict-like objects that can be indexed and iterated over in a case
 insensitive way.
 '''
 class CaseInsensitiveDict(MutableMapping):
-    
+    '''
+    Dict class for string keys that behaves in a case insensitive way.
+    '''
     def __init__(self, data=None, **kwargs):
         self._data = {}
         if data is None:
@@ -35,7 +37,9 @@ class CaseInsensitiveDict(MutableMapping):
         return repr([(k,v) for (k,v) in self._data.values()])
 
 class CaseInsensitiveOrderedDict(MutableMapping):
-    
+    '''
+    OrderedDict class for string keys that behaves in a case insensitive way.
+    '''
     def __init__(self, data=None, **kwargs):
         self._data = OrderedDict()
         if data is None:
@@ -143,10 +147,9 @@ class Block(MutableMapping):
             
             line = ('    {{: <4}} {{{}}}\n'.format(fmt)).format
             content.append(line(k,val)) 
-            
-        string = (self.preamble+'\n'
-                  +'BLOCK {}\n'.format(self.name)
-                  + ''.join(content))
+        string  = self.preamble+'\n'
+        if content:
+            string += 'BLOCK {}\n'.format(self.name) + ''.join(content)
         return string
     
     def dict(self):
@@ -181,9 +184,12 @@ class Matrix(Block):
             line = ('    {} {{{}}}\n'.format(ind,fmt)).format
             args = list(k)+[v]
             content.append(line(*args))
-        string = (self.preamble+'\n'
-                  +'BLOCK {}\n'.format(self.name)
-                  + ''.join(content) )
+        
+        string = self.preamble+'\n'
+        
+        if content:
+            string += 'BLOCK {}\n'.format(self.name) + ''.join(content)
+
         return string
     
     def dimension(self):
@@ -316,10 +322,12 @@ class NamedBlock(Block):
                                                            self._names[k]))
             else:
                 content.append('    {: <4} {}\n'.format(k,strval))
+        
+        string = self.preamble + '\n'
+        if content:
+            string += ('BLOCK {} # {}\n'.format(self.name, self.comment)
+                       + ''.join(content))
 
-        string = (self.preamble + '\n'
-                  + 'BLOCK {} # {}\n'.format(self.name, self.comment)
-                  + ''.join(content))
         return string
 
     def get_name(self, key, default=''):
@@ -386,9 +394,11 @@ class NamedMatrix(Matrix, NamedBlock):
             line = ('    {} {{{}}} {{}}\n'.format(ind,fmt)).format
             args = list(k)+[v, comment]
             content.append(line(*args))
-        string = (self.preamble+'\n'
-                  +'BLOCK {}\n'.format(self.name)
-                  + ''.join(content) )
+            
+        string = self.preamble+'\n'
+        if content:
+            string += 'BLOCK {}\n'.format(self.name) + ''.join(content)
+
         return string
     
 class CBlock(Block):
@@ -850,7 +860,7 @@ class Card(object):
     def has_decay(self, PID):
         return PID in self.decays
     
-    def write(self, filename, blockorder = [], preamble='',postamble=''):
+    def write(self, filename, blockorder = [], preamble='', postamble=''):
         '''
         Write contents of Card in SLHA formatted style to "filename". 
         Makes use of the __str__ methods written for the SLHA elements. 
@@ -935,10 +945,8 @@ class Card(object):
             cblk = ctype(reblk, imblk)
             self.matrices[rekey] = cblk
                     
-            
 class SLHAError(Exception): # Custom error name 
     pass
-
 
 def read(card, set_cplx=True):
     '''
