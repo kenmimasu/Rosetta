@@ -1,16 +1,17 @@
 ################################################################################
 ######################## ROSETTA: SILH BASIS INPUT CARD ########################
-###################### GENERATED FRI AUG 21 16:28:15 2015 ######################
+###################### GENERATED MON OCT 19 14:40:13 2015 ######################
 ################################################################################
 
 BLOCK mass # 
+    24   +8.03850e+01 # MW
     25   +1.25000e+02 # MH
 
 BLOCK sminputs # 
-    1    +1.32507e+02 # aEWM1
-    2    +1.16639e-05 # Gf
-    3    +1.18000e-01 # aS
-    4    +9.11880e+01 # MZ
+    1    +1.27916e+02 # aEWM1
+    2    +1.16638e-05 # Gf
+    3    +1.18400e-01 # aS
+    4    +9.11876e+01 # MZ
     25   +1.25000e+02 # MH
 
 ###################################
@@ -80,41 +81,56 @@ BLOCK SBxd
 BLOCK IMSBxd
     1   1    +0.00000e+00 # Isd1x1
 
+BLOCK SBxdB
+    1   1    +0.00000e+00 # RsdB1x1
+
+BLOCK IMSBxdB
+    1   1    +0.00000e+00 # IsdB1x1
+
+BLOCK SBxdG
+    1   1    +0.00000e+00 # RsdG1x1
+
+BLOCK IMSBxdG
+    1   1    +0.00000e+00 # IsdG1x1
+
+BLOCK SBxdW
+    1   1    +0.00000e+00 # RsdW1x1
+
+BLOCK IMSBxdW
+    1   1    +0.00000e+00 # IsdW1x1
+
 BLOCK SBxe
     1   1    +0.00000e+00 # Rse1x1
 
 BLOCK IMSBxe
     1   1    +0.00000e+00 # Ise1x1
 
+BLOCK SBxeB
+    1   1    +0.00000e+00 # RseB1x1
+
+BLOCK IMSBxeB
+    1   1    +0.00000e+00 # IseB1x1
+
+BLOCK SBxeW
+    1   1    +0.00000e+00 # RseW1x1
+
+BLOCK IMSBxeW
+    1   1    +0.00000e+00 # IseW1x1
+
 BLOCK SBxHd
     1   1    +0.00000e+00 # RsHd1x1
-
-BLOCK IMSBxHd
-    1   1    +0.00000e+00 # IsHd1x1
 
 BLOCK SBxHe
     1   1    +0.00000e+00 # RsHe1x1
 
-BLOCK IMSBxHe
-    1   1    +0.00000e+00 # IsHe1x1
-
 BLOCK SBxHpq
     1   1    +0.00000e+00 # RsHpq1x1
-
-BLOCK IMSBxHpq
-    1   1    +0.00000e+00 # IsHpq1x1
 
 BLOCK SBxHq
     1   1    +0.00000e+00 # RsHq1x1
 
-BLOCK IMSBxHq
-    1   1    +0.00000e+00 # IsHq1x1
-
 BLOCK SBxHu
     1   1    +0.00000e+00 # RsHu1x1
-
-BLOCK IMSBxHu
-    1   1    +0.00000e+00 # IsHu1x1
 
 BLOCK SBxHud
     1   1    +0.00000e+00 # RsHud1x1
@@ -127,6 +143,24 @@ BLOCK SBxu
 
 BLOCK IMSBxu
     1   1    +0.00000e+00 # Isu1x1
+
+BLOCK SBxuB
+    1   1    +0.00000e+00 # RsuB1x1
+
+BLOCK IMSBxuB
+    1   1    +0.00000e+00 # IsuB1x1
+
+BLOCK SBxuG
+    1   1    +0.00000e+00 # RsuG1x1
+
+BLOCK IMSBxuG
+    1   1    +0.00000e+00 # IsuG1x1
+
+BLOCK SBxuW
+    1   1    +0.00000e+00 # RsuW1x1
+
+BLOCK IMSBxuW
+    1   1    +0.00000e+00 # IsuW1x1
 
 ################################################################################
 ################################################################################

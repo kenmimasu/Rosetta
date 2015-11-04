@@ -45,17 +45,25 @@ class WarsawBasis(Basis.Basis):
         'WBxHpq': {'cname':'cHpq', 'kind':'hermitian', 'domain':'complex'},
         'WBxHu': {'cname':'cHu' , 'kind':'hermitian', 'domain':'complex'},
         'WBxHd' : {'cname':'cHd' , 'kind':'hermitian', 'domain':'complex'},
-        'WBxHud' : {'cname':'cHud', 'kind':'general', 'domain':'complex'}
+        'WBxHud' : {'cname':'cHud', 'kind':'general', 'domain':'complex'},
+        'WBxeW' : {'cname':'ceW' , 'kind':'general', 'domain':'complex'},
+        'WBxeB' : {'cname':'ceB' , 'kind':'general', 'domain':'complex'},
+        'WBxuG' : {'cname':'cuG' , 'kind':'general', 'domain':'complex'},
+        'WBxuW' : {'cname':'cuW' , 'kind':'general', 'domain':'complex'},
+        'WBxuB' : {'cname':'cuB' , 'kind':'general', 'domain':'complex'},
+        'WBxdG' : {'cname':'cdG' , 'kind':'general', 'domain':'complex'},
+        'WBxdW' : {'cname':'cdW' , 'kind':'general', 'domain':'complex'},
+        'WBxdB' : {'cname':'cdB' , 'kind':'general', 'domain':'complex'}   
     }
     
     independent = [c for c in blocks.keys()] + [c for c in flavored.keys()]
     
     # required_masses = set([y for x in PID.values() for y in x.values()])
-    required_masses = {25}    
+    required_masses = {25, 24} # Higgs & W masses
     required_inputs = {1, 2, 3, 4, 25} # aEWM1, Gf, MZ, MH, aS(MZ)
         
     def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
-        ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared
+        ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared at MZ
         gs2 = 4.*math.pi*self.inputs['aS'] # strong coupling squared
         Gf, MZ = self.inputs['Gf'], self.inputs['MZ']
         s2w = (1.- sqrt(1. - ee2/(sqrt(2.)*Gf*MZ**2)))/2. # sin^2(theta_W)
@@ -65,22 +73,22 @@ class WarsawBasis(Basis.Basis):
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
     
-    def to_MB_or_HB(self, instance, target='mass'):
+    def to_BC_or_HB(self, instance, target='bsmc'):
         '''
         Translation function to Mass basis or Higgs basis, which differs only in 
         the prefix of the flavored blocks.
         '''
         # prefix switch depending on target
-        if target == 'mass':
-            XB = 'MB'
+        if target == 'bsmc':
+            XB = 'BC'
         elif target == 'higgs':
             XB = 'HB'
         else:
-            raise Basis.TranslationError('target must be "mass" or "higgs"')
+            raise Basis.TranslationError('target must be "bsmc" or "higgs"')
             
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
-        MW = MZ*sqrt(c2w)
+        MW = self.mass[24]
         
         W = self
         M = instance
@@ -120,16 +128,6 @@ class WarsawBasis(Basis.Basis):
         matrix_sub(matrix_mult(M[XB+'xdGLzu'], W.ckm),
                    matrix_mult(W.ckm, M[XB+'xdGLzd']),
                    M[XB+'xdGLwq'])
-        
-        onames = ['xdGLze', 'xdGRze', 'xdGLzv', 'xdGLzu', 'xdGRzu', 
-                  'xdGLzd', 'xdGRzd', 'xdGLwl', 'xdGLwq', 'xdGRwq']
-        
-        vertex = [XB + o for o in onames]
-        
-        # HVFF coeffs [Eqns (3.10)]
-        for dG in vertex: 
-            dGh = dG[:-2]+'h'+dG[-2:]
-            matrix_eq(M[dG], M[dGh])
 
         # Higgs couplings to W/Z [eqn (4.14)]
         M['dCw'] = ( -W['cH']*(gw2-gp2) - W['cWB']*4.*gw2*gp2 
@@ -175,7 +173,7 @@ class WarsawBasis(Basis.Basis):
         # Yukawa type interaction coefficients [eqns. (5.16) & (4.17)]
         for f in ('u','d','e'):
             matrix = 'WBx' + f
-            for i,j in W['WBx'+f].keys(): 
+            for i,j in W[matrix].keys(): 
                 diag = delta(i,j)*(W['cH']+dv)
                 diag2 = 2.*delta(i,j)*W['cH']
                 s_Re, s_Im = W[matrix][i,j].real, W[matrix][i,j].imag
@@ -188,7 +186,52 @@ class WarsawBasis(Basis.Basis):
                 re = 3.*s_Re/sqrt(2.) - diag2
                 im = 3.*s_Im/sqrt(2.)
                 M[XB+'xY2'+f][i,j] = complex(re, im)
-                    
+        
+        # Dipole interactions
+        ii = complex(0.,1.)
+        for f in ('u','d','e'):
+            eta = 1 if f=='u' else -1
+            
+            glu, tglu = XB+'xdg'+f, XB+'xtdg'+f
+            pho, tpho = XB+'xda'+f, XB+'xtda'+f
+            zed, tzed = XB+'xdz'+f, XB+'xtdz'+f
+            dub = XB+'xdw'+f
+            
+            for i,j in M[zed].keys():
+                if f in ('u','d'):
+                    Gij, Gji = W['WBx'+f+'G'][i,j], W['WBx'+f+'G'][j,i]
+                    M[glu][i,j] = -sqrt(2.)*(Gij + Gji.conjugate())
+                    M[tglu][i,j] =  -ii*sqrt(2.)*(Gij - Gji.conjugate())
+
+                Aij = eta*W['WBx'+f+'W'][i,j] + W['WBx'+f+'B'][i,j]
+                Aji = eta*W['WBx'+f+'W'][j,i] + W['WBx'+f+'B'][j,i]
+                M[pho][i,j] = -sqrt(2.)*(Aij + Aji.conjugate())
+                M[tpho][i,j] =  -ii*sqrt(2.)*(Aij - Aji.conjugate())
+            
+                Zij = gw2*eta*W['WBx'+f+'W'][i,j] - gp2*W['WBx'+f+'B'][i,j]
+                Zji = gw2*eta*W['WBx'+f+'W'][j,i] - gp2*W['WBx'+f+'B'][j,i]
+                M[zed][i,j] = -sqrt(2.)/(gw2+gp2)*(Zij + Zji.conjugate())
+                M[tzed][i,j] =  -ii*sqrt(2.)/(gw2+gp2)*(Zij - Zji.conjugate())
+                
+            for i,j in M[dub].keys():
+                M[dub][i,j] =  -2.*sqrt(2.)*W['WBx'+f+'W'][i,j]
+        # list of all z/w vertex correction blocks
+        onames = ['xdGLze', 'xdGRze', 'xdGLzv', 'xdGLzu', 'xdGRzu', 
+                  'xdGLzd', 'xdGRzd', 'xdGLwl', 'xdGLwq', 'xdGRwq']
+        # list of all z/w/a dipole interaction blocks
+        dnames = ['xdgu', 'xdgd', 'xdau', 'xdad', 'xdae', 
+                  'xdzu', 'xdzd', 'xdze', 'xdwu', 'xdwd', 'xdwe', 
+                  'xtdgu', 'xtdgd', 'xtdau', 'xtdad', 'xtdae', 
+                  'xtdzu', 'xtdzd', 'xtdze']
+                  
+        vertex = [XB + o for o in onames]
+        dipole = [XB + o for o in dnames]
+        
+        # HVFF coeffs and dipole-like Higgs couplings [Eqns. (3.10) & (5.6)]
+        for dG in vertex+dipole: 
+            dGh = dG[:-2]+'h'+dG[-2:]
+            matrix_eq(M[dG], M[dGh])
+        
         # Triple gauge couplings [eqn. (4.18)]
         M['dG1z'] = (gw2+gp2)/(gw2-gp2)*( -W['cWB']*gp2 + W['cT'] - dv )
         M['dKa']  = W['cWB']*gw2
@@ -246,13 +289,13 @@ class WarsawBasis(Basis.Basis):
         
         return M
     
-    @Basis.translation('mass')
-    def to_mass(self,instance):
-        return self.to_MB_or_HB(instance, target = 'mass')
+    @Basis.translation('bsmc')
+    def to_bsmc(self,instance):
+        return self.to_BC_or_HB(instance, target = 'bsmc')
     
     @Basis.translation('higgs')
     def to_higgs(self,instance):
-        return self.to_MB_or_HB(instance, target = 'higgs')
+        return self.to_BC_or_HB(instance, target = 'higgs')
         
     @Basis.translation('silh')
     def to_silh(self, instance):
@@ -317,7 +360,12 @@ class WarsawBasis(Basis.Basis):
         for coeff in trivial:
             wcoeff = coeff.replace('s','c')
             S[coeff] = W[wcoeff]
+            
+        trivial2 = ['xeW','xeB','xuG','xuW','xuB','xdG','xdW','xdB']
         
+        for coeff in trivial2:
+            matrix_eq(W['WB'+coeff], S['SB'+coeff])
+
         return S
 
 ################################################################################

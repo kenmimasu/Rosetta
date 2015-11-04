@@ -24,10 +24,10 @@ PID_to_input = {v:k for k,v in input_to_PID.items()}
 # PID:value dictionary for default particle masses when undefined
 default_masses = {1:0.0048, 2:0.0023, 3:0.095, 4:1.42, 5:4.7, 6:173., 
                   11:0.000511, 12:0., 13:0.105658367, 14:0., 15:1.7768, 16:0.,
-                  23:9.118800e+01, 24:7.982400e+01, 25:125.}
+                  23:9.118760e+01, 24:8.0385e+01, 25:125.}
                   
 # ID:value dictionary for default SHLA inputs when undefined
-default_inputs = {1: 1.325070e+02, 2: 1.166390e-05, 3: 1.180000e-01, 
+default_inputs = {1: 1.27916e+02, 2: 1.166379e-05, 3: 1.184e-01, 
                   4: default_masses[23], 5: default_masses[5], 
                   6: default_masses[6], 7: default_masses[15],
                   25:default_masses[25], 9:default_masses[24] }

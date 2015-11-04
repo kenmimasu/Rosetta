@@ -1,6 +1,6 @@
 from internal import Basis
 from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
-import MassBasis as MB
+import BSMCharacterisation as BSMC
 import sys
 import math, re
 from math import sqrt
@@ -8,7 +8,7 @@ from itertools import combinations_with_replacement as comb
 from itertools import product
 from internal.constants import PID
 ################################################################################
-MassBasis = MB.MassBasis
+BSMCharacterisation = BSMC.BSMCharacterisation
 ################################################################################
 class HiggsBasis(Basis.Basis):
     '''
@@ -61,7 +61,8 @@ class HiggsBasis(Basis.Basis):
               'HBxh':HBxh, 'HBxhh':HBxhh, 'HBxhself':HBxhself, 'HBx4F':HBx4F}
               
     # copy flavored block structure from MassBasis.MassBasis          
-    flavored = {k.replace('MB','HB'):v for k,v in MassBasis.flavored.iteritems()} 
+    flavored = {k.replace('BC','HB'):v for k,v in 
+                BSMCharacterisation.flavored.iteritems()} 
 
     # independent coefficients
     independent = [
@@ -70,9 +71,9 @@ class HiggsBasis(Basis.Basis):
     'HBxdGLze', 'HBxdGRze', 'HBxdGLwl', 'HBxdGLzu', 
     'HBxdGRzu', 'HBxdGLzd', 'HBxdGRzd', 'HBxdGRwq', 
     'HBxdgu', 'HBxdgd', 'HBxdau', 'HBxdad', 'HBxdae', 
-    'HBxdzu', 'HBxdzd', 'HBxdze', 'HBxdwq', 'HBxdwl', 
+    'HBxdzu', 'HBxdzd', 'HBxdze',
     'HBxtdgu', 'HBxtdgd', 'HBxtdau', 'HBxtdad', 'HBxtdae', 
-    'HBxtdzu', 'HBxtdzd', 'HBxtdze', 'HBxtdwq', 'HBxtdwl',
+    'HBxtdzu', 'HBxtdzd', 'HBxtdze',
     # [Eqn. (5.2)]
     'Cgg', 'dCz', 'Caa', 'Cza', 'Czz', 'Czbx', 'tCgg', 'tCaa', 'tCza', 'tCzz', 
     'HBxdYu', 'HBxdYd', 'HBxdYe', 'HBxSu', 'HBxSd', 'HBxSe', 'dL3',
@@ -82,7 +83,7 @@ class HiggsBasis(Basis.Basis):
     ]
                 
     # Required inputs/masses             
-    required_masses = {25}
+    required_masses = {25, 24} # Higgs & W masses
     required_inputs = {1, 2, 3, 4} # aEWM1, Gf, aS, MZ
     ########################## 
     
@@ -100,9 +101,9 @@ class HiggsBasis(Basis.Basis):
     def calculate_dependent(self):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         A = self
-        MW = MZ*sqrt(c2w)
         MH = self.mass[25]
-        
+        MW = self.mass[24]
+                
         def delta(i,j):
             return 1. if i==j else 0.
         
@@ -125,15 +126,26 @@ class HiggsBasis(Basis.Basis):
         matrix_sub(matrix_mult(A['HBxdGLzu'], A.ckm),
                    matrix_mult(A.ckm, A['HBxdGLzd']),
                    A['HBxdGLwq'])
-
+                   
+        # W dipole interaction
+        ii = complex(0.,1.)
+        for f in ('u','d','e'):
+            eta = 1. if f=='u' else -1.
+            wdip = 'HBxdw'+f
+            adip, tadip = 'HBxda'+f, 'HBxtda'+f
+            zdip, tzdip = 'HBxdz'+f, 'HBxtdz'+f
+            for i,j in A[wdip].keys():
+                A[wdip][i,j] = eta*( A[zdip][i,j] - ii*A[tzdip][i,j] + 
+                                s2w*(A[adip][i,j] - ii*A[tadip][i,j]) )
+        
         # list of all z/w vertex correction blocks
         vertex = ['HBxdGLze', 'HBxdGRze', 'HBxdGLzv', 'HBxdGLzu', 'HBxdGRzu', 
                   'HBxdGLzd', 'HBxdGRzd', 'HBxdGLwl', 'HBxdGLwq', 'HBxdGRwq']
         # list of all z/w/a dipole interaction blocks
         dipole = ['HBxdgu', 'HBxdgd', 'HBxdau', 'HBxdad', 'HBxdae', 
-                  'HBxdzu', 'HBxdzd', 'HBxdze', 'HBxdwq', 'HBxdwl', 
+                  'HBxdzu', 'HBxdzd', 'HBxdze', 'HBxdwu', 'HBxdwd', 'HBxdwe', 
                   'HBxtdgu', 'HBxtdgd', 'HBxtdau', 'HBxtdad', 'HBxtdae', 
-                  'HBxtdzu', 'HBxtdzd', 'HBxtdze', 'HBxtdwq', 'HBxtdwl']
+                  'HBxtdzu', 'HBxtdzd', 'HBxtdze']
                   
         # HVFF coeffs and dipole-like Higgs couplings [Eqns. (3.10) & (5.6)]
         for dG in vertex + dipole: 
@@ -200,8 +212,8 @@ class HiggsBasis(Basis.Basis):
                       + A['HBxdGLwl'][2,2].real - 2.*A['dM'])*2.
         
         
-    @Basis.translation('mass')        
-    def to_mass(self, instance):
+    @Basis.translation('bsmc')        
+    def to_bsmc(self, instance):
         # trivial translation
         for k, v in self.iteritems():
             instance[k] = v
@@ -253,6 +265,7 @@ class HiggsBasis(Basis.Basis):
                    )*gp2*gw2/(2.*(gw2 - gp2)*(gw2 + gp2)**2)
                     + dM)
         cT = W['cT']
+        
         for i,j in H['HBxdGLzu'].keys():
             fac = (dM-cT)*delta(i,j)
             facp =  -(dM + (cH + dCz)/3.)*delta(i,j)
@@ -284,6 +297,23 @@ class HiggsBasis(Basis.Basis):
                 im = yuk*sin*sqrt(2.)
                 W['WBx'+f][i,j] = complex(re, im)
         
+        # Dipole interactions
+        ii = complex(0.,1.)
+        for f in ('u','d','e'):
+            eta = 1 if f=='u' else -1
+            for i,j in W['WBx'+f+'W'].keys():
+                # gluon
+                if f in ('u','d'):
+                    W['WBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
+                                     - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
+                # Weak
+                W['WBx'+f+'W'][i,j] = - H['HBxdw'+f][i,j]/(2.*sqrt(2.))
+                # Hypercharge
+                W['WBx'+f+'B'][i,j] = (eta*H['HBxdw'+f][i,j]
+                                       - (H['HBxda'+f][i,j] 
+                                          - ii*H['HBxtda'+f][i,j])
+                                      )/(2.*sqrt(2.))
+                                      
         W['c3G'], W['tc3G'] = H['C3g'], H['tC3g']
         W['c3W'], W['tc3W'] = -2./3./gw2**2*H['Lz'], -2./3./gw2**2*H['tLz']
         W['cll1122'], W['cpuu3333'] = H['cll1122'], H['cpuu3333']
@@ -391,17 +421,32 @@ class HiggsBasis(Basis.Basis):
                 im = yuk*sin*sqrt(2.)
                 S['SBx'+f][i,j] = complex(re, im)
 
+        # Dipole interactions
+        ii = complex(0.,1.)
+        for f in ('u','d','e'):
+            eta = 1 if f=='u' else -1
+            for i,j in S['SBx'+f+'W'].keys():
+                # gluon
+                if f in ('u','d'):
+                    S['SBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
+                                     - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
+                # Weak
+                S['SBx'+f+'W'][i,j] = - H['HBxdw'+f][i,j]/(2.*sqrt(2.))
+                # Hypercharge
+                S['SBx'+f+'B'][i,j] =  (eta*H['HBxdw'+f][i,j]
+                                       - (H['HBxda'+f][i,j] 
+                                          - ii*H['HBxtda'+f][i,j])
+                                      )/(2.*sqrt(2.))
+
         return S
     
     def modify_inputs(self):
         '''
         W mass modification from dM.
         '''
-        s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
-        MW = MZ*sqrt(c2w)
-        if 24 in self.mass:
-            self.mass[24] = MW + self['dM']
-        else:
+        try:
+            self.mass[24] += self['dM']
+        except KeyError:
             self.mass.new_entry(24, MW + self['dM'], name = 'MW')
         
         

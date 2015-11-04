@@ -49,7 +49,15 @@ class SILHBasis(Basis.Basis):
         'SBxHpq': {'cname':'sHpq', 'kind':'hermitian', 'domain':'complex'},
         'SBxHu': {'cname':'sHu' , 'kind':'hermitian', 'domain':'complex'},
         'SBxHd' : {'cname':'sHd' , 'kind':'hermitian', 'domain':'complex'},
-        'SBxHud' : {'cname':'sHud', 'kind':'general', 'domain':'complex'}
+        'SBxHud' : {'cname':'sHud', 'kind':'general', 'domain':'complex'},
+        'SBxeW' : {'cname':'seW' , 'kind':'general', 'domain':'complex'},
+        'SBxeB' : {'cname':'seB' , 'kind':'general', 'domain':'complex'},
+        'SBxuG' : {'cname':'suG' , 'kind':'general', 'domain':'complex'},
+        'SBxuW' : {'cname':'suW' , 'kind':'general', 'domain':'complex'},
+        'SBxuB' : {'cname':'suB' , 'kind':'general', 'domain':'complex'},
+        'SBxdG' : {'cname':'sdG' , 'kind':'general', 'domain':'complex'},
+        'SBxdW' : {'cname':'sdW' , 'kind':'general', 'domain':'complex'},
+        'SBxdB' : {'cname':'sdB' , 'kind':'general', 'domain':'complex'}
     }
 
     independent = blocks.keys() + flavored.keys()
@@ -58,7 +66,7 @@ class SILHBasis(Basis.Basis):
     dependent = ['CsHl1x1', 'CsHpl1x1']
     
     # required_masses = set([y for x in PID.values() for y in x.values()])
-    required_masses = {25}
+    required_masses = {25, 24}  # Higgs & W masses
     required_inputs = {1, 2, 3, 4, 25} # aEWM1, Gf, aS, MZ, MH
     ##########################
     def calculate_dependent(self):
@@ -76,22 +84,23 @@ class SILHBasis(Basis.Basis):
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
     
-    def to_MB_or_HB(self, instance, target='mass'):
+    def to_BC_or_HB(self, instance, target='bsmc'):
         '''
         Translation function to Mass basis or Higgs basis, which differs only in 
         the prefix of the flavored blocks.
         '''
         # prefix switch depending on target
-        if target == 'mass':
-            XB = 'MB'
+        if target == 'bsmc':
+            XB = 'BC'
         elif target == 'higgs':
             XB = 'HB'
         else:
-            raise Basis.TranslationError('target must be "mass" or "higgs"')
+            raise Basis.TranslationError('target must be "bsmc" or "higgs"')
         
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
-        MW = MZ*sqrt(c2w)
+        MW = self.mass[24]
+        # MW = MZ*sqrt(c2w)
                 
         S = self
         M = instance
@@ -209,6 +218,51 @@ class SILHBasis(Basis.Basis):
                 im = 3.*s_Im/sqrt(2.)
                 M[XB+'xY2'+f][i,j] = complex(re, im)
 
+        # Dipole interactions
+        ii = complex(0.,1.)
+        for f in ('u','d','e'):
+            eta = 1 if f=='u' else -1
+            
+            glu, tglu = XB+'xdg'+f, XB+'xtdg'+f
+            pho, tpho = XB+'xda'+f, XB+'xtda'+f
+            zed, tzed = XB+'xdz'+f, XB+'xtdz'+f
+            dub = XB+'xdw'+f
+            
+            for i,j in M[zed].keys():
+                if f in ('u','d'):
+                    Gij, Gji = S['SBx'+f+'G'][i,j], S['SBx'+f+'G'][j,i]
+                    M[glu][i,j] = -sqrt(2.)*(Gij + Gji.conjugate())
+                    M[tglu][i,j] =  -ii*sqrt(2.)*(Gij - Gji.conjugate())
+
+                Aij = eta*S['SBx'+f+'W'][i,j] + S['SBx'+f+'B'][i,j]
+                Aji = eta*S['SBx'+f+'W'][j,i] + S['SBx'+f+'B'][j,i]
+                M[pho][i,j] = -sqrt(2.)*(Aij + Aji.conjugate())
+                M[tpho][i,j] =  -ii*sqrt(2.)*(Aij - Aji.conjugate())
+            
+                Zij = gw2*eta*S['SBx'+f+'W'][i,j] - gp2*S['SBx'+f+'B'][i,j]
+                Zji = gw2*eta*S['SBx'+f+'W'][j,i] - gp2*S['SBx'+f+'B'][j,i]
+                M[zed][i,j] = -sqrt(2.)/(gw2+gp2)*(Zij + Zji.conjugate())
+                M[tzed][i,j] =  -ii*sqrt(2.)/(gw2+gp2)*(Zij - Zji.conjugate())
+
+            for i,j in M[dub].keys():
+                M[dub][i,j] =  -2.*sqrt(2.)*S['SBx'+f+'W'][i,j]
+        # list of all z/w vertex correction blocks
+        onames = ['xdGLze', 'xdGRze', 'xdGLzv', 'xdGLzu', 'xdGRzu', 
+                  'xdGLzd', 'xdGRzd', 'xdGLwl', 'xdGLwq', 'xdGRwq']
+        # list of all z/w/a dipole interaction blocks
+        dnames = ['xdgu', 'xdgd', 'xdau', 'xdad', 'xdae', 
+                  'xdzu', 'xdzd', 'xdze', 'xdwu', 'xdwd', 'xdwe', 
+                  'xtdgu', 'xtdgd', 'xtdau', 'xtdad', 'xtdae', 
+                  'xtdzu', 'xtdzd', 'xtdze']
+                  
+        vertex = [XB + o for o in onames]
+        dipole = [XB + o for o in dnames]
+        
+        # HVFF coeffs and dipole-like Higgs couplings [Eqns. (3.10) & (5.6)]
+        for dG in vertex+dipole: 
+            dGh = dG[:-2]+'h'+dG[-2:]
+            matrix_eq(M[dG], M[dGh])
+
         # Triple gauge couplings [eqn. (5.18)]
         M['dG1z'] = -(gw2+gp2)/(gw2-gp2)/4.*( (gw2-gp2)*S['sHW'] 
                         + gw2*(S['sW'] + S['s2W']) + gp2*(S['sB'] + S['s2B']) 
@@ -274,13 +328,13 @@ class SILHBasis(Basis.Basis):
         return M
         
         
-    @Basis.translation('mass')
-    def to_mass(self,instance):
-        return self.to_MB_or_HB(instance, target = 'mass')
+    @Basis.translation('bsmc')
+    def to_bsmc(self,instance):
+        return self.to_BC_or_HB(instance, target = 'bsmc')
     
     @Basis.translation('higgs')
     def to_higgs(self,instance):
-        return self.to_MB_or_HB(instance, target = 'higgs')
+        return self.to_BC_or_HB(instance, target = 'higgs')
     
     @Basis.translation('warsaw')
     def to_warsaw(self, instance):
@@ -352,6 +406,10 @@ class SILHBasis(Basis.Basis):
         for coeff in trivial:
             wcoeff = coeff.replace('s','c')
             W[wcoeff] = S[coeff]
+        
+        trivial2 = ['xeW','xeB','xuG','xuW','xuB','xdG','xdW','xdB']
+        for coeff in trivial2:
+            matrix_eq(S['SB'+coeff], W['WB'+coeff])
         
         return W
         

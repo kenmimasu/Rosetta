@@ -1,16 +1,17 @@
 ################################################################################
 ####################### ROSETTA: WARSAW BASIS INPUT CARD #######################
-###################### GENERATED FRI AUG 21 16:28:15 2015 ######################
+###################### GENERATED MON OCT 19 14:40:13 2015 ######################
 ################################################################################
 
 BLOCK mass # 
+    24   +8.03850e+01 # MW
     25   +1.25000e+02 # MH
 
 BLOCK sminputs # 
-    1    +1.32507e+02 # aEWM1
-    2    +1.16639e-05 # Gf
-    3    +1.18000e-01 # aS
-    4    +9.11880e+01 # MZ
+    1    +1.27916e+02 # aEWM1
+    2    +1.16638e-05 # Gf
+    3    +1.18400e-01 # aS
+    4    +9.11876e+01 # MZ
     25   +1.25000e+02 # MH
 
 ###################################
@@ -80,53 +81,62 @@ BLOCK WBxd
 BLOCK IMWBxd
     1   1    +0.00000e+00 # Icd1x1
 
+BLOCK WBxdB
+    1   1    +0.00000e+00 # RcdB1x1
+
+BLOCK IMWBxdB
+    1   1    +0.00000e+00 # IcdB1x1
+
+BLOCK WBxdG
+    1   1    +0.00000e+00 # RcdG1x1
+
+BLOCK IMWBxdG
+    1   1    +0.00000e+00 # IcdG1x1
+
+BLOCK WBxdW
+    1   1    +0.00000e+00 # RcdW1x1
+
+BLOCK IMWBxdW
+    1   1    +0.00000e+00 # IcdW1x1
+
 BLOCK WBxe
     1   1    +0.00000e+00 # Rce1x1
 
 BLOCK IMWBxe
     1   1    +0.00000e+00 # Ice1x1
 
+BLOCK WBxeB
+    1   1    +0.00000e+00 # RceB1x1
+
+BLOCK IMWBxeB
+    1   1    +0.00000e+00 # IceB1x1
+
+BLOCK WBxeW
+    1   1    +0.00000e+00 # RceW1x1
+
+BLOCK IMWBxeW
+    1   1    +0.00000e+00 # IceW1x1
+
 BLOCK WBxHd
     1   1    +0.00000e+00 # RcHd1x1
-
-BLOCK IMWBxHd
-    1   1    +0.00000e+00 # IcHd1x1
 
 BLOCK WBxHe
     1   1    +0.00000e+00 # RcHe1x1
 
-BLOCK IMWBxHe
-    1   1    +0.00000e+00 # IcHe1x1
-
 BLOCK WBxHl
     1   1    +0.00000e+00 # RcHl1x1
-
-BLOCK IMWBxHl
-    1   1    +0.00000e+00 # IcHl1x1
 
 BLOCK WBxHpl
     1   1    +0.00000e+00 # RcHpl1x1
 
-BLOCK IMWBxHpl
-    1   1    +0.00000e+00 # IcHpl1x1
-
 BLOCK WBxHpq
     1   1    +0.00000e+00 # RcHpq1x1
-
-BLOCK IMWBxHpq
-    1   1    +0.00000e+00 # IcHpq1x1
 
 BLOCK WBxHq
     1   1    +0.00000e+00 # RcHq1x1
 
-BLOCK IMWBxHq
-    1   1    +0.00000e+00 # IcHq1x1
-
 BLOCK WBxHu
     1   1    +0.00000e+00 # RcHu1x1
-
-BLOCK IMWBxHu
-    1   1    +0.00000e+00 # IcHu1x1
 
 BLOCK WBxHud
     1   1    +0.00000e+00 # RcHud1x1
@@ -139,6 +149,24 @@ BLOCK WBxu
 
 BLOCK IMWBxu
     1   1    +0.00000e+00 # Icu1x1
+
+BLOCK WBxuB
+    1   1    +0.00000e+00 # RcuB1x1
+
+BLOCK IMWBxuB
+    1   1    +0.00000e+00 # IcuB1x1
+
+BLOCK WBxuG
+    1   1    +0.00000e+00 # RcuG1x1
+
+BLOCK IMWBxuG
+    1   1    +0.00000e+00 # IcuG1x1
+
+BLOCK WBxuW
+    1   1    +0.00000e+00 # RcuW1x1
+
+BLOCK IMWBxuW
+    1   1    +0.00000e+00 # IcuW1x1
 
 ################################################################################
 ################################################################################

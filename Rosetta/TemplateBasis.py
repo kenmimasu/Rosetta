@@ -18,7 +18,7 @@ class TemplateBasis(Basis.Basis):
     ########################## 
     independent = ['a','b','c','AA']
     
-    required_masses = {1,2,3,4,5,6} # quark masses rquired
+    required_masses = {1,2,3,4,5,6} # quark masses required
     
     required_inputs = {1, 4} # aEWM1, MZ
     
@@ -71,12 +71,12 @@ class TemplateBasis(Basis.Basis):
         
         return B
         
-    @Basis.translation('mass')        
+    @Basis.translation('pheno')        
     def to_mass(self, instance):
         '''
-        Toy translation to the Mass basis setting all coefficients according to 
-        a nonsense formula, myfunc, defined below. Also modifies the Z and 
-        Higgs masses.
+        Toy translation to the BSM Characterisation Lagrangian setting all 
+        coefficients according to a nonsense formula, myfunc, declared below. 
+        Also modifies the Z and Higgs masses.
         '''
         A = self
         B = instance

@@ -121,7 +121,7 @@ class Basis(MutableMapping):
     flavored = dict()
     required_inputs, required_masses = set(),set()
     
-    def __init__(self, param_card=None, output_basis='mass', 
+    def __init__(self, param_card=None, output_basis='bsmc', 
                  ehdecay=False, silent=False, translate=True,
                  flavor = 'general', dependent=True):
         '''
@@ -168,7 +168,6 @@ class Basis(MutableMapping):
             self.set_flavor(self.flavor, 'general')
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
-            
             # generate internal OrderedDict() object for __len__, __iter__, 
             # items() and iteritems() method
             self._gen_thedict()
@@ -188,7 +187,7 @@ class Basis(MutableMapping):
             self.newbasis.check_modified_inputs()
             
             # delete imaginary parts of diagonal elements in hermitian matrices
-            if self.output_basis != 'mass':
+            if self.output_basis != 'bsmc':
                 self.newbasis.reduce_hermitian_matrices()
                 
             # set new SLHA card
@@ -373,7 +372,7 @@ class Basis(MutableMapping):
         if _from == to: return
 
         self.set_fblocks(to) # reset fblocks according to flavor option
-        newcard = self.default_card(dependent=False) 
+        newcard = self.default_card(dependent=False)
         
         if (_from, to) in (('general', 'universal'), ('general', 'diagonal')):
             blks_to_del = []
@@ -1001,7 +1000,9 @@ class Basis(MutableMapping):
                         newinstance[k] = random.uniform(-1.,1.)
                     else:
                         newinstance[k] = val
-                        
+        
+        newinstance.reduce_hermitian_matrices()
+        
         SLHA_card = newinstance.card
         
         mass_preamble = ('\n###################################\n'
@@ -1034,6 +1035,7 @@ class Basis(MutableMapping):
                     +'#'*80 +'\n')
         
         special_blocks = ['mass','sminputs','vckm','basis']
+                
         theorder = sortblocks(SLHA_card, ignore = special_blocks)
         SLHA_card.write(filename, blockorder=special_blocks + theorder, 
                         preamble = preamble, postamble = ('\n'+'#'*80)*2)
@@ -1053,9 +1055,10 @@ class Basis(MutableMapping):
         
         for bname, fields in self.fblocks.iteritems():
             theblock = self.card.matrices.get(bname,[])
-            to_add = [f for f in fields if f in self.dependent 
-                                        and f not in theblock]
-
+            to_add = [f for f in fields if 
+                      (f in self.dependent or bname in self.dependent)
+                      and f not in theblock]
+            
             for entry in to_add:
                 index = (int(entry[-3]), int(entry[-1]))
                 if self.flavored[bname]['domain']=='complex':      
@@ -1075,8 +1078,6 @@ class Basis(MutableMapping):
         
         self.card.set_complex()
         self.fix_matrices()
-        # for k,v in self.card.matrices.items():
-        #     print k,type(v)
         
     def check_calculated_data(self):
         '''
@@ -1183,17 +1184,17 @@ class Basis(MutableMapping):
             required_inputs = set(instance.required_inputs)
             required_masses = set(instance.required_masses)
             current = new
-            
-        if verbose:
-            print 'Translation successful.\n'
 
-        if current.name =='mass':
+        if current.name =='bsmc':
             current.expand_matrices()
         else:
             current.flavor = self.flavor
             # reduce flavor structure back to user set option
             current.set_flavor('general', self.flavor)
-
+            
+        if verbose:
+            print 'Translation successful.\n'
+            
         return current
 
     def get_other_blocks(self, card, ignore):
@@ -1228,7 +1229,7 @@ class Basis(MutableMapping):
     def expand_matrices(self):
         '''
         Special function to populate redundant elements of matrix blocks when 
-        translating to the mass basis so that values for all 9 entries are 
+        translating to the bsmc Lagrangian so that values for all 9 entries are 
         explicitly stored before writing out the parameter card. This is to 
         stay in accordance with the SLHA format.
         The function directly modifies the _data and  _names attributes of the 

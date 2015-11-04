@@ -21,9 +21,9 @@ parser.add_argument("param_card", metavar="PARAMCARD",
 parser.add_argument("-o", "--output", metavar="OUTPUT", type=str, default='',
                     help="Output file name. Default: [PARAMCARD]_new")
                     
-parser.add_argument("-t", "--target", type=str, default='mass', 
+parser.add_argument("-t", "--target", type=str, default='bsmc', 
                     choices=existing,
-                    help="Basis into which to translate, default: mass")
+                    help="Basis into which to translate, default: bsmc")
                           
 parser.add_argument("-w", "--overwrite", action='store_true', 
                     help="Overwrite any pre-existing output file.")
@@ -87,7 +87,7 @@ basis_instance = mybasis(param_card=args.param_card,
                          flavor=args.flavor,
                          silent=args.silent)
 
-if not args.dependent:
+if not args.dependent and args.target.lower()!='bsmc':
     basis_instance.newbasis.delete_dependent()
 
 if basis_instance.write_param_card(new_param_card, 

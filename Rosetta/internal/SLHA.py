@@ -147,7 +147,7 @@ class Block(MutableMapping):
             
             line = ('    {{: <4}} {{{}}}\n'.format(fmt)).format
             content.append(line(k,val)) 
-        string  = self.preamble+'\n'
+        string = self.preamble+'\n'
         if content:
             string += 'BLOCK {}\n'.format(self.name) + ''.join(content)
         return string
@@ -323,7 +323,7 @@ class NamedBlock(Block):
             else:
                 content.append('    {: <4} {}\n'.format(k,strval))
         
-        string = self.preamble + '\n'
+        string = self.preamble+'\n'
         if content:
             string += ('BLOCK {} # {}\n'.format(self.name, self.comment)
                        + ''.join(content))
@@ -444,7 +444,12 @@ class CBlock(Block):
         super(CBlock, self).__setitem__(key, cval)
         
     def __str__(self):
-        return self.preamble + str(self._re) + str(self._im)
+        string = self.preamble
+        if self._re._data:
+            string += str(self._re)
+        if self._im._data:
+            string += str(self._im)
+        return string
     
 class CMatrix(CBlock, Matrix):
     container = Matrix

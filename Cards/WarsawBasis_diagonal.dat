@@ -1,16 +1,17 @@
 ################################################################################
 ####################### ROSETTA: WARSAW BASIS INPUT CARD #######################
-###################### GENERATED FRI AUG 21 16:28:20 2015 ######################
+###################### GENERATED MON OCT 19 14:40:12 2015 ######################
 ################################################################################
 
 BLOCK mass # 
+    24   +8.03850e+01 # MW
     25   +1.25000e+02 # MH
 
 BLOCK sminputs # 
-    1    +1.32507e+02 # aEWM1
-    2    +1.16639e-05 # Gf
-    3    +1.18000e-01 # aS
-    4    +9.11880e+01 # MZ
+    1    +1.27916e+02 # aEWM1
+    2    +1.16638e-05 # Gf
+    3    +1.18400e-01 # aS
+    4    +9.11876e+01 # MZ
     25   +1.25000e+02 # MH
 
 ###################################
@@ -84,6 +85,36 @@ BLOCK IMWBxd
     2   2    +0.00000e+00 # Icd2x2
     3   3    +0.00000e+00 # Icd3x3
 
+BLOCK WBxdB
+    1   1    +0.00000e+00 # RcdB1x1
+    2   2    +0.00000e+00 # RcdB2x2
+    3   3    +0.00000e+00 # RcdB3x3
+
+BLOCK IMWBxdB
+    1   1    +0.00000e+00 # IcdB1x1
+    2   2    +0.00000e+00 # IcdB2x2
+    3   3    +0.00000e+00 # IcdB3x3
+
+BLOCK WBxdG
+    1   1    +0.00000e+00 # RcdG1x1
+    2   2    +0.00000e+00 # RcdG2x2
+    3   3    +0.00000e+00 # RcdG3x3
+
+BLOCK IMWBxdG
+    1   1    +0.00000e+00 # IcdG1x1
+    2   2    +0.00000e+00 # IcdG2x2
+    3   3    +0.00000e+00 # IcdG3x3
+
+BLOCK WBxdW
+    1   1    +0.00000e+00 # RcdW1x1
+    2   2    +0.00000e+00 # RcdW2x2
+    3   3    +0.00000e+00 # RcdW3x3
+
+BLOCK IMWBxdW
+    1   1    +0.00000e+00 # IcdW1x1
+    2   2    +0.00000e+00 # IcdW2x2
+    3   3    +0.00000e+00 # IcdW3x3
+
 BLOCK WBxe
     1   1    +0.00000e+00 # Rce1x1
     2   2    +0.00000e+00 # Rce2x2
@@ -94,75 +125,60 @@ BLOCK IMWBxe
     2   2    +0.00000e+00 # Ice2x2
     3   3    +0.00000e+00 # Ice3x3
 
+BLOCK WBxeB
+    1   1    +0.00000e+00 # RceB1x1
+    2   2    +0.00000e+00 # RceB2x2
+    3   3    +0.00000e+00 # RceB3x3
+
+BLOCK IMWBxeB
+    1   1    +0.00000e+00 # IceB1x1
+    2   2    +0.00000e+00 # IceB2x2
+    3   3    +0.00000e+00 # IceB3x3
+
+BLOCK WBxeW
+    1   1    +0.00000e+00 # RceW1x1
+    2   2    +0.00000e+00 # RceW2x2
+    3   3    +0.00000e+00 # RceW3x3
+
+BLOCK IMWBxeW
+    1   1    +0.00000e+00 # IceW1x1
+    2   2    +0.00000e+00 # IceW2x2
+    3   3    +0.00000e+00 # IceW3x3
+
 BLOCK WBxHd
     1   1    +0.00000e+00 # RcHd1x1
     2   2    +0.00000e+00 # RcHd2x2
     3   3    +0.00000e+00 # RcHd3x3
-
-BLOCK IMWBxHd
-    1   1    +0.00000e+00 # IcHd1x1
-    2   2    +0.00000e+00 # IcHd2x2
-    3   3    +0.00000e+00 # IcHd3x3
 
 BLOCK WBxHe
     1   1    +0.00000e+00 # RcHe1x1
     2   2    +0.00000e+00 # RcHe2x2
     3   3    +0.00000e+00 # RcHe3x3
 
-BLOCK IMWBxHe
-    1   1    +0.00000e+00 # IcHe1x1
-    2   2    +0.00000e+00 # IcHe2x2
-    3   3    +0.00000e+00 # IcHe3x3
-
 BLOCK WBxHl
     1   1    +0.00000e+00 # RcHl1x1
     2   2    +0.00000e+00 # RcHl2x2
     3   3    +0.00000e+00 # RcHl3x3
-
-BLOCK IMWBxHl
-    1   1    +0.00000e+00 # IcHl1x1
-    2   2    +0.00000e+00 # IcHl2x2
-    3   3    +0.00000e+00 # IcHl3x3
 
 BLOCK WBxHpl
     1   1    +0.00000e+00 # RcHpl1x1
     2   2    +0.00000e+00 # RcHpl2x2
     3   3    +0.00000e+00 # RcHpl3x3
 
-BLOCK IMWBxHpl
-    1   1    +0.00000e+00 # IcHpl1x1
-    2   2    +0.00000e+00 # IcHpl2x2
-    3   3    +0.00000e+00 # IcHpl3x3
-
 BLOCK WBxHpq
     1   1    +0.00000e+00 # RcHpq1x1
     2   2    +0.00000e+00 # RcHpq2x2
     3   3    +0.00000e+00 # RcHpq3x3
-
-BLOCK IMWBxHpq
-    1   1    +0.00000e+00 # IcHpq1x1
-    2   2    +0.00000e+00 # IcHpq2x2
-    3   3    +0.00000e+00 # IcHpq3x3
 
 BLOCK WBxHq
     1   1    +0.00000e+00 # RcHq1x1
     2   2    +0.00000e+00 # RcHq2x2
     3   3    +0.00000e+00 # RcHq3x3
 
-BLOCK IMWBxHq
-    1   1    +0.00000e+00 # IcHq1x1
-    2   2    +0.00000e+00 # IcHq2x2
-    3   3    +0.00000e+00 # IcHq3x3
-
 BLOCK WBxHu
     1   1    +0.00000e+00 # RcHu1x1
     2   2    +0.00000e+00 # RcHu2x2
     3   3    +0.00000e+00 # RcHu3x3
-
-BLOCK IMWBxHu
-    1   1    +0.00000e+00 # IcHu1x1
-    2   2    +0.00000e+00 # IcHu2x2
-    3   3    +0.00000e+00 # IcHu3x3
 
 BLOCK WBxHud
     1   1    +0.00000e+00 # RcHud1x1
@@ -183,6 +199,36 @@ BLOCK IMWBxu
     1   1    +0.00000e+00 # Icu1x1
     2   2    +0.00000e+00 # Icu2x2
     3   3    +0.00000e+00 # Icu3x3
+
+BLOCK WBxuB
+    1   1    +0.00000e+00 # RcuB1x1
+    2   2    +0.00000e+00 # RcuB2x2
+    3   3    +0.00000e+00 # RcuB3x3
+
+BLOCK IMWBxuB
+    1   1    +0.00000e+00 # IcuB1x1
+    2   2    +0.00000e+00 # IcuB2x2
+    3   3    +0.00000e+00 # IcuB3x3
+
+BLOCK WBxuG
+    1   1    +0.00000e+00 # RcuG1x1
+    2   2    +0.00000e+00 # RcuG2x2
+    3   3    +0.00000e+00 # RcuG3x3
+
+BLOCK IMWBxuG
+    1   1    +0.00000e+00 # IcuG1x1
+    2   2    +0.00000e+00 # IcuG2x2
+    3   3    +0.00000e+00 # IcuG3x3
+
+BLOCK WBxuW
+    1   1    +0.00000e+00 # RcuW1x1
+    2   2    +0.00000e+00 # RcuW2x2
+    3   3    +0.00000e+00 # RcuW3x3
+
+BLOCK IMWBxuW
+    1   1    +0.00000e+00 # IcuW1x1
+    2   2    +0.00000e+00 # IcuW2x2
+    3   3    +0.00000e+00 # IcuW3x3
 
 ################################################################################
 ################################################################################
