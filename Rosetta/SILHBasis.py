@@ -129,8 +129,13 @@ class SILHBasis(Basis.Basis):
             M[XB+'xdGRze'][i,j] = (- 1./2.*S['SBxHe'][i,j] + f(0.,-1.,i,j))
             M[XB+'xdGLzu'][i,j] = (1./2.*S['SBxHpq'][i,j] 
                                 - 1./2.*S['SBxHq'][i,j] + f(1./2.,2./3.,i,j))
-            M[XB+'xdGLzd'][i,j] = (-1./2.*S['SBxHpq'][i,j] 
-                                - 1./2.*S['SBxHq'][i,j] + f(-1./2.,-1./3.,i,j))
+            
+            M[XB+'xdGLzd'][i,j] = -1./2.*matrix_mult( S.ckm.dag(),
+                                          matrix_mult(
+                                             matrix_add(S['SBxHpq'],S['SBxHq']), 
+                                             S.ckm)
+                                         )[i,j] + f(-1./2.,-1./3.,i,j)
+            
             M[XB+'xdGRzu'][i,j] = (- 1./2.*S['SBxHu'][i,j] + f(0.,2./3.,i,j))
             M[XB+'xdGRzd'][i,j] = (- 1./2.*S['SBxHd'][i,j] + f(0.,-1./3.,i,j))
             M[XB+'xdGLwl'][i,j] = (S['SBxHpl'][i,j] + f(1./2.,0.,i,j) 

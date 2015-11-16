@@ -220,7 +220,8 @@ class Matrix(Block):
             if isinstance(v,Matrix):
                 array.append(v.array())
             else:
-                array.append([v for v in v.values()])
+                # array.append([v for v in v.values()])
+                array.append(v)
         return array
 
 class NamedBlock(Block):

@@ -44,7 +44,8 @@ class Basis(MutableMapping):
                   definition are also stored.
     self.mass   - SLHA.NamedBlock instance for the "mass" block
     self.inputs - SLHA.NamedBlock instance for the "sminputs" block
-    self.ckm    - SLHA.NamedMatrix instance for the VCKM and IMVCKM blocks
+    self.ckm    - Rosetta.matrices.CTwoDMatrix instance for the VCKM and 
+                  IMVCKM blocks
 
     self.blocks, self.required_inputs and self.required_masses should be defined 
     in accordance with block structure of the SLHA parameter card, Blocks 
@@ -571,8 +572,8 @@ class Basis(MutableMapping):
             cname = 'IV{}{}x{}'.format(VCKMele[(i,j)], i, j)
             imckm.new_entry((i,j), IMVCKM[i][j], name=cname) 
             
-        vckm = SLHA.CNamedMatrix(ckm, imckm)
-        
+        # vckm = SLHA.CNamedMatrix(ckm, imckm)
+        vckm = CTwoDMatrix(SLHA.CNamedMatrix(ckm, imckm))
         return vckm
 
         
@@ -1104,7 +1105,9 @@ class Basis(MutableMapping):
         if card is None:
             card = self.card
         for name, matrix in card.matrices.iteritems():
-            if name not in self.flavored:
+            if name.lower() == 'vckm':
+                card.matrices['vckm'] = CTwoDMatrix(matrix)
+            elif name not in self.flavored:
                 continue
             else:
                 opt = self.flavored[name]

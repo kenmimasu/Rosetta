@@ -265,17 +265,18 @@ class HiggsBasis(Basis.Basis):
                    )*gp2*gw2/(2.*(gw2 - gp2)*(gw2 + gp2)**2)
                     + dM)
         cT = W['cT']
-        
+        # 'rotated' by VCKM: V.dGLzd.V^\dagger
+        RdGLzd = matrix_mult(matrix_mult(H.ckm, H['HBxdGLzd']),H.ckm.dag()) 
         for i,j in H['HBxdGLzu'].keys():
             fac = (dM-cT)*delta(i,j)
             facp =  -(dM + (cH + dCz)/3.)*delta(i,j)
-            W['WBxHq'][i,j] = (fac/3. - H['HBxdGLzu'][i,j] - H['HBxdGLzd'][i,j])
+            W['WBxHq'][i,j] = (fac/3. - H['HBxdGLzu'][i,j] - RdGLzd[i,j])
             W['WBxHu'][i,j] = 4./3.*fac - 2.*H['HBxdGRzu'][i,j]
             W['WBxHd'][i,j] = -2./3.*fac - 2.*H['HBxdGRzd'][i,j] 
-            W['WBxHpq'][i,j] = (facp + H['HBxdGLzu'][i,j] - H['HBxdGLzd'][i,j])
+            W['WBxHpq'][i,j] = (facp + H['HBxdGLzu'][i,j] - RdGLzd[i,j])
             W['WBxHl'][i,j] = -(fac + 2.*H['HBxdGLze'][i,j] + H['HBxdGLwl'][i,j]) 
             W['WBxHpl'][i,j] = facp + H['HBxdGLwl'][i,j] 
-            W['WBxHe'][i,j] = -2.*fac - 2.*H['HBxdGRze'][i,j] 
+            W['WBxHe'][i,j] = -2.*fac - 2.*H['HBxdGRze'][i,j]
         for k,v in H['HBxdGRwq'].iteritems():
             W['WBxHud'][k] = -2.*v
                 
@@ -390,17 +391,19 @@ class HiggsBasis(Basis.Basis):
         S['s6H'] = (3.*dCz - 4.*H['HBxdGLwl'][1,1].real 
                   + 4.*H['HBxdGLwl'][2,2].real )*MH**2/(2.*vev**2) - H['dL3']
         
+        # 'rotated' by VCKM: V.dGLzd.V^\dagger
+        RdGLzd = matrix_mult(matrix_mult(H.ckm, H['HBxdGLzd']),H.ckm.dag())
         for i, j in H['HBxdGLzu'].keys():
             fac = -delta(i,j)*(4.*H['HBxdGLze'][1,1].real 
                               + 2.*H['HBxdGLwl'][1,1].real)
             facp = -delta(i,j)*H['HBxdGLwl'][1,1].real
         
             S['SBxHq'][i,j] = (fac/6. - H['HBxdGLzu'][i,j]
-                                - H['HBxdGLzd'][i,j]) 
+                                - RdGLzd[i,j]) 
             S['SBxHu'][i,j] = 2./3.*fac - 2.*H['HBxdGRzu'][i,j]
             S['SBxHd'][i,j] = -1./3.*fac - 2.*H['HBxdGRzd'][i,j] 
             S['SBxHpq'][i,j] = (facp + H['HBxdGLzu'][i,j] 
-                                 - H['HBxdGLzd'][i,j])
+                                 - RdGLzd[i,j])
             S['SBxHl'][i,j] = (- fac/2. - 2.*H['HBxdGLze'][i,j] 
                                 - H['HBxdGLwl'][i,j]) 
             S['SBxHpl'][i,j] = facp + H['HBxdGLwl'][i,j] 

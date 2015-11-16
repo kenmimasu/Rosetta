@@ -22,9 +22,11 @@ class TwoDMatrix(SLHA.NamedMatrix):
         intkeys = self.__parse__(key)
         i, j = self.__keymap__(intkeys)
         try:
-            return self._names[(j,i)]
+            # return self._names[(j,i)]
+            return self._names[(i,j)]
         except KeyError:
-            return key[:-3]+'{}x{}'.format(j,i)
+            # return key[:-3]+'{}x{}'.format(j,i)
+            return key[:-3]+'{}x{}'.format(i,j)
         
     def __keymap__(self, key):
         '''
@@ -97,6 +99,13 @@ class TwoDMatrix(SLHA.NamedMatrix):
     def __delitem__(self, key):
         key =  self.get_number(key) if type(key) is str else key
         return super(TwoDMatrix, self).__delitem__(key)
+    
+    def T(self):
+        new = self.__class__(self)
+        # transposed data
+        newdata = OrderedDict([((j,i),v) for (i,j),v in new._data.items()])
+        new._data = newdata
+        return new
 
 class CTwoDMatrix(TwoDMatrix, SLHA.CNamedMatrix):
     mask = tuple()    
@@ -114,7 +123,8 @@ class CTwoDMatrix(TwoDMatrix, SLHA.CNamedMatrix):
         intkeys = part.__parse__(key)
         i, j = self.__keymap__(intkeys)
         try:
-            return part._names[(j,i)]
+            # return part._names[(j,i)]
+            return part._names[(i,j)]
         except KeyError:
             return key[:-3]+'{}x{}'.format(i,j)
         
@@ -152,7 +162,30 @@ class CTwoDMatrix(TwoDMatrix, SLHA.CNamedMatrix):
     
     def __contains__(self, key):
         return super(CTwoDMatrix, self).__contains__(key)
-
+        
+    def T(self):
+        new = self.__class__(self)
+        # transposed data
+        newdata = OrderedDict([((j,i),v) for (i,j),v in new._data.items()])
+        re_data = OrderedDict([((j,i),v) for (i,j),v in new._re._data.items()])
+        im_data = OrderedDict([((j,i),v) for (i,j),v in new._im._data.items()])
+        new._data = newdata
+        new._re._data = re_data
+        new._im._data = im_data
+        return new
+    
+    def dag(self):
+        new = self.__class__(self)
+        # transposed data
+        newdata = OrderedDict([((j,i),v.conjugate()) 
+                               for (i,j),v in new._data.items()])
+        re_data = OrderedDict([((j,i),v) for (i,j),v in new._re._data.items()])
+        im_data = OrderedDict([((j,i),-v) for (i,j),v in new._im._data.items()])
+        new._data = newdata
+        new._re._data = re_data
+        new._im._data = im_data
+        return new
+        
 class SymmetricMatrix(TwoDMatrix):
     mask = ((2,1),(3,1),(3,2))
     def __keymap__(self, key):
@@ -210,6 +243,8 @@ class HermitianMatrix(CTwoDMatrix):
             return value.conjugate()
         else:
             return value
+    def dag(self):
+        return self
 
         
 ################################################################################
@@ -218,8 +253,8 @@ def matrix_mult(A, B, assign=None):
     '''
     Matrix operation A.B:
     Perform matrix multiplication of A and B. If the assign option is given, the 
-    result will be assigned to its elements, otherwise, an object of identical 
-    type to A will be returned.
+    result will be assigned to its elements, otherwise, an TwoDMatrix or 
+    CTwoDMatrix will be returned depending on the type of Matrices A & B.
     Objects should be SLHA.Matrix instances or be indexable as [i,j,..] and 
     posess the dimension() method which returns a tuple of array dimensions. 
     Assumes indexing from 1.
@@ -275,7 +310,8 @@ def matrix_add(A, B, assign=None):
         raise IndexError(err)
             
     if assign is None:
-        dimC = dimA[:-1] + dimB[1:]
+        # dimC = dimA[:-1] + dimB[1:]
+        dimC = dimA
         if isinstance(A, SLHA.CBlock) or isinstance(B, SLHA.CBlock):
             C = CTwoDMatrix()
         else:
@@ -315,6 +351,7 @@ def matrix_sub(A, B, assign=None):
         raise IndexError(err)
             
     if assign is None:
+        dimC = dimA
         if isinstance(A, SLHA.CBlock) or isinstance(B, SLHA.CBlock):
             C = CTwoDMatrix()
         else:

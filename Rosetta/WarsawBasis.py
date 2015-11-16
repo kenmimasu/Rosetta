@@ -114,14 +114,19 @@ class WarsawBasis(Basis.Basis):
                                 - 1./2.*W['WBxHl'][i,j] + f(-1./2.,-1.,i,j))
             M[XB+'xdGRze'][i,j] = (- 1./2.*W['WBxHe'][i,j] + f(0.,-1.,i,j))
             M[XB+'xdGLzu'][i,j] = (1./2.*W['WBxHpq'][i,j] 
-                                - 1./2.*W['WBxHq'][i,j] + f(1./2.,2./3.,i,j))
-            M[XB+'xdGLzd'][i,j] = (-1./2.*W['WBxHpq'][i,j] 
-                                - 1./2.*W['WBxHq'][i,j] + f(-1./2.,-1./3.,i,j))
+                                   - 1./2.*W['WBxHq'][i,j] + f(1./2.,2./3.,i,j))
+            M[XB+'xdGLzd'][i,j] = -1./2.*matrix_mult( W.ckm.dag(),
+                                          matrix_mult(
+                                             matrix_add(W['WBxHpq'],W['WBxHq']), 
+                                             W.ckm)
+                                         )[i,j] + f(-1./2.,-1./3.,i,j)
+            
             M[XB+'xdGRzu'][i,j] = (- 1./2.*W['WBxHu'][i,j] + f(0.,2./3.,i,j))
             M[XB+'xdGRzd'][i,j] = (- 1./2.*W['WBxHd'][i,j] + f(0.,-1./3.,i,j))
             M[XB+'xdGLwl'][i,j] = (W['WBxHpl'][i,j] + f(1./2.,0.,i,j) 
                                 - f(-1./2.,-1.,i,j))
-
+        
+        
         for k,v in W['WBxHud'].iteritems():
             M[XB+'xdGRwq'][k] = -v/2.
 
