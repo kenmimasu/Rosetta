@@ -83,19 +83,14 @@ class SILHBasis(Basis.Basis):
         gp2 = gw2*s2w/c2w # Hypercharge coupling squared
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
-    
-    def to_BC_or_HB(self, instance, target='bsmc'):
+        
+    @Basis.translation('higgs')
+    def to_higgs(self, instance, target='bsmc'):
         '''
-        Translation function to Mass basis or Higgs basis, which differs only in 
-        the prefix of the flavored blocks.
+        Translation function to  Higgs basis.
         '''
-        # prefix switch depending on target
-        if target == 'bsmc':
-            XB = 'BC'
-        elif target == 'higgs':
-            XB = 'HB'
-        else:
-            raise Basis.TranslationError('target must be "bsmc" or "higgs"')
+        # Higgs Basis prefix
+        XB = 'HB'
         
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
@@ -122,8 +117,8 @@ class SILHBasis(Basis.Basis):
             
         # W/Z chiral coupling deviations
         for i,j in S['SBxHpl'].keys():
-            M[XB+'xdGLzv'][i,j] = (1./2.*S['SBxHpl'][i,j] 
-                                - 1./2.*S['SBxHl'][i,j] + f(1./2.,0.,i,j))
+            # M[XB+'xdGLzv'][i,j] = (1./2.*S['SBxHpl'][i,j]
+            #                     - 1./2.*S['SBxHl'][i,j] + f(1./2.,0.,i,j))
             M[XB+'xdGLze'][i,j] = (-1./2.*S['SBxHpl'][i,j] 
                                 - 1./2.*S['SBxHl'][i,j] + f(-1./2.,-1.,i,j))
             M[XB+'xdGRze'][i,j] = (- 1./2.*S['SBxHe'][i,j] + f(0.,-1.,i,j))
@@ -143,25 +138,13 @@ class SILHBasis(Basis.Basis):
 
         for k,v in S['SBxHud'].iteritems():
             M[XB+'xdGRwq'][k] = -v/2.
-
-        matrix_sub(matrix_mult(M[XB+'xdGLzu'], S.ckm),
-                   matrix_mult(S.ckm, M[XB+'xdGLzd']),
-                   M[XB+'xdGLwq'])
         
         onames = ['xdGLze', 'xdGRze', 'xdGLzv', 'xdGLzu', 'xdGRzu', 
                   'xdGLzd', 'xdGRzd', 'xdGLwl', 'xdGLwq', 'xdGRwq']
                   
         vertex = [XB + o for o in onames]
         
-        # HVFF coeffs [Eqns (3.10)]
-        for dG in vertex: 
-            dGh = dG[:-2]+'h'+dG[-2:]
-            matrix_eq(M[dG], M[dGh])
-        
-        # Higgs couplings to W/Z [eqn (4.14)]
-        M['dCw'] =  -S['sH'] - gw2*gp2/(gw2-gp2)*( S['sW'] + S['sB'] 
-                         + S['s2W'] + S['s2B'] - 4./gp2*S['sT'] 
-                         + (3.*gw2 + gp2)/(2.*gw2*gp2)*S['SBxHpl'][2,2].real)
+        # Higgs couplings to Z [eqn (4.14)]
         M['dCz'] = -S['sH'] - 3./2.*S['SBxHpl'][2,2].real 
         
         # Two derivative field strength interactions [eqn (4.15)]
@@ -174,21 +157,11 @@ class SILHBasis(Basis.Basis):
                                   - 4.*S['sT'] + 2.*S['SBxHpl'][2,2].real ) 
         M['Cza']  = ( S['sHB'] - S['sHW'])/2. - s2w*S['sBB']
         
-        M['Cabx'] =  ( S['sHW'] - S['sHB'])/2.+ 1./(gw2-gp2)*(
-                           gw2*(S['sW']+S['s2W']) + gp2*(S['sB']+S['s2B'])
-                         - 4.*S['sT'] + 2.*S['SBxHpl'][2,2].real )
-        M['Cww']  =  -S['sHW']
-        # factor 2 wrong in note here 
-        M['Cwbx'] =  S['sHW']/2. + 1./2./(gw2-gp2)*(
-                           gw2*(S['sW']+S['s2W']) + gp2*(S['sB']+S['s2B'])
-                         - 4.*S['sT'] + 2.*S['SBxHpl'][2,2].real )
         M['tCgg'] = S['tsGG'] 
         M['tCaa'] = S['tsBB']
         M['tCzz'] = -1./(gw2+gp2)*( gw2*S['tsHW'] + gp2*S['tsHB'] 
                                      - gp2*s2w*S['tsBB'] )
-        M['tCza'] = ( S['tsHB'] - S['tsHW'])/2. - s2w*S['tsBB']
-        M['tCww'] =  -S['tsHW']
-        
+        M['tCza'] = ( S['tsHB'] - S['tsHW'])/2. - s2w*S['tsBB']        
         
         # solution for  [eqn (5.16)]
         # dy*cos(phi) == X
@@ -219,10 +192,6 @@ class SILHBasis(Basis.Basis):
                 M[XB+'xdY'+f][i,j], M[XB+'xS'+f][i,j] = dy_sf(dy_cosphi, 
                                                               dy_sinphi)
 
-                re = 3.*s_Re/sqrt(2.) - diag2
-                im = 3.*s_Im/sqrt(2.)
-                M[XB+'xY2'+f][i,j] = complex(re, im)
-
         # Dipole interactions
         ii = complex(0.,1.)
         for f in ('u','d','e'):
@@ -249,97 +218,21 @@ class SILHBasis(Basis.Basis):
                 M[zed][i,j] = -sqrt(2.)/(gw2+gp2)*(Zij + Zji.conjugate())
                 M[tzed][i,j] =  -ii*sqrt(2.)/(gw2+gp2)*(Zij - Zji.conjugate())
 
-            for i,j in M[dub].keys():
-                M[dub][i,j] =  -2.*sqrt(2.)*S['SBx'+f+'W'][i,j]
-        # list of all z/w vertex correction blocks
-        onames = ['xdGLze', 'xdGRze', 'xdGLzv', 'xdGLzu', 'xdGRzu', 
-                  'xdGLzd', 'xdGRzd', 'xdGLwl', 'xdGLwq', 'xdGRwq']
-        # list of all z/w/a dipole interaction blocks
-        dnames = ['xdgu', 'xdgd', 'xdau', 'xdad', 'xdae', 
-                  'xdzu', 'xdzd', 'xdze', 'xdwu', 'xdwd', 'xdwe', 
-                  'xtdgu', 'xtdgd', 'xtdau', 'xtdad', 'xtdae', 
-                  'xtdzu', 'xtdzd', 'xtdze']
-                  
-        vertex = [XB + o for o in onames]
-        dipole = [XB + o for o in dnames]
-        
-        # HVFF coeffs and dipole-like Higgs couplings [Eqns. (3.10) & (5.6)]
-        for dG in vertex+dipole: 
-            dGh = dG[:-2]+'h'+dG[-2:]
-            matrix_eq(M[dG], M[dGh])
-
         # Triple gauge couplings [eqn. (5.18)]
-        M['dG1z'] = -(gw2+gp2)/(gw2-gp2)/4.*( (gw2-gp2)*S['sHW'] 
-                        + gw2*(S['sW'] + S['s2W']) + gp2*(S['sB'] + S['s2B']) 
-                        - 4.*S['sT'] + 2.*S['SBxHpl'][2,2].real )
-        M['dKa'] = - gw2/4.*(S['sHW']+S['sHB'])
-        M['dKz'] = ( -1./4.*(gw2*S['sHW'] - gp2*S['sHB'])
-                      -(gw2+gp2)/(gw2-gp2)/4.*(
-                          gw2*(S['sW'] + S['s2W'])
-                          + gp2*(S['sB'] + S['s2B']) 
-                          - 4.*S['sT'] + 2.*S['SBxHpl'][2,2].real
-                          )
-                      )
-        M['La'] = -S['s3W']*3./2.*gw2**2
-        M['Lz'] =  M['La']
-        M['tKa'] =  - gw2/4.*(S['tsHW']+S['tsHB'])
-        M['tKz'] = gp2/4.*(S['tsHW']+S['tsHB'])
-        M['tLa'] = -S['ts3W']*3./2.*gw2**2
-        M['tLz'] =  M['tLa']
+        M['Lz'] = -S['s3W']*3./2.*gw2**2
+        M['tLz'] = -S['ts3W']*3./2.*gw2**2
         M['C3g']  = S['s3G']
         M['tC3g']  = S['ts3G']
-
-        # Quartic gauge couplings [Sec 3.7] [eqn (3.23)] 
-        M['dGw4'] = 2.*c2w*M['dG1z']
-        M['dGw2z2'] = 2.*M['dG1z']
-        M['dGw2za'] = M['dG1z']
         
-        # two derivative quartic gauge couplings [Sec 3.7] [eqn (3.24)] 
-        M['Lw4'] = -gw2/2./MW**2*M['Lz']
-        M['tLw4'] = -gw2/2./MW**2*M['tLz']
-        M['Lw2z2'] = -gw2*c2w/MW**2*M['Lz']
-        M['tLw2z2'] = -gw2*c2w/MW**2*M['tLz']
-        M['Lw2za'] = -ee2/MW**2*M['Lz']
-        M['tLw2za'] = -ee2/MW**2*M['tLz']
-        M['Lw2a2'] = -sqrt(ee2*gw2*c2w)/MW**2*M['Lz']
-        M['tLw2a2'] = -sqrt(ee2*gw2*c2w)/MW**2*M['tLz']
-        M['Lw2az'] = -sqrt(ee2*gw2*c2w)/MW**2*M['Lz']
-        M['tLw2az'] = -sqrt(ee2*gw2*c2w)/MW**2*M['tLz']
-        M['C4g'] = 3.*sqrt(gs2)**3/vev**2*M['C3g']
-        M['tC4g'] = 3.*sqrt(gs2)**3/vev**2*M['tC3g']
-
-        # Higgs cubic interaction [eqn. (4.19)]
+        # # Higgs cubic interaction [eqn. (4.19)]
         M['dL3']  =  -MH**2/(2.*vev**2)*(3.*S['sH'] + S['SBxHpl'][2,2].real/2.) - S['s6H']
         M['dL4'] = 3./2.*M['dL3'] - MH**2/vev**2/6.*M['dCz']
-        
-        # Couplings of two Higgs bosons to gluons [Sec 3.8]
-        # [eqn (3.27)] copied from HiggsBasis implemetation
-        M['Cgg2'], M['tCgg2'] = M['Cgg'], M['tCgg']
-        
-        M['dCz2'] = M['dCz']
-        M['dCw2'] = M['dCw'] + 3.*M['dM']
-        
-        hvv = ['Cww', 'Cwbx', 'Cgg', 'Caa', 'Cza', 'Czz', 'Czbx', 'Cabx',
-               'tCww', 'tCgg', 'tCaa', 'tCza', 'tCzz']
-        
-        for cvv in hvv:
-            cvv2 = cvv +'2'
-            M[cvv2] = M[cvv]
-        
+
+        # Four fermion interactions
         M['cll1122'] = (gp2*S['s2B'] - gw2*S['s2W'])/2.
-        M['cll1221'] = gw2*S['s2W']
         M['cpuu3333'] = (1./3.)*gs2*S['s2G']
         
         return M
-        
-        
-    @Basis.translation('bsmc')
-    def to_bsmc(self,instance):
-        return self.to_BC_or_HB(instance, target = 'bsmc')
-    
-    @Basis.translation('higgs')
-    def to_higgs(self,instance):
-        return self.to_BC_or_HB(instance, target = 'higgs')
     
     @Basis.translation('warsaw')
     def to_warsaw(self, instance):

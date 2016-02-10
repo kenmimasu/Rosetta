@@ -50,18 +50,18 @@ print '########## Rosetta ##########'
 print 'Reading "{}"\n'.format(args.param_card)
 thecard = SLHA.read(args.param_card)
 if 'basis' not in thecard.blocks:
-    raise RosettaError('\n\tParameter card {} '.format(args.param_card) + 
+    raise RosettaError('\n    Parameter card {} '.format(args.param_card) + 
                        'does not have a block "BASIS".')
 else:
     try:
         basis = thecard.blocks['basis'][1]
     except KeyError:
-        raise RosettaError('\n\tFormatting error for block basis. '
+        raise RosettaError('\n    Formatting error for block basis. '
                                'Check input card, {}.'.format(args.param_card))
 try:
     mybasis = implemented.bases[basis.lower()] 
 except KeyError:
-    err = ('\n\tElement 1 of block "BASIS", "{}", not recognised. '.format(basis)
+    err = ('\n    Element 1 of block "BASIS", "{}", not recognised. '.format(basis)
            + 'Rosetta accepts one of: {}.'.format(', '.join(bases.keys())))
     raise RosettaError(err)
 
@@ -75,7 +75,7 @@ if not args.output: # output file name
 else:
     new_param_card = args.output
 
-print 'Basis class used to read in param card:\n\t{}\n'.format(mybasis)
+print 'Basis class used to read in param card:\n    {}\n'.format(mybasis)
 
 # if args.flavor not in ('general','diagonal','universal','MFV'):
 

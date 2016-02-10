@@ -1116,7 +1116,7 @@ def read_until(lines, here, *args):
     Case insensitive.
     Args:
         lines - iterator of strings
-        here - string (plus any further argumnts). 
+        here - string (plus any further arguments). 
                Reading will end if the line matches any of these.
     Return:
         lines_read - list of lines read

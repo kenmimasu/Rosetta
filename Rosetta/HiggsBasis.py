@@ -101,9 +101,10 @@ class HiggsBasis(Basis.Basis):
     def calculate_dependent(self):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         A = self
+
         MH = self.mass[25]
         MW = self.mass[24]
-                
+               
         def delta(i,j):
             return 1. if i==j else 0.
         
@@ -126,7 +127,7 @@ class HiggsBasis(Basis.Basis):
         matrix_sub(matrix_mult(A['HBxdGLzu'], A.ckm),
                    matrix_mult(A.ckm, A['HBxdGLzd']),
                    A['HBxdGLwq'])
-                   
+        
         # W dipole interaction
         ii = complex(0.,1.)
         for f in ('u','d','e'):
@@ -137,7 +138,7 @@ class HiggsBasis(Basis.Basis):
             for i,j in A[wdip].keys():
                 A[wdip][i,j] = eta*( A[zdip][i,j] - ii*A[tzdip][i,j] + 
                                 s2w*(A[adip][i,j] - ii*A[tadip][i,j]) )
-        
+
         # list of all z/w vertex correction blocks
         vertex = ['HBxdGLze', 'HBxdGRze', 'HBxdGLzv', 'HBxdGLzu', 'HBxdGRzu', 
                   'HBxdGLzd', 'HBxdGRzd', 'HBxdGLwl', 'HBxdGLwq', 'HBxdGRwq']
@@ -185,6 +186,7 @@ class HiggsBasis(Basis.Basis):
         A['tC4g'] = 3.*sqrt(gs2)**3/vev**2*A['tC3g']
         
         # Couplings of two Higgs bosons [Sec 3.8] [eqn (3.27)]
+        # Gauge
         A['Cgg2'], A['tCgg2'] = A['Cgg'], A['tCgg']
         A['dCz2'] = A['dCz']
         A['dCw2'] = A['dCw'] + 3.*A['dM']
@@ -195,6 +197,7 @@ class HiggsBasis(Basis.Basis):
             cvv2 = cvv + '2'
             A[cvv2] = A[cvv]
         
+        # Yukawas
         for f in ('u','d','e'):
             yuk = 'HBxdY' + f
             sin = 'HBxS' + f
@@ -265,6 +268,7 @@ class HiggsBasis(Basis.Basis):
                    )*gp2*gw2/(2.*(gw2 - gp2)*(gw2 + gp2)**2)
                     + dM)
         cT = W['cT']
+        
         # 'rotated' by VCKM: V.dGLzd.V^\dagger
         RdGLzd = matrix_mult(matrix_mult(H.ckm, H['HBxdGLzd']),H.ckm.dag()) 
         for i,j in H['HBxdGLzu'].keys():
@@ -314,7 +318,7 @@ class HiggsBasis(Basis.Basis):
                                        - (H['HBxda'+f][i,j] 
                                           - ii*H['HBxtda'+f][i,j])
                                       )/(2.*sqrt(2.))
-                                      
+        
         W['c3G'], W['tc3G'] = H['C3g'], H['tC3g']
         W['c3W'], W['tc3W'] = -2./3./gw2**2*H['Lz'], -2./3./gw2**2*H['tLz']
         W['cll1122'], W['cpuu3333'] = H['cll1122'], H['cpuu3333']
@@ -412,6 +416,7 @@ class HiggsBasis(Basis.Basis):
         for k, v in H['HBxdGRwq'].iteritems():
             S['SBxHud'][k] = -2.*v            
         
+        # Yukawa interactions
         for f in ('u','d','e'):
             for i,j in H['HBxdY'+f].keys(): 
                 diag = delta(i,j)*(dCz - H['HBxdGLwl'][1,1].real 
@@ -439,18 +444,80 @@ class HiggsBasis(Basis.Basis):
                 S['SBx'+f+'B'][i,j] =  (eta*H['HBxdw'+f][i,j]
                                        - (H['HBxda'+f][i,j] 
                                           - ii*H['HBxtda'+f][i,j])
-                                      )/(2.*sqrt(2.))
-
+                                       )/(2.*sqrt(2.))
+        
         return S
     
+    
+    @Basis.translation('hisz')
+    def to_hisz(self, instance):
+        
+        s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
+        print 's2w, c2w, ee2, gw2, gp2, MZ, vev, gs2',s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
+
+        dg = gw2 - gp2
+        dg_inv = 1./dg
+        
+        H = self
+        Z = instance
+        
+        Z['Lam'] = vev
+        
+        Z['fGG'] = -8.*math.pi**2*H['Cgg']
+    
+        Z['fH2'] = -2.*H['dCz']
+
+        Z['fW'] = -4.*dg_inv*(gw2*H['Czbx'] + gp2*H['Czz'] 
+                             - s2w*ee2*H['Caa'] - s2w*dg*H['Cza'])
+        
+        Z['fB'] = 4.*dg_inv*(gw2*H['Czbx'] + gw2*H['Czz'] 
+                            - c2w*ee2*H['Caa'] - c2w*dg*H['Cza'])
+
+        Z['fWW'] = -dg_inv*(2.*gw2*H['Czbx'] + (gw2 + gp2)*H['Czz'] 
+                           - s2w*gp2*H['Caa'])
+                           
+        Z['fBB'] = dg_inv*(2.*gw2*H['Czbx'] + (gw2 + gp2)*H['Czz'] 
+                          - c2w*gw2*H['Caa'])
+                           
+        Z['fWWW'] = 8./(3.*gw2**2)*H['Lz']
+    
+        Z['tfGG'] = -8.*math.pi**2*H['tCgg']
+
+        Z['tfW'] = 4.*(H['tCzz']- (c2w-s2w)*H['tCza']  - s2w*c2w*H['tCaa'] )
+
+        Z['tfWW'] = (H['tCzz']- 2.*c2w*H['tCza'] - s2w*(c2w + 1.)*H['tCaa'])
+                           
+        Z['tfBB'] = -H['tCzz']+ 2.*c2w*H['tCza'] - c2w**2*H['tCaa']
+        
+        Z['tfWWW'] = 8./(3.*gw2**2)*H['tLz']
+        
+        
+        def delta(i,j):
+            return 1. if i==j else 0.
+        
+        # Yukawa interactions
+        for f in ('u','d','e'):
+            for i,j in H['HBxdY'+f].keys(): 
+               
+                yuk = H['HBxdY'+f][i,j]
+                sin = H['HBxS'+f][i,j]
+                cos = sqrt(1.-sin**2)
+                
+                re = ( delta(i,j)*H['dCz'] - yuk*cos )*sqrt(2.)
+                im = yuk*sin*sqrt(2.)
+                Z['HZx'+f][i,j] = complex(re, im)
+        
+        return Z
+
+################################################################################
     def modify_inputs(self):
         '''
         W mass modification from dM.
         '''
+        print 'changin MW'
         try:
             self.mass[24] += self['dM']
         except KeyError:
             self.mass.new_entry(24, MW + self['dM'], name = 'MW')
-        
         
 ################################################################################ 

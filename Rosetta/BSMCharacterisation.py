@@ -118,8 +118,9 @@ class BSMCharacterisation(Basis.Basis):
     # All parameters independent
     independent = ( [c for v in blocks.values() for c in v] + 
                     [c for c in flavored.keys()] )
+
     required_inputs = {1, 2, 4}
-    # all other undefined behavoiur inherited from Basis.Basis by default
+    # all other undefined behaviour inherited from Basis.Basis by default
 ################################################################################
     def modify_inputs(self):
         '''

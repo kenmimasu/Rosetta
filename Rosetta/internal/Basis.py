@@ -118,13 +118,13 @@ class Basis(MutableMapping):
     
     blocks = dict()
     independent = []
-    dependent = []
+    # dependent = []
     flavored = dict()
     required_inputs, required_masses = set(),set()
     
-    def __init__(self, param_card=None, output_basis='bsmc', 
+    def __init__(self, param_card=None, output_basis='bsmc', flavor = 'general',
                  ehdecay=False, silent=False, translate=True,
-                 flavor = 'general', dependent=True):
+                 dependent=True, modify_inputs=True):
         '''
         Keyword arguments:
             param_card   - SLHA formatted card conforming to the definitions in 
@@ -149,7 +149,10 @@ class Basis(MutableMapping):
         self.param_card = param_card
         self.output_basis = output_basis
         self.newname = 'Basis'
+        if not hasattr(self, 'dependent'): self.dependent=[]
+
         self.set_dependents()
+
         self.set_fblocks(self.flavor)
 
         # read param card (sets self.inputs, self.mass, self.name, self.card)
@@ -184,8 +187,9 @@ class Basis(MutableMapping):
                 # do nothing
                 self.newbasis = self
             
-            self.newbasis.modify_inputs()
-            self.newbasis.check_modified_inputs()
+            if modify_inputs:
+                self.newbasis.modify_inputs()
+                self.newbasis.check_modified_inputs()
             
             # delete imaginary parts of diagonal elements in hermitian matrices
             if self.output_basis != 'bsmc':
@@ -311,7 +315,7 @@ class Basis(MutableMapping):
                 else:
                     self.dependent.extend(dependents)
                     self.independent.extend(independents)
-                
+        
     def set_fblocks(self, option='general'):
         self.fblocks = dict()
         for name, opt in self.flavored.iteritems():
@@ -333,6 +337,7 @@ class Basis(MutableMapping):
         preamble = ('\n###################################\n'
             + '## INFORMATION FOR {} BASIS\n'.format(self.name.upper())
             + '###################################\n')
+            
         thecard.blocks['basis'].preamble=preamble
 
         # default behaviour: create one 'newcoup' block, ignoring flavored
@@ -380,18 +385,46 @@ class Basis(MutableMapping):
             for bname, blk in self.card.matrices.iteritems():
                 # only consider declared flavor matrices
                 if bname not in self.flavored: continue
+                
                 # only consider independent blocks
                 if not newcard.has_matrix(bname):
                     blks_to_del.append(bname) 
                     continue
-                to_del = []
+                
                 # delete elements not present in default card
+                to_del = []
+                no_del = []
                 for k in blk.keys():
                     cname = blk.get_name(k)
                     if k not in newcard.matrices[bname]:
-                        to_del.append(k)
+                        if abs(blk[k]) < 1e-6:
+                            to_del.append(k)
+                        else:                            
+                            no_del.append(k)
+                
+                # only keep 2,2 and 3,3 elements as anomalous if they 
+                # sufficiently different from the 1,1 element in the universal 
+                # case.
+                if no_del and (_from, to) == ('general', 'universal'): 
+                    for diag in ((2,2), (3,3)):
+                        if diag in no_del:
+                            val = abs(blk[diag])
+                            if val - abs(blk[1,1]) < 1e-4*val:
+                                no_del.remove(diag)
+                                to_del.append(diag)
+                
                 for k in to_del:
                     del blk[k]
+
+                if no_del:
+                    no_del_names = [blk.get_name(k) for k in no_del]
+                    print  'Warning in {}.set_flavour():'.format(self.__class__)
+                    print ('    Reduction in flavour structure ' +
+                           'from "{}" to "{}" '.format(_from, to) +
+                           'encountered some unexpected non-zero elements ' +
+                           '(> 1e-6) which were not deleted.')
+                    print 'Not deleted: {}\n'.format(', '.join(no_del_names))
+                
             for blk in blks_to_del:
                 del self.card.matrices[blk]
                         
@@ -587,8 +620,9 @@ class Basis(MutableMapping):
         PID_list = ', '.join([str(x) for x in required_masses])
         if required_masses:
             if self.mass is None:
-                repr_default = ['{}={: .5e}'.format(particle_names[k], 
-                                 default_inputs.get(k,0.)) for 
+
+                repr_default = ['{}={:.5e}'.format(particle_names[k], 
+                                 default_masses.get(k,0.)) for 
                                  k in required_masses]
                 mass_list = ', '.join( ['{} (M{})'.format(x,particle_names[x]) 
                                         for x in required_masses] )
@@ -598,7 +632,7 @@ class Basis(MutableMapping):
                     print 'Required PIDs: {}'.format(mass_list)
 
                     carry_on = Y_or_N(
-                        'Continue with default values '\
+                        ' values '\
                         'for unspecified masses? '\
                         '({})'.format(', '.join(repr_default))
                                      )
@@ -666,7 +700,11 @@ class Basis(MutableMapping):
                         print 'Exit'
                         sys.exit()
 
-    def check_param_data(self, silent=False):
+    def check_param_data(self, silent=False, 
+                               do_unknown=True, 
+                               do_consistency=True,
+                               do_dependent=True,
+                               do_independent=True):
         '''
         Cross check of parameter data read in the SLHA formatted card.
         Compares lists of coefficients declared in self.independent and 
@@ -703,7 +741,7 @@ class Basis(MutableMapping):
                            
             # check for unrecognised coefficient numbers              
             unknown = input_eles.difference(defined_eles)
-            if unknown:
+            if unknown and do_unknown:
                 unknown_names = {i:inputblock.get_name(i,'none') 
                                  for i in unknown}
                 if not silent:
@@ -727,7 +765,7 @@ class Basis(MutableMapping):
                 elif input_name.lower()!=name.lower():
                     mismatched.append((index,name,input_name))
                     
-            if mismatched:
+            if mismatched and do_consistency:
                 if not silent:
                     print 'Warning: Mismatch of coefficient names '\
                           'in {}, block "{}".'.format(self.__class__,
@@ -743,7 +781,7 @@ class Basis(MutableMapping):
             # check if coefficients defined as dependent 
             # have been assigned values
             defined_dependent = set(dependent).intersection(input_eles)
-            if defined_dependent: 
+            if defined_dependent and do_dependent: 
                 if not silent:
                     print 'Warning: you have assigned values to some '\
                           'coefficients defined as dependent '\
@@ -766,7 +804,7 @@ class Basis(MutableMapping):
             
             # check if all independent coefficients are assigned values
             missing = set(independent).difference(input_eles).difference(set(dependent))
-            if missing: # Deal with unassigned independent coefficients
+            if missing and do_independent: # Deal with unassigned independent coefficients
                 if not silent:
                     print 'Warning: some coefficients defined as independent '\
                           'in {}, block "{}", have not been assigned values'\
@@ -1157,7 +1195,7 @@ class Basis(MutableMapping):
         names = [self.name.lower()]+[x[0] for x in chain]
         if verbose:
             print 'Rosetta will be performing the translation:'
-            print '\t'+' -> '.join([bases[x].__name__ 
+            print '    '+' -> '.join([bases[x].__name__ 
                                                     for x in names])
         
         # perform succesive translations, checking for  
@@ -1167,37 +1205,56 @@ class Basis(MutableMapping):
         
         required_inputs = current.required_inputs
         required_masses = current.required_masses
+
         
-        for target, function in chain:
+        for target, translate_function in chain:
             # new target basis instance
-            instance = bases[target]()
+            # instance = bases[target](dependent=False)
+            instance = bases[target](dependent=True)
             # ensure required inputs are present
             message = 'translation ({} -> {})'.format(current.name, 
                                                       instance.name)
-            
+                                                      
             current.check_sminputs(required_inputs, message=message)
             current.check_masses(required_masses, message=message)
-            # call translation function
-            new = function(current, instance)
+            
+            new = translate_function(current, instance)
+            
             # update new basis instance with non-EFT blocks, decays
             all_coeffs = (current.blocks.keys() + current.flavored.keys())
             new.get_other_blocks(current.card, all_coeffs)
+            
+            message = ' {}'.format(instance.__class__)
+            # checks & calculate dependent
+            print 'Checking for required SM inputs'
+            new.check_sminputs(new.required_inputs, message=message)
+            print 'Checking for required masses'
+            new.check_masses(new.required_masses, message=message)
+            print 'Checking EFT coefficients'
+            # NOTE cannot check for presence of dependent coefficients as there 
+            # is no difference between the coefficient existing and it having 
+            # been assigned a value.
+            new.check_param_data(do_dependent=False)
+            print 'Calling {}.calculate_dependent()'.format(new.__class__)
+            new.init_dependent()
+            new.calculate_dependent()
             
             # prepare for next step
             required_inputs = set(instance.required_inputs)
             required_masses = set(instance.required_masses)
             current = new
-
+        
         if current.name =='bsmc':
             current.expand_matrices()
         else:
             current.flavor = self.flavor
             # reduce flavor structure back to user set option
-            current.set_flavor('general', self.flavor)
+            current.set_flavor('general', self.flavor)            
             
         if verbose:
             print 'Translation successful.\n'
-            
+        
+        
         return current
 
     def get_other_blocks(self, card, ignore):
@@ -1367,7 +1424,7 @@ class Basis(MutableMapping):
               
     def modify_inputs(self):
         '''
-        Default behavoiur of calculate_dependent(). Called if a subclass of 
+        Default behavoiur of modify_inputs(). Called if a subclass of 
         Basis has not implemented the function.
         '''
         print 'Nothing done for {}.modify_'\
@@ -1418,7 +1475,7 @@ def flavor_coeffs(name, kind='hermitian', domain='real', flavor='general',
                          cname = None):
     '''
     Function to create flavor components of a coefficient according to its 
-    properties. Takes a parameter name as an arguement and returns a tuple of 
+    properties. Takes a parameter name as an argument and returns a tuple of 
     lists corresponding to the real and imaginary parts of the matrix elements. 
     The naming convention for real coefficients is to suffix the coefficient 
     name with the matrix indices separates by "x". 
