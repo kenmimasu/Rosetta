@@ -1,10 +1,12 @@
 import os
+from SLHA import CaseInsensitiveDict as CIdict
 __doc__ ='''
     Reads config.txt and sets some variables relevant to running Rosetta.
 '''
 ################################################################################
 dirname= os.path.dirname(__file__)
 eHDECAY_dir=''
+settings = CIdict()
 ################################################################################
 with open('{}/../config.txt'.format(dirname)) as config:
     lines = [x.strip() for x in config.readlines()]
@@ -19,13 +21,7 @@ for i,l in enumerate(lines):
     else:
         field, value = None, None
     
-    if field == 'eHDECAY_dir':
-        eHDECAY_dir = value
-    else:
-        print ('Rosetta did not recognise option "{}" '.format(field) +
-               'in line {} of config.txt'.format(i+1))
-################################################################################
-        
-        
+    settings[field] = value
     
+################################################################################
     

@@ -1,6 +1,7 @@
-from internal import Basis
 import math
 from math import sqrt
+
+from internal import Basis
 ################################################################################
 class BSMCharacterisation(Basis.Basis):
     '''

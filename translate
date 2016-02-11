@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 ################################################################################
-import Rosetta.internal.machinery as implemented
+# import Rosetta.internal.machinery as implemented
+# from Rosetta.internal import RosettaError
+# from Rosetta.internal import SLHA
+# import Rosetta.internal.machinery as implemented
+from Rosetta.internal import machinery as implemented
 from Rosetta.internal import RosettaError
 from Rosetta.internal import SLHA
 import StringIO, os, argparse, sys
-import subprocess as sub
 ################################################################################
 existing = implemented.bases.keys()
 allowed_flav = ('general', 'diagonal', 'universal')

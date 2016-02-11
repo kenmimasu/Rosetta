@@ -1,17 +1,28 @@
-import __init__ as Rosetta
+# from ..internal import particle_names, default_masses
+# from internal 
+################################################################################
 from math import sqrt
-from .. import SILHBasis as SB
 import os
 from tempfile import mkdtemp
 import subprocess as sub
 from collections import namedtuple
-from settings import eHDECAY_dir
+
+from .. import SILHBasis as SB
+from ..internal.settings import settings
+from ..internal.errors import eHDECAYInterfaceError
+from ..internal.constants import particle_names, default_masses
 ################################################################################
 # required info
 masses = {25,3,4,5,6,15,13,24,23} # H, c, b, t, tau, mu, Z, W masses
 inputs = {1,2,3} # aEWM1, Gf, aS@MZ
 
 # eHDECAY executable
+try:
+    eHDECAY_dir = settings['eHDECAY_dir']
+except KeyError:
+    err = ('Could not find option "eHDECAY_dir" in Rosetta/config.txt')
+    raise eHDecayInterfaceError(err)
+    
 executable = '{}/run'.format(eHDECAY_dir) 
 ################################################################################
 __doc__='''
@@ -46,10 +57,10 @@ def run(basis, electroweak=True):
         electroweak - switch for electroweak corrections, IELW
     '''
     if not os.path.exists(executable):
-        print ('Rosetta: could not find eHDECAY executable in {}'.format(
-        eHDECAY_dir
-        ))
-    
+        err = ('Rosetta: could not find eHDECAY ' +
+               'executable in {}'.format(eHDECAY_dir))
+        raise eHDECAYInterfaceError(err)
+        
     print ('########## eHDECAY ##########\n'
            'If you use this feature, please cite:\n'
            'R. Contino et al., Comput.Phys.Commun. 185 (2014) 3412\n'
@@ -78,7 +89,7 @@ def run(basis, electroweak=True):
     out, err = process.communicate()
     
     if err: 
-        raise RuntimeError('eHDECAY error: {}'.format(err))
+        raise eHDECAYInterfaceError(err)
     print 'eHDECAY output:\n{}'.format(out)
     
     # read BRs and total width
@@ -147,8 +158,10 @@ def nonzero_mass(basis,PID):
     '''
     themass = basis.mass[PID]
     if themass == 0.:
-        name = Rosetta.particle_names[PID]
-        default = Rosetta.default_masses[PID]
+        # name = Rosetta.particle_names[PID]
+        # default = Rosetta.default_masses[PID]
+        name = particle_names[PID]
+        default = default_masses[PID]
         print ('eHDECAY requires nonzero mass for {}. '.format(name) +
                 'Default value of {} GeV used.'.format(default))
         return default

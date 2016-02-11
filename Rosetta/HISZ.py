@@ -1,8 +1,7 @@
-from internal import Basis
 import math
 from math import sqrt
-from itertools import combinations_with_replacement as comb
-from itertools import product
+
+from internal import Basis
 from internal.constants import PID
 from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
@@ -66,7 +65,6 @@ class HISZ(Basis.Basis):
         XB = 'HB'
         
         s2w, c2w, ee2, gw2, gp2, MW, vev, gs2 = self.calculate_inputs() 
-        print 's2w, c2w, ee2, gw2, gp2, MW, vev, gs2',s2w, c2w, ee2, gw2, gp2, MW, vev, gs2
 
         H = self
         M = instance

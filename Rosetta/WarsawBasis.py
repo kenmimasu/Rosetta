@@ -1,8 +1,7 @@
-from internal import Basis
 import math
 from math import sqrt
-from itertools import combinations_with_replacement as comb
-from itertools import product
+
+from internal import Basis
 from internal.constants import PID
 from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
@@ -291,14 +290,3 @@ class WarsawBasis(Basis.Basis):
 
         return S
         
-################################################################################
-    # def modify_inputs(self):
-    #     '''
-    #     W mass modification from dM.
-    #     '''
-    #     try:
-    #         self.mass[24] += self['dM']
-    #     except KeyError:
-    #         self.mass.new_entry(24, MW + self['dM'], name = 'MW')
-
-################################################################################

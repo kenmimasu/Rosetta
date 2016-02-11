@@ -1,1 +1,2 @@
 eHDECAY_dir /Users/Ken/Work/Packages/Higgs/eHDECAY
+Lilith_dir  /Users/Ken/Work/Packages/Higgs/Lilith/1.1.3

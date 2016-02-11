@@ -17,7 +17,7 @@ from matrices import (TwoDMatrix, CTwoDMatrix, HermitianMatrix,
 from constants import (PID, default_inputs, default_masses, input_names, VCKM, 
                       IMVCKM, VCKMele, particle_names, input_to_PID, 
                       PID_to_input)
-from __init__ import RosettaError
+from errors import RosettaError, eHDECAYInterfaceError
 ################################################################################
 __doc__ = '''
 Base class for Rosetta bases as well as some utility functions for defining the 
@@ -1175,7 +1175,7 @@ class Basis(MutableMapping):
             verbose - print some status messages.
         '''
         from machinery import get_path, relationships, bases
-                
+
         # default target
         target = target if target is not None else self.output_basis
         
@@ -1183,7 +1183,7 @@ class Basis(MutableMapping):
         
         # find the chain of bases and translation functions 
         # to get from self.name to target
-        chain = get_path(self.name.lower(), target, relationships)
+        chain = get_path(self.name.lower(), target, relationships)            
 
         if not chain: # no translation possible
             inputbasis = self.__class__.__name__
@@ -1206,10 +1206,8 @@ class Basis(MutableMapping):
         required_inputs = current.required_inputs
         required_masses = current.required_masses
 
-        
         for target, translate_function in chain:
-            # new target basis instance
-            # instance = bases[target](dependent=False)
+
             instance = bases[target](dependent=True)
             # ensure required inputs are present
             message = 'translation ({} -> {})'.format(current.name, 
@@ -1217,7 +1215,7 @@ class Basis(MutableMapping):
                                                       
             current.check_sminputs(required_inputs, message=message)
             current.check_masses(required_masses, message=message)
-            
+            print message
             new = translate_function(current, instance)
             
             # update new basis instance with non-EFT blocks, decays
@@ -1226,16 +1224,16 @@ class Basis(MutableMapping):
             
             message = ' {}'.format(instance.__class__)
             # checks & calculate dependent
-            print 'Checking for required SM inputs'
+            print '\tChecking required SM inputs for "{}"'.format(new.name)
             new.check_sminputs(new.required_inputs, message=message)
-            print 'Checking for required masses'
+            print '\tChecking for required masses for "{}"'.format(new.name)
             new.check_masses(new.required_masses, message=message)
-            print 'Checking EFT coefficients'
-            # NOTE cannot check for presence of dependent coefficients as there 
-            # is no difference between the coefficient existing and it having 
-            # been assigned a value.
+            print '\tChecking EFT coefficients for "{}"'.format(new.name)
+            # NOTE switch off check for presence of dependent coefficients as 
+            # there is no difference between the coefficient existing and it 
+            # having been assigned a value.
             new.check_param_data(do_dependent=False)
-            print 'Calling {}.calculate_dependent()'.format(new.__class__)
+            print '\tCalling {}.calculate_dependent()\n'.format(new.__class__)
             new.init_dependent()
             new.calculate_dependent()
             
@@ -1252,7 +1250,7 @@ class Basis(MutableMapping):
             current.set_flavor('general', self.flavor)            
             
         if verbose:
-            print 'Translation successful.\n'
+            print '\nTranslation successful.\n'
         
         
         return current
@@ -1361,9 +1359,11 @@ class Basis(MutableMapping):
         Interface Rosetta with eHDECAY to calculate Higgs widths and branching 
         fractions. 
         '''
-        import eHDECAY
-        
-        BRs = eHDECAY.run(self, electroweak=True)
+        from ..interfaces import eHDECAY
+        try:
+            BRs = eHDECAY.run(self, electroweak=True)
+        except eHDECAYInterfaceError:
+            print e
         
         sum_BRs = sum([v for k,v in BRs.items() if k is not 'WTOT'])
         
@@ -1416,7 +1416,7 @@ class Basis(MutableMapping):
         
     def calculate_dependent(self):
         '''
-        Default behavoiur of calculate_dependent(). Called if a subclass of 
+        Default behaviour of calculate_dependent(). Called if a subclass of 
         Basis has not implemented the function.
         '''
         print 'Nothing done for {}.calculate_'\

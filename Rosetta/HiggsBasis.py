@@ -1,11 +1,10 @@
+import sys
+import math
+from math import sqrt
+
 from internal import Basis
 from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
 import BSMCharacterisation as BSMC
-import sys
-import math, re
-from math import sqrt
-from itertools import combinations_with_replacement as comb
-from itertools import product
 from internal.constants import PID
 ################################################################################
 BSMCharacterisation = BSMC.BSMCharacterisation
@@ -453,7 +452,6 @@ class HiggsBasis(Basis.Basis):
     def to_hisz(self, instance):
         
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
-        print 's2w, c2w, ee2, gw2, gp2, MZ, vev, gs2',s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
 
         dg = gw2 - gp2
         dg_inv = 1./dg

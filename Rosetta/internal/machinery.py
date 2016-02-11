@@ -1,6 +1,8 @@
 # Imports all modules in the Rosetta base directory
-from Rosetta import __all__ as basisnames
-from Rosetta import *
+from .. import __all__ as basisnames
+from .. import *
+# from .. import HiggsBasis
+from errors import TranslationPathError
 import inspect
 ################################################################################
 __doc__ = '''
@@ -13,7 +15,10 @@ is used in the translate() function of the class Basis.
 '''
 
 def relate(mydict):
-    '''recursively build the relations tree for implemented.py'''
+    '''
+    Recursively build the relations tree for translation functions between 
+    bases. 
+    '''
     def traverse(base, state={}, chain=[]):
         
         subset = [(x,f) for x,f in mydict[base].iteritems() 
@@ -34,28 +39,42 @@ def relate(mydict):
     for k in mydict.keys():
         relations[k] = traverse(k, state={}, chain=[])
         
-    for k,v in mydict.iteritems():
-        for kk,vv in v.iteritems():
+    for k, v in mydict.iteritems():
+        for kk, vv in v.iteritems():
             relations[k][kk] = [(kk,vv)]
             
     return relations
 
-def get_path(start,end,rels):
+def get_path(start, end, rels):
     '''traverse relations tree and return the path needed'''
+
     avail = rels[start]
     try:
-        path = avail[end]
+        path = avail[end][:]
     except KeyError:
-        return []
+        err = 'No translation path available for "{}"'.format(end)
+        raise TranslationPathError(err)
+        
+        # return []
+
     step = path[-1][0]
+
     while step!=end:
-        intermediate = rels[step][end]
-        path += intermediate
-        step = intermediate[-1][0]
+        try:
+            intermediate = rels[step][end]
+            path += intermediate
+            step = intermediate[-1][0]
+        except KeyError:
+            err = ('\tProblem finding translation step '+
+                   'between "{}" & "{}"'.format(step,end))
+            raise TranslationPathError(err)
+            # return []
     return path
     
 ################################################################################
-# Constructs the relationship dictionary from all .py files in
+# Constructs the relationship dictionary from all .py files in Rosetta/ dir
+
+# Collect basis classes in base directory of Rosetta according to their name
 modules = {b:v for b,v in globals().iteritems() if b in basisnames}
 bases = {}
 for bname, module in modules.iteritems():
@@ -68,14 +87,24 @@ for bname, module in modules.iteritems():
         print ('Warning: Rosetta did not find a class named ' +
                '{0} in {0}.py. File ignored.'.format(bname) )
 
+# Build dictionary of all basis classes and their implemented translation 
+# functions
 translations = {}
-
-for bas,inst in bases.iteritems():
-    functions = [i for i in inst.__dict__.values() if hasattr(i,'_target')]
+for basis, instance in bases.iteritems():
+    functions = [i for i in instance.__dict__.values() 
+                 if hasattr(i,'_target')]
     tmap = {f._target:f for f in functions}
-    translations[bas] = tmap
+    translations[basis] = tmap
 
+# Feed dictionary to relate funciton to build all possible paths between bases
 relationships = relate(translations)
+
+# for k,v in  relationships.items():
+#     print k
+#     for kk, vv in v.items():
+#         print '\t',kk,vv
+# import sys
+# sys.exit()
 ################################################################################
 if __name__=='__main__':
     pass
