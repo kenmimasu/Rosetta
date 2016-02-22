@@ -7,16 +7,11 @@ from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
 class HISZ(basis.Basis):
     '''
-    Basis class for Rosetta based on [Giudice et al., JHEP 0706 (2007) 045 ] 
-    and a number of successive publications. Part of the three intrinsic basis 
-    implementations in Rosetta along with the Higgs and Warsaw bases. The exact 
-    list of operators included as well as the equations for the translation to 
-    the Higgs and Warsaw bases can be found in the HXSWG note, for which all 
-    references to tables and equations are in this implementation. The basis 
-    differs slightly to the versions defined in the original publications. 
-    Please refer to the HXSWG note for further details. Table 1 contains the 
-    majority of the operators included, with the remaining structure described 
-    in section 5.
+    Basis class for Rosetta based on [ Hagiwara et al., 
+    Phys.Rev. D48 (1993) 2182-2203 ]. The exact list of operators included as 
+    well as the equations for the translation to and from the Higgs basis can 
+    be found in the HXSWG note, for which all references to equations are in 
+    this implementation.
     '''
 
     name = 'hisz'

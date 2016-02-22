@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ################################################################################
 import StringIO, os, argparse, sys
-sys.path.append('../../')
+sys.path.append('{}/../../'.format(os.path.dirname(__file__)))
 from Rosetta import implemented_bases
 from Rosetta.internal import SLHA
 from Rosetta.internal.basis import write_param_card
