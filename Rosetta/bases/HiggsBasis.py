@@ -1,17 +1,17 @@
-import sys
+# import sys
 import math
 from math import sqrt
-
-from internal import Basis
-from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
-import BSMCharacterisation as BSMC
-from internal.constants import PID
+#
+from ..internal import basis
+from ..internal import PID
+from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
+from . import BSMCharacterisation as BSMC
 ################################################################################
 BSMCharacterisation = BSMC.BSMCharacterisation
 ################################################################################
-class HiggsBasis(Basis.Basis):
+class HiggsBasis(basis.Basis):
     '''
-    Main basis class for Rosetta, based on the reccomendation for the 
+    Main basis class for Rosetta, based on the recommendation for the 
     parametrisation of Higgs Effective Field theory in the LHC Higgs cross 
     section working group note (LHCHXSWG-INT-2015-001). Part of the three 
     intrinsic basis implementations in Rosetta along with the Warsaw and SILH 
@@ -214,14 +214,14 @@ class HiggsBasis(Basis.Basis):
                       + A['HBxdGLwl'][2,2].real - 2.*A['dM'])*2.
         
         
-    @Basis.translation('bsmc')        
+    @basis.translation('bsmc')        
     def to_bsmc(self, instance):
         # trivial translation
         for k, v in self.iteritems():
             instance[k] = v
         return instance
         
-    @Basis.translation('warsaw')
+    @basis.translation('warsaw')
     def to_warsaw(self, wbinstance):
 
         def delta(i,j):
@@ -324,7 +324,7 @@ class HiggsBasis(Basis.Basis):
 
         return W
         
-    @Basis.translation('silh')
+    @basis.translation('silh')
     def to_silh(self,instance):
         
         H = self
@@ -448,7 +448,7 @@ class HiggsBasis(Basis.Basis):
         return S
     
     
-    @Basis.translation('hisz')
+    @basis.translation('hisz')
     def to_hisz(self, instance):
         
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
@@ -512,7 +512,6 @@ class HiggsBasis(Basis.Basis):
         '''
         W mass modification from dM.
         '''
-        print 'changin MW'
         try:
             self.mass[24] += self['dM']
         except KeyError:

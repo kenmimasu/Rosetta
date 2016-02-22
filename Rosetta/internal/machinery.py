@@ -1,8 +1,7 @@
 # Imports all modules in the Rosetta base directory
-from .. import __all__ as basisnames
-from .. import *
-# from .. import HiggsBasis
-from errors import TranslationPathError
+from ..bases import __all__ as basisnames
+from ..bases import *
+from errors import TranslationPathError, BasesError, RelationshipsError
 import inspect
 ################################################################################
 __doc__ = '''
@@ -52,7 +51,7 @@ def get_path(start, end, rels):
     try:
         path = avail[end][:]
     except KeyError:
-        err = 'No translation path available for "{}"'.format(end)
+        err = 'No translation path available to "{}"'.format(end)
         raise TranslationPathError(err)
         
         # return []
@@ -65,14 +64,14 @@ def get_path(start, end, rels):
             path += intermediate
             step = intermediate[-1][0]
         except KeyError:
-            err = ('\tProblem finding translation step '+
+            err = ('\tFailed to find translation step '+
                    'between "{}" & "{}"'.format(step,end))
             raise TranslationPathError(err)
             # return []
     return path
     
 ################################################################################
-# Constructs the relationship dictionary from all .py files in Rosetta/ dir
+# Constructs the relationship dictionary from all .py files in Rosetta/bases dir
 
 # Collect basis classes in base directory of Rosetta according to their name
 modules = {b:v for b,v in globals().iteritems() if b in basisnames}
@@ -87,6 +86,7 @@ for bname, module in modules.iteritems():
         print ('Warning: Rosetta did not find a class named ' +
                '{0} in {0}.py. File ignored.'.format(bname) )
 
+if not bases: raise BasesError('No valid basis implementations found.')
 # Build dictionary of all basis classes and their implemented translation 
 # functions
 translations = {}
@@ -96,30 +96,9 @@ for basis, instance in bases.iteritems():
     tmap = {f._target:f for f in functions}
     translations[basis] = tmap
 
-# Feed dictionary to relate funciton to build all possible paths between bases
+# Feed dictionary to relate function to build all possible paths between bases
 relationships = relate(translations)
+if not relationships: 
+    raise RelationshipsError('No valid translation relationships between '
+                             'basis implementations found.')
 
-# for k,v in  relationships.items():
-#     print k
-#     for kk, vv in v.items():
-#         print '\t',kk,vv
-# import sys
-# sys.exit()
-################################################################################
-if __name__=='__main__':
-    pass
-    # mydict = {
-    #          'A':{'B':'A.Bfunc','C':'A.Cfunc'},
-    #          'B':{'C':'B.Cfunc','D':'B.Dfunc'},
-    #          'C':{'A':'C.Afunc','D':'C.Dfunc','B':'CBfunc'},
-    #          'D':{'A':'D.Afunc'},
-    #          'E':{'D':'E.Dfunc'},
-    #          'F':{'C':'F.Cfunc','E':'F.Efunc'},
-    #          'G':{'E':'G.Efunc'}
-    #          }
-    #
-    # relations =  relate(mydict)
-    # for k,v in relations.items():
-    #     print k,v
-    # print '\n\n'
-    # print get_path('A','C',relations)

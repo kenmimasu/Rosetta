@@ -954,6 +954,23 @@ class Card(object):
 class SLHAError(Exception): # Custom error name 
     pass
 
+def sortblocks(card, ignore = []):
+    normal_blocks = sorted([k for k in card.blocks.keys() 
+                            if k.lower() not in ignore],
+                            key=str.lower)
+    flav_blocks = sorted([k for k in card.matrices.keys() 
+                          if k.lower() not in ignore],
+                          key=str.lower)
+    flav_cplx = []
+    for im in [fl for fl in flav_blocks if fl.lower().startswith('im')]:
+        re = im[2:]
+        flav_cplx.append(re)
+        flav_cplx.append(im)
+        flav_blocks.remove(re)
+        flav_blocks.remove(im)
+
+    return normal_blocks + flav_blocks + flav_cplx
+
 def read(card, set_cplx=True):
     '''
     SLHA formatted card reader. Blocks and Decay structures are read 

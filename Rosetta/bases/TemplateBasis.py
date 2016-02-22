@@ -1,9 +1,8 @@
-from internal import Basis
-from internal.constants import default_masses, default_inputs, PID
-from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
-
+from ..internal import basis
+from ..internal import PID
+from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
-class TemplateBasis(Basis.Basis):
+class TemplateBasis(basis.Basis):
     '''
     Toy implementation of a user defined basis class. Makes use of the internal 
     function flavor_matrix to generate indexed coefficients e11,e12,...,e33. A 
@@ -54,7 +53,7 @@ class TemplateBasis(Basis.Basis):
         # matrix multiplication function assigning CC -> AA.BB
         matrix_mult(p['AA'], p['BB'], p['CC'])
         
-    @Basis.translation('silh')
+    @basis.translation('silh')
     def to_silh(self, instance):
         '''
         Toy translation to the SILH basis setting all coefficients to 1e-3, and 
@@ -71,7 +70,7 @@ class TemplateBasis(Basis.Basis):
         
         return B
         
-    @Basis.translation('pheno')        
+    @basis.translation('pheno')        
     def to_mass(self, instance):
         '''
         Toy translation to the BSM Characterisation Lagrangian setting all 

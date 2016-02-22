@@ -1,7 +1,3 @@
-import os
-
-files = os.listdir(os.path.dirname(__file__))
-
-__all__ = [f.replace('.py','') for f in files
-         if '.py'==f[-3:] and f!='__init__.py']
-
+from internal.machinery import bases as implemented_bases
+from internal import session, settings
+from bases import *

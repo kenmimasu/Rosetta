@@ -1,11 +1,11 @@
 import math
 from math import sqrt
 
-from internal import Basis
-from internal.constants import PID
-from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
+from ..internal import basis
+from ..internal import PID
+from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
-class SILHBasis(Basis.Basis):
+class SILHBasis(basis.Basis):
     '''
     Basis class for Rosetta based on [Giudice et al., JHEP 0706 (2007) 045 ] 
     and a number of succesive publications. Part of the three intrinsic basis 
@@ -83,7 +83,7 @@ class SILHBasis(Basis.Basis):
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
         
-    @Basis.translation('higgs')
+    @basis.translation('higgs')
     def to_higgs(self, instance, target='bsmc'):
         '''
         Translation function to  Higgs basis.
@@ -233,7 +233,7 @@ class SILHBasis(Basis.Basis):
         
         return M
     
-    @Basis.translation('warsaw')
+    @basis.translation('warsaw')
     def to_warsaw(self, instance):
 
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 

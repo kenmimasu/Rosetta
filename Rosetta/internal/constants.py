@@ -1,4 +1,7 @@
 from math import sqrt
+from SLHA import NamedMatrix, CNamedMatrix
+from matrices import CTwoDMatrix
+from itertools import product
 ################################################################################
 __doc__ = '''
 Some useful lookup dictionaries and default values for particle masses, SM  
@@ -32,7 +35,7 @@ default_inputs = {1: 1.27916e+02, 2: 1.166379e-05, 3: 1.184e-01,
                   6: default_masses[6], 7: default_masses[15],
                   25:default_masses[25], 9:default_masses[24]}
 
-# CKM matrix
+# Construct default CKM matrix
 # Wolfenstein parameterisation (PDG best fit)
 lam, A, rho, eta = 0.22535, 0.811, 0.131, 0.345
 # CKM mixing angles and CP phase
@@ -49,5 +52,23 @@ IMVCKM = {1:{1:0.,             2:0.,             3:-s13sd},
           3:{1:-c12*c23*s13sd, 2:-s12*c23*s13sd, 3:0.   }}
 VCKMele = {(1,1):'ud',(1,2):'us',(1,3):'ub',(2,1):'cd',
            (2,2):'cs',(2,3):'cb',(3,1):'td',(3,2):'ts',(3,3):'tb'}
+
+preamble = ('\n###################################\n'
+        + '## CKM INFORMATION\n'
+        + '###################################\n')
+        
+ckm = NamedMatrix(name='VCKM', preamble=preamble)
+for i,j in product((1,2,3),(1,2,3)):
+    cname = 'RV{}{}x{}'.format(VCKMele[(i,j)], i, j)
+    ckm.new_entry((i,j), VCKM[i][j], name=cname)
+    
+imckm = NamedMatrix(name='IMVCKM')
+for i,j in product((1,2,3),(1,2,3)):
+    cname = 'IV{}{}x{}'.format(VCKMele[(i,j)], i, j)
+    imckm.new_entry((i,j), IMVCKM[i][j], name=cname) 
+    
+# vckm = SLHA.CNamedMatrix(ckm, imckm)
+default_ckm = CTwoDMatrix(CNamedMatrix(ckm, imckm))
+
 ################################################################################
            

@@ -1,9 +1,11 @@
 import math
 from math import sqrt
 
-from internal import Basis
+from ..internal import basis
+from ..internal import PID
+from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
-class BSMCharacterisation(Basis.Basis):
+class BSMCharacterisation(basis.Basis):
     '''
     The main output basis for the Rosetta translation module. Based entirely on 
     the Higgs basis parametrisation without assuming the SU(2)xU(1) preserving 

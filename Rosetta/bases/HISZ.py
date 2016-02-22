@@ -1,11 +1,11 @@
 import math
 from math import sqrt
 
-from internal import Basis
-from internal.constants import PID
-from internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
+from ..internal import basis
+from ..internal import PID
+from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
-class HISZ(Basis.Basis):
+class HISZ(basis.Basis):
     '''
     Basis class for Rosetta based on [Giudice et al., JHEP 0706 (2007) 045 ] 
     and a number of successive publications. Part of the three intrinsic basis 
@@ -55,7 +55,7 @@ class HISZ(Basis.Basis):
         vev =  2.*MW/sqrt(gw2)
         return s2w, c2w, ee2, gw2, gp2, MW, vev, gs2
     
-    @Basis.translation('higgs')
+    @basis.translation('higgs')
     def to_higgs(self, instance):
         '''
         Translation function to Mass basis or Higgs basis, which differs only in 

@@ -1,15 +1,23 @@
 import os
 from SLHA import CaseInsensitiveDict as CIdict
+from errors import ReadSettingsError
+from ..bases import __all__ as implemented_bases
 __doc__ ='''
     Reads config.txt and sets some variables relevant to running Rosetta.
 '''
 ################################################################################
-dirname= os.path.dirname(__file__)
-eHDECAY_dir=''
-settings = CIdict()
+config = CIdict()
 ################################################################################
-with open('{}/../config.txt'.format(dirname)) as config:
-    lines = [x.strip() for x in config.readlines()]
+force = False
+verbose = False
+silent = False
+################################################################################
+dirname = os.path.dirname(__file__)
+try:
+    with open('{}/../config.txt'.format(dirname)) as cfg:
+        lines = [x.strip() for x in cfg.readlines()]
+except IOError:
+    raise ReadSettingsError()
     
 for i,l in enumerate(lines):
     if l and not l.startswith('#'):
@@ -20,8 +28,8 @@ for i,l in enumerate(lines):
             field, value = None, None
     else:
         field, value = None, None
-    
-    settings[field] = value
+
+    config[field] = value
     
 ################################################################################
     
