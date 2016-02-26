@@ -219,17 +219,18 @@ def generate_frdef(basis_class,filename):
 
 if __name__=='__main__':
     # pass
-    settings.silent=True
+    settings.silent=False
+    settings.verbose=True
 ################################################################################
 # # card writers
 #     # for flav in ('general',):
 #     # for flav in ('universal',):
 #     # for flav in ('diagonal',):
-    for flav in ('diagonal','general','universal'):
-        if flav =='general':
-            tail = ''
-        else:
-            tail = '_%s' % flav
+    # for flav in ('diagonal','general','universal'):
+    #     if flav =='general':
+    #         tail = ''
+    #     else:
+    #         tail = '_%s' % flav
 
 #         instance = TB.TemplateBasis(flavor=flav)
 #         # write_template_card(instance.card,'Cards/TemplateBasis{}.dat'.format(tail))
@@ -257,7 +258,12 @@ if __name__=='__main__':
 #     # #
 ################################################################################
 # translation testers   
-    # two_way_test(HZ.HISZ,'HISZ_rand.dat','higgs',verbose=False)
+    # two_way_test(HZ.HISZ,'HISZ_rand.dat','higgs')
+    # two_way_test(HZ.HISZ,'HISZ_rand.dat','warsaw')
+    # two_way_test(HZ.HISZ,'HISZ_rand.dat','silh')
+    # two_way_test(HB.HiggsBasis,'HiggsBasis_rand.dat','hisz')
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','hisz')
+    # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','hisz')
     #
     # print '#'*80+'\n'
     # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs')

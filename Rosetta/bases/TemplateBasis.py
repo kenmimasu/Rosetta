@@ -70,7 +70,7 @@ class TemplateBasis(basis.Basis):
         
         return B
         
-    @basis.translation('pheno')        
+    @basis.translation('bsmc')        
     def to_mass(self, instance):
         '''
         Toy translation to the BSM Characterisation Lagrangian setting all 

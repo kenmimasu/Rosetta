@@ -90,8 +90,8 @@ def exit(code=0):
         logfile.write(output.getvalue())
     with open('rosetta.suppressed.log', 'w') as logfile:
         logfile.write(suppressed.getvalue())
-    stdout('Exit.')
-    stdout('Output and suppressed output written to rosetta.log and '
+    log('Exit.')
+    log('Output and suppressed output written to rosetta.log and '
            'rosetta.suppressed.log respectively.')
     sys.exit(code)
     

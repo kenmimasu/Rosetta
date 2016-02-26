@@ -59,15 +59,16 @@ def partial_width_ratios(basis):
     Calculate ratios of all Higgs partial widths w.r.t the SM prediction and 
     returns a dictionary of rescaling factors.
     Arguments:
-        basis - Rosetta.internal.Basis instance
+        basis - Rosetta.internal.basis.Basis instance
     '''
-    bsmc = basis.translate(target='bsmc',verbose=False)
+    bsmc = basis.translate(target='bsmc')
     check.masses(bsmc, masses, message='Signal strength calculation')
-    
+
     # Store relevant coefficients
     MH, MT, MB = bsmc.mass[25], bsmc.mass[6], bsmc.mass[5]
     dCz, Czbx, Czz = bsmc['dCz'], bsmc['Czbx'], bsmc['Czz']
-    Cgg, Cza, Caa = bsmc['Cgg'], bsmc['Cza'], bsmc['Caa']
+    dCw, Cwbx, Cww = bsmc['dCw'], bsmc['Cwbx'], bsmc['Cww']
+    Cgg, Cza, Caa, Cabx = bsmc['Cgg'], bsmc['Cza'], bsmc['Caa'], bsmc['Cabx']
     
     if basis.flavor == 'universal':
         dYt, dYb = bsmc['BCxdYu'][1,1], bsmc['BCxdYd'][1,1]
@@ -89,8 +90,8 @@ def partial_width_ratios(basis):
         (21,21):Hgg(MH, MT, MB, Cgg, dYt, dYb),
         (22,22):Haa(Caa), 
         (23,22):Hza(Cza), 
-        (24,-24):H2l2v(dCz, Czbx, Czz, Cza, Caa), 
-        (23,23):H4l(dCz, Czbx, Czz, Cza, Caa)
+        (24,-24):H2l2v(dCw, Cwbx, Cww),
+        (23,23):H4l(dCz, Czbx, Czz, Cza, Caa, Cabx)
     }
 
     return ratios
@@ -107,8 +108,10 @@ def Hgg(MH, MT, MB, Cgg, dYu, dYd):
     chat = Cgg + 1./(12.*pi**2)*( At*dYu + Ab*dYd )
     cSM =  1./(12.*pi**2)*( At + Ab )
 
-    # return abs( (1. + chat/cSM) )**2
-    return 1. + 2.*(chat/cSM).real
+    lin = 1. + 2.*(chat/cSM).real
+    quad = abs( (1. + chat/cSM) )**2
+    
+    return lin
 
 def Haa(Caa):
     '''
@@ -117,8 +120,11 @@ def Haa(Caa):
     Basis. 
     '''
     cSM = -8.3e-2
-    # return (1. + Caa/cSM)**2
-    return 1. + 2.*Caa/cSM
+
+    lin = 1. + 2.*Caa/cSM
+    quad = (1. + Caa/cSM)**2
+    
+    return lin
     
 def Hza(Cza):
     '''
@@ -127,8 +133,12 @@ def Hza(Cza):
     Basis. 
     '''
     cSM = -5.9e-2
-    # return (1. + Cza/cSM)**2
-    return 1. + 2.*Cza/cSM
+
+    lin = 1. + 2.*Cza/cSM
+    quad = (1. + Cza/cSM)**2
+    
+    return lin
+    
     
 def Hff(dYf):
     '''
@@ -136,33 +146,47 @@ def Hff(dYf):
     Higgs to the SM prediction as a function of the EFT parameters in the 
     Higgs/BSMC Basis. 
     '''
-    return 1. + 2.*dYf
+    lin = 1. + 2.*dYf
+    quad = 1. + 2.*dYf * dYf**2
+    
+    return lin
 
-def H2l2v(dCz, Czbx, Czz, Cza, Caa):
+def H2l2v(dCw, Cwbx, Cww):
     '''
     Return the approximate ratio of 2 lepton - 2 neutrino (WW) partial width of 
     the Higgs to the SM prediction as a function of the EFT parameters in the 
     Higgs/BSMC Basis. 
     '''
-    return 1 + 2.*dCz + 0.67*Czbx + 0.05*Czz - 0.17*Cza - 0.05*Caa
-
-def H2e2mu(dCz, Czbx, Czz, Cza, Caa):
+    # return 1 + 2.*dCz + 0.67*Czbx + 0.05*Czz - 0.17*Cza - 0.05*Caa
+    lin = 1 + 2.*dCw + 0.46074*Cwbx - 0.153652*Cww
+    
+    return lin
+    
+def H2e2mu(dCz, Czbx, Czz, Cza, Caa, Cabx):
     '''
     Return the approximate ratio of 2 electron - 2 muon (ZZ) partial width of 
     the Higgs to the SM prediction as a function of the EFT parameters in the 
     Higgs/BSMC Basis. 
     '''
-    return 1 + 2.*dCz + 0.35*Czbx + 0.19*Czz - 0.09*Cza - 0.01*Caa
+    # return 1 + 2.*dCz + 0.35*Czbx + 0.19*Czz - 0.09*Cza - 0.01*Caa
+    lin = (1 + 2.*dCz + 0.40640*Czbx - 0.14865*Czz - 0.06883*Cza - 0.000366*Caa 
+          - 0.02108*Cabx)
 
-def H4l(dCz, Czbx, Czz, Cza, Caa):
+    return lin
+
+def H4l(dCz, Czbx, Czz, Cza, Caa, Cabx):
     '''
     Return the approximate ratio of 4 lepton (ZZ) partial width of the 
     Higgs to the SM prediction as a function of the EFT parameters in the 
     Higgs/BSMC Basis. 
     '''
-    return 1 + 2.*dCz + 0.32*Czbx + 0.19*Czz - 0.08*Cza - 0.02*Caa
     
-# print gg(125.,173.,4.7, 1.,0.,0.)-1.
+    lin = (1 + 2.*dCz + 0.398148*Czbx - 0.144664*Czz + 0.060691*Cza 
+          - 0.0226033*Cabx - 0.012563*Caa)
+
+    return lin
+    # return 1 + 2.*dCz + 0.32*Czbx + 0.19*Czz - 0.08*Cza - 0.02*Caa
+    
 ################################################################################
 def get_datum(MH, file):
     '''

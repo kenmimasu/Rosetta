@@ -15,3 +15,10 @@ class SignalStrengthsInterfaceError(RosettaInterfaceError):
     '''
     interface='SignalStrengths'
     pass
+
+class SqrtsError(SignalStrengthsInterfaceError):
+    '''
+    Exception for invalid value of sqrt(s) in TeV not in (7, 8, 13)
+    '''
+    interface='SignalStrengths'
+    pass

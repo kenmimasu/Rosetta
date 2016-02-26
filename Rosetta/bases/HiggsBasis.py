@@ -452,6 +452,7 @@ class HiggsBasis(basis.Basis):
     def to_hisz(self, instance):
         
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
+        # print 's2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 ',s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
 
         dg = gw2 - gp2
         dg_inv = 1./dg
@@ -504,6 +505,14 @@ class HiggsBasis(basis.Basis):
                 re = ( delta(i,j)*H['dCz'] - yuk*cos )*sqrt(2.)
                 im = yuk*sin*sqrt(2.)
                 Z['HZx'+f][i,j] = complex(re, im)
+        
+        # Provide the right W mass for input...
+        MW = MZ*sqrt(c2w)
+        Z.mass[24]= MW
+        try:
+            Z.inputs.new_entry(9, MW, name='MW')
+        except KeyError:
+            Z.inputs[9] = MW
         
         return Z
 

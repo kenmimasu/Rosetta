@@ -60,6 +60,7 @@ class HISZ(basis.Basis):
         XB = 'HB'
         
         s2w, c2w, ee2, gw2, gp2, MW, vev, gs2 = self.calculate_inputs() 
+        # print 's2w, c2w, ee2, gw2, gp2, MW, vev, gs2 ',s2w, c2w, ee2, gw2, gp2, MW, vev, gs2
 
         H = self
         M = instance
@@ -131,6 +132,13 @@ class HISZ(basis.Basis):
                 M[XB+'xdY'+f][i,j], M[XB+'xS'+f][i,j] = dy_sf(dy_cosphi, 
                                                               dy_sinphi)
         
+        # Provide the right Z mass for input...
+        MZ = MW/sqrt(c2w)
+        M.mass[23]= MZ
+        try:
+            M.inputs.new_entry(4, MZ, name='MZ')
+        except KeyError:
+            M.inputs[4] = MZ
         return M
 
         

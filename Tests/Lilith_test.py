@@ -19,8 +19,10 @@ from Rosetta.internal import SLHA
 
 from Rosetta.interfaces.Lilith import Lilith
 
-instance = HB.HiggsBasis(flavor='universal', param_card = '../HiggsBasis_universal_1e-3.dat', translate=False)
+# instance = HB.HiggsBasis(flavor='universal', param_card = '../HiggsBasis_universal_1e-3.dat', translate=False)
+# instance = HZ.HISZ(flavor='universal', param_card = '../HISZ_universal_1e-3.dat', translate=False)
+instance = HZ.HISZ(flavor='universal', param_card = '../HISZ_universal_0.dat', translate=False)
 
 
-
+print 'Lilith Likelihood:'
 print Lilith.compute_likelihood(instance)

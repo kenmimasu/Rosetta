@@ -222,13 +222,20 @@ class Basis(MutableMapping):
         # and all coeffs set to 0 (used for creating an empty basis 
         # instance for use in translate() method)
         else: 
-            self.card = self.default_card(dependent=dependent)            
+            self.card = self.default_card(dependent=dependent) 
+            self.inputs, self.mass = None, None           
             self._gen_thedict()
             
     # overloaded container (dict) methods for indexing etc.
     
     def __getitem__(self, key):
-        return self.card.__getitem__(key)
+        try:
+            return self.card.__getitem__(key)
+        except KeyError:
+            if hasattr(self,'_thedict'):
+                return  self._thedict[key]
+            else:
+                raise KeyError
 
     def __setitem__(self, key, value):
         if hasattr(self,'_thedict'):
@@ -250,7 +257,8 @@ class Basis(MutableMapping):
         return iter(self._thedict)
     
     def _gen_thedict(self):
-        thedict = SLHA.CaseInsensitiveOrderedDict()
+        # thedict = SLHA.CaseInsensitiveOrderedDict()
+        thedict = CaseInsensitiveDict()
         for name, blk in self.card.blocks.iteritems():
             if name in self.blocks:
                 for k, v in blk.iteritems():
@@ -269,6 +277,7 @@ class Basis(MutableMapping):
                         im_name = blk._im.get_name(k)
                         if re_name: thedict[re_name] = v.real
                         if im_name: thedict[im_name] = v.real
+                        
         self._thedict = thedict
         
     
@@ -423,13 +432,18 @@ class Basis(MutableMapping):
 
                 if no_del:
                     no_del_names = [blk.get_name(k) for k in no_del]
+                    no_del_values = [blk[k] for k in no_del]
                     session.verbose(
                     '    Warning in {}.set_flavour():\n'.format(self.__class__)+
                     '    Reduction in flavour structure ' +
                     'from "{}" to "{}" '.format(_from, to) +
                     'encountered some unexpected non-zero elements ' +
-                    '(> 1e-6) which were not deleted.\n' +
-                    '    Not deleted: {}\n'.format(', '.join(no_del_names)))
+                    ' which were not deleted.\n    Not deleted: ' +
+                    '{}\n'.format(
+                    ', '.join(['{}={}'.format(x,y) for x,y in 
+                               zip(no_del_names,no_del_values)])
+                    )
+                    )
                 
             for blk in blks_to_del:
                 del self.card.matrices[blk]
@@ -518,78 +532,6 @@ class Basis(MutableMapping):
                 else: 
                     continue
                 card.matrices[name] = MatrixType(matrix)
-    
-    def get_other_blocks(self, card, ignore):
-        ignore = [x.lower() for x in ignore] 
-        
-        other_blocks, other_matrices = {}, {}
-        for k, v in card.blocks.iteritems():
-            if k.lower() != 'basis' and k.lower() not in ignore:
-                other_blocks[k]=v
-        for k, v in card.matrices.iteritems():
-            if k.lower() != 'basis' and k.lower() not in ignore:
-                other_matrices[k]=v
-
-        for block in other_blocks:
-            theblock = card.blocks[block]
-            self.card.add_block(theblock)
-        
-        for matrix in other_matrices:
-            theblock = card.matrices[matrix]
-            self.card.add_block(theblock)
-        
-        for decay in card.decays.values():
-            self.card.add_decay(decay, preamble = decay.preamble)
-        
-        if card.has_block('mass'):
-            self.mass=self.card.blocks['mass']
-        if card.has_block('sminputs'):
-            self.inputs=self.card.blocks['sminputs']
-            
-        self.ckm = card.matrices['vckm']
-    
-    def expand_matrices(self):
-        '''
-        Special function to populate redundant elements of matrix blocks when 
-        translating to the bsmc Lagrangian so that values for all 9 entries are 
-        explicitly stored before writing out the parameter card. This is to 
-        stay in accordance with the SLHA format.
-        The function directly modifies the _data and  _names attributes of the 
-        matrices since matrices with special properties i.e. Hermitian, 
-        Symmetric etc. do not grant direct access to the redundant keys such as 
-        the lower triangle of a Hermitian matrix.
-        '''
-        all_keys = [(1,1), (1,2), (1,3),
-                    (2,1), (2,2), (2,3),
-                    (3,1), (3,2), (3,3)]
-                    
-        for matrix in self.card.matrices.values():
-            # list of missing elements in _data member of matrix instance
-            missing_keys = [k for k in all_keys if k not in matrix._data]
-            
-            if missing_keys:
-                # randomly select parameter name since they all should have 
-                # the same structure: (R|I)NAMEixj
-                elename = matrix._names.values()[0]
-                cname = elename[1:-3] # matrix name
-                pref = elename[0] 
-                for k in missing_keys:
-                    tail = cname + '{}x{}'.format(*k)
-                    matrix._data[k] = matrix[k]
-                    matrix._names[k] = pref + tail
-                    matrix._numbers[pref+tail] = k
-                    try:
-                        matrix._re._data[k] = matrix._re[k]
-                        matrix._re._names[k] = 'R' + tail
-                        matrix._re._numbers['R'+tail] = k
-                    except AttributeError:
-                        pass
-                    try:
-                        matrix._im._data[k] = matrix._im[k]
-                        matrix._im._names[k] = 'I' + tail
-                        matrix._im._numbers['I'+tail] = k
-                    except AttributeError:
-                        pass
     
     def reduce_hermitian_matrices(self):
         '''

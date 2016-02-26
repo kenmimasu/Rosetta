@@ -21,10 +21,15 @@ lilithcalc = lilith.Lilith(verbose=False,timer=False)
 def compute_likelihood(basis, sqrts=8):
     session.once(cite_msg)
     
+    # ratios of decay partial widths and total width
     decays = decay(basis, electroweak=True, SM_BRs=None, ratio=True)
+    # ratios of production cross sections
     prods = prod(basis, sqrts)
+    
     xml_input = generate_input(basis.mass[25], prods, decays)
+    
     lilithcalc.computelikelihood(userinput=xml_input)
+    
     return lilithcalc.l    
         
 def generate_input(MH, prod, decay):
