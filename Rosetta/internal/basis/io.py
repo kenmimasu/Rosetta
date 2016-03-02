@@ -62,12 +62,6 @@ def read_param_card(basis):
 
 def write_param_card(card, filename, overwrite=False):
     '''Write contents of card to filename'''
-    # preamble = ('\n###################################\n'
-    #             + '## INFORMATION FOR {} BASIS\n'.format(basis.newname.upper())
-    #             + '###################################\n')
-    # if 'basis' in card.blocks:
-    #     card.blocks['basis'].preamble = preamble
-    #     card.blocks['basis'][1] = basis.newname
 
     dec_preamble = ('\n###################################\n'
                 + '## DECAY INFORMATION\n'
@@ -115,6 +109,8 @@ def write_param_card(card, filename, overwrite=False):
         card.write(filename, blockorder=special_blocks + coefforder,
                                      preamble=card_preamble)
         session.log('Wrote "{}".'.format(filename))
+        session.log('')
+        
         return True
     else:
         return False
@@ -185,4 +181,5 @@ def write_template_card(basis, filename, value=0.):
     SLHA_card.write(filename, blockorder=special_blocks + theorder, 
                     preamble = preamble, postamble = ('\n'+'#'*80)*2)
     session.log('wrote {}'.format(filename))
+    session.log('')
     

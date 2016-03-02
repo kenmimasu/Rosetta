@@ -11,7 +11,7 @@ from ...internal.constants import (particle_names, default_masses,
 from ...internal.basis import checkers as check
 from ...internal import session
 
-from . import executable, eHDECAYInterfaceError
+from . import executable, eHDECAYInterfaceError, eHDECAYImportError
 ################################################################################
 # required info
 masses = {25,3,4,5,6,15,13,24,23} # H, c, b, t, tau, mu, Z, W masses
@@ -64,7 +64,7 @@ def run(basis, electroweak=True, interpolate=False, SM_BRs=None):
     check.sminputs(basis, inputs, message='eHDECAY interface')
     
     # translate to silh instance
-    thesilh = basis.translate(target='silh',verbose=False)
+    thesilh = basis.translate(target='silh')
 
     thesilh.set_flavor(thesilh.flavor, 'general')
     # slightly modify silh to get eHDECAY inputs

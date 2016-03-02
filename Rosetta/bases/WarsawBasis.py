@@ -181,7 +181,7 @@ class WarsawBasis(basis.Basis):
             glu, tglu = XB+'xdg'+f, XB+'xtdg'+f
             pho, tpho = XB+'xda'+f, XB+'xtda'+f
             zed, tzed = XB+'xdz'+f, XB+'xtdz'+f
-            dub = XB+'xdw'+f
+            dub = XB+'xdwl' if f=='e' else XB+'xdw'+f
             
             for i,j in M[zed].keys():
                 if f in ('u','d'):

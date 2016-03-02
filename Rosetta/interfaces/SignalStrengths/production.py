@@ -4,9 +4,31 @@ from decay import Hgg
 from ...internal.basis import checkers as check
 from errors import SqrtsError
 ################################################################################
+# TO DO: provide production function to do the same job as decay(..., ratios=False)
 # required info
 masses = {25,5,6} # H, b, t masses
 ################################################################################
+def production(basis, ratio=True, sqrts=8):
+    '''
+    Return the new Higgs production cross sections based on the rescaling factors 
+    computed in production_ratio(). SM BRs can be provided through the SM_BRs 
+    keyword argument, otherwise they will be calculated using eHDECAY.
+    Arguments:
+        basis       - Rosetta.internal.Basis instance
+    Options:
+        ratio       - return the ratios of each BR and total width to the SM 
+                      prediction
+        sqrts       - pp collider centre of mass energy in TeV: {7, 8, 13}
+    '''
+    # get production rescaling factors
+    rscl = production_ratios(basis, sqrts)
+    
+    if not ratio:
+        raise NotImplementedError('This feature is not yet '
+                                  'implemented in Rosetta!')
+    else:
+        return rscl
+
 def production_ratios(basis, sqrts):
     '''
     Calculate ratios of all Higgs production rates w.r.t the SM prediction and 

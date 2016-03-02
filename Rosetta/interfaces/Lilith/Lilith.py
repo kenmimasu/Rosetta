@@ -3,7 +3,7 @@ import os
 import sys
 from itertools import product
 from . import lilith, LilithInterfaceError
-from ..SignalStrengths.production import production_ratios as prod
+from ..SignalStrengths.production import production
 from ..SignalStrengths.decay import decay
 from ...internal import session
 ################################################################################
@@ -24,7 +24,7 @@ def compute_likelihood(basis, sqrts=8):
     # ratios of decay partial widths and total width
     decays = decay(basis, electroweak=True, SM_BRs=None, ratio=True)
     # ratios of production cross sections
-    prods = prod(basis, sqrts)
+    prods = production(basis, sqrts=sqrts)
     
     xml_input = generate_input(basis.mass[25], prods, decays)
     
@@ -36,7 +36,7 @@ def generate_input(MH, prod, decay):
     mus = []
     
     for kp, (kd, vd) in product(prod.keys(), channels.items()):
-        mu = prod[kp]*decay[vd]*decay['WTOT']
+        mu = prod[kp]*decay[vd]/decay['WTOT']
         mustr = '<mu prod="{}" decay="{}">{}</mu>'.format(kp, kd, mu)
         mus.append(mustr)
         

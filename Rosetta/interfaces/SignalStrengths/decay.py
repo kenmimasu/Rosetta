@@ -15,14 +15,18 @@ masses = {25,4,5,6,15} # H, b, t masses
 def decay(basis, electroweak=True, SM_BRs=None, ratio=False):
     '''
     Return the new Higgs BRs and Total widths based on the rescaling factors 
-    computed in ratio(). SM BRs can be provided through the SM_BRs keyword 
-    argument, otherwise they will be calculated using eHDECAY.
+    computed in partial_width_ratios(). SM BRs can be provided through the 
+    SM_BRs keyword argument, otherwise they will be calculated using eHDECAY or 
+    read in from the tabulated data provided by the LHCHXSWG using get_BR().
     Arguments:
-        basis - Rosetta.internal.Basis instance
+        basis       - Rosetta.internal.Basis instance
     Options:
-        SM_BRs - Provide dict for SM Higgs branching fractions and total width 
+        SM_BRs      - Provide dict for SM Higgs branching fractions and total 
+                      width 
         electroweak - if SM_BRs is None and SignalStrengths.use_eHDECAY is True 
                       the options is fed into the eHDECAY interface
+        ratio       - return the ratios of each BR and total width to the SM 
+                      prediction
     '''
     # get partial width rescaling factors
     rscl = partial_width_ratios(basis)
@@ -195,6 +199,7 @@ def get_datum(MH, file):
     between the two closest available mass points.
     '''
     last_data = [1e10]
+    # Go through file to find closest masses
     for line in open(file, 'r'):
         try:
             data = [float(x) for x in line.split()]
@@ -212,8 +217,9 @@ def get_datum(MH, file):
             data = [x + (y-x)*dMH/dMH0 for x,y in zip(last_data, data)]
             break
             
-        last_data= data
+        last_data = data
     
+    # get every third datum (ignore errors column)
     BRs = [d for i,d in enumerate(data[1:]) if i%3==0 ]
     
     return BRs
@@ -225,9 +231,6 @@ def get_BR(MH):
     Data taken from tabulated values provided by the LHCHXSWG at:
     
     https://twiki.cern.ch/twiki/bin/view/LHCPhysics/CERNYellowReportPageBR2014
-    
-    Information is linearly interpolated between the two closest available mass 
-    points.
     '''
     basedir = os.path.dirname(__file__)
     

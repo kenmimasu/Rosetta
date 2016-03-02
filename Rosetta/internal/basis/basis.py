@@ -392,7 +392,8 @@ class Basis(MutableMapping):
         if _from == to: return
 
         self.set_fblocks(to) # reset fblocks according to flavor option
-        newcard = self.default_card(dependent=False)
+        # newcard = self.default_card(dependent=False)
+        newcard = self.default_card(dependent=True)
         
         if (_from, to) in (('general', 'universal'), ('general', 'diagonal')):
             blks_to_del = []
@@ -402,7 +403,7 @@ class Basis(MutableMapping):
                 
                 # only consider independent blocks
                 if not newcard.has_matrix(bname):
-                    blks_to_del.append(bname) 
+                    blks_to_del.append(bname)
                     continue
                 
                 # delete elements not present in default card
@@ -565,15 +566,15 @@ class Basis(MutableMapping):
         Interface Rosetta with eHDECAY to calculate Higgs widths and branching 
         fractions. 
         '''
-        from ...interfaces.eHDECAY import eHDECAY, eHDECAYInterfaceError
+        from ...interfaces.eHDECAY import eHDECAY, eHDECAYInterfaceError, eHDECAYImportError
         try:
             BRs = eHDECAY.run(self, electroweak=True)
-            BR2 = eHDECAY.run(self, interpolate=True)
-            for (k,v) in BRs.iteritems():
-                if v!=0.:
-                    print k,v, abs(1.-(BR2[k]/v))
-                else:
-                    print k,v,BR2[k]
+            # BR2 = eHDECAY.run(self, interpolate=True)
+            # for (k,v) in BRs.iteritems():
+            #     if v!=0.:
+            #         print k,v, abs(1.-(BR2[k]/v))
+            #     else:
+            #         print k,v,BR2[k]
         except eHDECAYInterfaceError:
             print e
             return

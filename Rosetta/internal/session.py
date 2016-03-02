@@ -93,5 +93,13 @@ def exit(code=0):
     log('Exit.')
     log('Output and suppressed output written to rosetta.log and '
            'rosetta.suppressed.log respectively.')
+    log('#############################')
+    log('')
     sys.exit(code)
+
+log('')
+once('########## Rosetta ##########')
+log('')
+
+
     

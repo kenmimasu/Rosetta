@@ -13,7 +13,6 @@ from Rosetta import SILHBasis as SB
 from Rosetta import BSMCharacterisation as MB
 from Rosetta import TemplateBasis as TB
 from Rosetta import HISZ as HZ
-# from Rosetta import MufBasis as MUF
 from Rosetta.internal import SLHA
 from Rosetta.internal.basis import write_param_card
 from Rosetta import settings

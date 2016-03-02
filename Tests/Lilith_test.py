@@ -6,7 +6,6 @@ import re
 import random
 
 sys.path.append('../')
-# sys.path.append('Users/Ken/Work/Projects/Rosetta/dev/rosetta/')
 
 from Rosetta import HiggsBasis as HB
 from Rosetta import WarsawBasis as WB
@@ -14,8 +13,7 @@ from Rosetta import SILHBasis as SB
 from Rosetta import BSMCharacterisation as MB
 from Rosetta import TemplateBasis as TB
 from Rosetta import HISZ as HZ
-# from Rosetta import MufBasis as MUF
-from Rosetta.internal import SLHA
+from Rosetta.internal import SLHA, session
 
 from Rosetta.interfaces.Lilith import Lilith
 
@@ -23,6 +21,8 @@ from Rosetta.interfaces.Lilith import Lilith
 # instance = HZ.HISZ(flavor='universal', param_card = '../HISZ_universal_1e-3.dat', translate=False)
 instance = HZ.HISZ(flavor='universal', param_card = '../HISZ_universal_0.dat', translate=False)
 
+lik = Lilith.compute_likelihood(instance)
 
-print 'Lilith Likelihood:'
-print Lilith.compute_likelihood(instance)
+session.log('Lilith Likelihood: '+str(lik))
+session.log('#############################')
+session.log('')

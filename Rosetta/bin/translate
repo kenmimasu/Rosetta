@@ -29,7 +29,7 @@ parser.add_argument("-t", "--target", type=str, default='bsmc',
 parser.add_argument("-w", "--overwrite", action='store_true', 
                     help="Overwrite any pre-existing output file.")
 
-parser.add_argument("-d", "--dependent", action='store_true', 
+parser.add_argument("--dependent", action='store_true', 
                     help=("Also write out dependent parameters to output card"))
                     
 parser.add_argument("-s", "--silent", action='store_true', 
@@ -41,11 +41,11 @@ parser.add_argument("-v", "--verbose", action='store_true',
 parser.add_argument("--force", action='store_true', 
                     help=("Take default answers to all questions."))
                     
-parser.add_argument("-f", "--flavor", type=str, default = "general", 
+parser.add_argument("--flavor", type=str, default = "general", 
                     choices=allowed_flav,
                     help=("Specify flavor structure, default : 'general'"))
                           
-parser.add_argument("-e", "--ehdecay", action='store_true', 
+parser.add_argument("--ehdecay", action='store_true', 
                     help="Interface with eHDECAY for Higgs branching fractions.")
 ################################################################################
 args = parser.parse_args()
@@ -53,8 +53,6 @@ settings.silent = args.silent
 settings.verbose = args.verbose
 settings.force = args.force
 
-session.log('')
-session.once('########## Rosetta ##########')
 # Read basis class from paramerter card, 
 # must be defined in Rosetta.implemented_bases
 session.log('Reading "{}"\n'.format(args.param_card))
@@ -76,8 +74,9 @@ except KeyError:
     raise RosettaError(err)
 
 if not args.output: # output file name
+    inputfile = os.path.basename(args.param_card)
     if '.' in args.param_card:
-        new_name = args.param_card.split('.')
+        new_name = inputfile.split('.')
         new_name.insert(-1,'_new.')
         new_param_card = ''.join(new_name)
     else:
@@ -87,26 +86,23 @@ else:
 
 session.log('Basis class used to read in param card:\n    {}\n'.format(mybasis))
 
-# if args.flavor not in ('general','diagonal','universal','MFV'):
-
 session.log('flavor structure: {}\n'.format(args.flavor))
+
 # create instance of mybasis, atuomatically translating to target basis
 basis_instance = mybasis(param_card=args.param_card, 
                          output_basis=args.target,
                          ehdecay=args.ehdecay,
                          flavor=args.flavor)
-
+                         
 if not args.dependent and args.target.lower()!='bsmc':
     basis_instance.newbasis.delete_dependent()
 
 if write_param_card(basis_instance.newcard, new_param_card, 
                     overwrite=args.overwrite): # 
     session.log('#############################')
-    session.log('')
     session.exit(0)
 else:
     session.log('#############################')
-    session.log('')
     session.exit(0)
 ################################################################################
 

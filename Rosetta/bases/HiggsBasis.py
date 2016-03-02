@@ -131,7 +131,12 @@ class HiggsBasis(basis.Basis):
         ii = complex(0.,1.)
         for f in ('u','d','e'):
             eta = 1. if f=='u' else -1.
-            wdip = 'HBxdw'+f
+            
+            if f=='e':
+                wdip = 'HBxdwl'
+            else:
+                wdip = 'HBxdw'+f
+                
             adip, tadip = 'HBxda'+f, 'HBxtda'+f
             zdip, tzdip = 'HBxdz'+f, 'HBxtdz'+f
             for i,j in A[wdip].keys():
@@ -143,7 +148,7 @@ class HiggsBasis(basis.Basis):
                   'HBxdGLzd', 'HBxdGRzd', 'HBxdGLwl', 'HBxdGLwq', 'HBxdGRwq']
         # list of all z/w/a dipole interaction blocks
         dipole = ['HBxdgu', 'HBxdgd', 'HBxdau', 'HBxdad', 'HBxdae', 
-                  'HBxdzu', 'HBxdzd', 'HBxdze', 'HBxdwu', 'HBxdwd', 'HBxdwe', 
+                  'HBxdzu', 'HBxdzd', 'HBxdze', 'HBxdwu', 'HBxdwd', 'HBxdwl', 
                   'HBxtdgu', 'HBxtdgd', 'HBxtdau', 'HBxtdad', 'HBxtdae', 
                   'HBxtdzu', 'HBxtdzd', 'HBxtdze']
                   
@@ -311,9 +316,10 @@ class HiggsBasis(basis.Basis):
                     W['WBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
                                      - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
                 # Weak
-                W['WBx'+f+'W'][i,j] = - H['HBxdw'+f][i,j]/(2.*sqrt(2.))
+                ff = 'l' if f=='e' else f
+                W['WBx'+f+'W'][i,j] = - H['HBxdw'+ff][i,j]/(2.*sqrt(2.))
                 # Hypercharge
-                W['WBx'+f+'B'][i,j] = (eta*H['HBxdw'+f][i,j]
+                W['WBx'+f+'B'][i,j] = (eta*H['HBxdw'+ff][i,j]
                                        - (H['HBxda'+f][i,j] 
                                           - ii*H['HBxtda'+f][i,j])
                                       )/(2.*sqrt(2.))
@@ -437,10 +443,13 @@ class HiggsBasis(basis.Basis):
                 if f in ('u','d'):
                     S['SBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
                                      - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
+                
+                ff = 'l' if f=='e' else f
+                
                 # Weak
-                S['SBx'+f+'W'][i,j] = - H['HBxdw'+f][i,j]/(2.*sqrt(2.))
+                S['SBx'+f+'W'][i,j] = - H['HBxdw'+ff][i,j]/(2.*sqrt(2.))
                 # Hypercharge
-                S['SBx'+f+'B'][i,j] =  (eta*H['HBxdw'+f][i,j]
+                S['SBx'+f+'B'][i,j] =  (eta*H['HBxdw'+ff][i,j]
                                        - (H['HBxda'+f][i,j] 
                                           - ii*H['HBxtda'+f][i,j])
                                        )/(2.*sqrt(2.))

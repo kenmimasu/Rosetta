@@ -34,7 +34,7 @@ except ImportError:
         err = ('Could not find option "Lilith_dir" in Rosetta/config.txt')
         raise LilithImportError(err)
     except ImportError:
-        err = ('Failed to import Lilith, check Lilith_dir option in '
+        err = ('check Lilith_dir option in '
                'Rosetta/config.txt')
         raise LilithImportError(err)
 ################################################################################

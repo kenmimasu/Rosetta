@@ -7,7 +7,7 @@ class RosettaInterfaceError(RosettaError):
     '''Base error class for Rosetta interfaces.'''
     interface=''
     def __init__( self, msg ):
-        super(RosettaInterfaceError).__init__(self, 
+        super(RosettaInterfaceError, self).__init__(
              'Error in Rosetta {} interface: {}'.format(self.interface, msg))
     pass
 
@@ -15,7 +15,7 @@ class RosettaImportError(RosettaError):
     '''Base error class for Rosetta interfaces.'''
     interface=''
     def __init__( self, msg ):
-        super(RosettaInterfaceError).__init__(self, 
+        super(RosettaImportError, self).__init__(
              'Error importing Rosetta {} interface: {}'.format(self.interface, msg))
     pass
 
@@ -41,6 +41,6 @@ class ReadSettingsError(RosettaError):
     '''Raised for error in reading setting from config.txt'''
     interface=''
     def __init__( self ):
-        super(RosettaSettingError).__init__(self, 'Error reading config.txt.')
+        super(RosettaSettingsError, self).__init__('Error reading config.txt.')
     pass
 ################################################################################
