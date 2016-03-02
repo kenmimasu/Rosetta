@@ -1,7 +1,7 @@
 import os
 from SLHA import CaseInsensitiveDict as CIdict
 from errors import ReadSettingsError
-from ..bases import __all__ as implemented_bases
+# from ..bases import __all__ as implemented_bases
 import session
 __doc__ ='''
     Reads config.txt and sets some variables relevant to running Rosetta.

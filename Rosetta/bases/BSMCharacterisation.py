@@ -1,7 +1,7 @@
 import math
 from math import sqrt
 
-from ..internal import basis
+from . import basis
 from ..internal import PID
 from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################

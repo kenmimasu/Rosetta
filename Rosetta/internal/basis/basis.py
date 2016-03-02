@@ -11,7 +11,6 @@ from itertools import combinations_with_replacement as combinations2
 from .. import SLHA
 from ..SLHA import CaseInsensitiveDict
 import checkers as check
-from ..query import query_yes_no as Y_or_N
 from ..matrices import (TwoDMatrix, CTwoDMatrix, HermitianMatrix, 
                       SymmetricMatrix, AntisymmetricMatrix)
 from ..constants import (PID, default_inputs, default_masses, input_names, 

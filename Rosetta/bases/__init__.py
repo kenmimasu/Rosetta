@@ -1,6 +1,6 @@
 import os
 
-from ..internal import Basis
+from ..internal import basis
 from ..internal.constants import PID
 from ..internal.matrices import matrix_mult, matrix_add, matrix_sub, matrix_eq
 
