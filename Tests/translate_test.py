@@ -265,9 +265,9 @@ if __name__=='__main__':
     # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','hisz')
     #
     # print '#'*80+'\n'
-    # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs')
-    # two_way_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','higgs',flavor='diagonal')
-    # two_way_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','higgs',flavor='universal')
+    two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs')
+    two_way_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','higgs',flavor='diagonal')
+    two_way_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','higgs',flavor='universal')
     # print '#'*80+'\n'
     # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','silh')
     # two_way_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','silh',flavor='diagonal')

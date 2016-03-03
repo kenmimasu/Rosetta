@@ -1,5 +1,6 @@
 from .. import session
 import checkers as check
+from ..errors import TranslationPathError
 
 def translate(basis, target=None, cache=True, avoid_cache = False, 
                       minimal=False): 
