@@ -4,11 +4,14 @@ import os
 from .. import SLHA
 from .. import session
 
-def read_param_card(basis):
+def read_param_card(basis, SLHAcard = None):
     '''
     Call SLHA.read() and set up the Basis instance accordingly.
     '''
-    basis.card = SLHA.read(basis.param_card, set_cplx=False)
+    if SLHAcard is not None:
+        basis.card = SLHAcard
+    else:
+        basis.card = SLHA.read(basis.param_card, set_cplx=False)
     
     try:
         card_name = basis.card.blocks.get('basis',[''])[1]
@@ -117,6 +120,7 @@ def write_param_card(card, filename, overwrite=False):
 
 def write_template_card(basis, filename, value=0.):
     from ..machinery import bases
+    from ..constants import default_masses, particle_names, default_inputs, input_names
     try: 
         val = float(value)
         rand = False
@@ -128,7 +132,8 @@ def write_template_card(basis, filename, value=0.):
             session.log('In write_template_card: "value" keyword argument '
                         'must either be a number or the string, "random".')  
             sys.exit()          
-    newinstance = bases[basis.name](flavor=basis.flavor, dependent=False)
+    # newinstance = bases[basis.name](flavor=basis.flavor, dependent=False)
+    newinstance = basis.__class__(flavor=basis.flavor, dependent=False)
     for k in newinstance.keys():            
             try:
                 if rand:

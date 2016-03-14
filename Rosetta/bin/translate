@@ -70,7 +70,7 @@ try:
     mybasis = implemented_bases[basis.lower()] 
 except KeyError:
     err = ('\n    Element 1 of block "BASIS", "{}", not recognised. '.format(basis)
-           + 'Rosetta accepts one of: {}.'.format(', '.join(bases.keys())))
+           + 'Rosetta accepts one of: {}.'.format(', '.join(existing)))
     raise RosettaError(err)
 
 if not args.output: # output file name
@@ -80,7 +80,7 @@ if not args.output: # output file name
         new_name.insert(-1,'_new.')
         new_param_card = ''.join(new_name)
     else:
-        new_name = args.param_card+'_new'
+        new_param_card = args.param_card+'_new'
 else:
     new_param_card = args.output
 

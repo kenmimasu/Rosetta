@@ -9,7 +9,7 @@ from ...internal.constants import (particle_names, default_masses,
                                    default_ckm, default_inputs)
 
 from ...internal.basis import checkers as check
-from ...internal import session
+from ...internal import session, SLHA
 
 from . import executable, eHDECAYInterfaceError, eHDECAYImportError
 ################################################################################
@@ -46,7 +46,65 @@ cite_msg = ('########## eHDECAY ##########\n'
             'R. Contino et al., Comput.Phys.Commun. 185 (2014) 3412\n'
             'A. Djouadi, J. Kalinowski, M. Spira et al., '
             'Comput.Phys.Commun. 108 (1998) 56 \n')
+            
 ################################################################################
+def SLHAblock(basis):
+    '''
+    Interface Rosetta with eHDECAY to calculate Higgs widths and branching
+    fractions and return an SLHA decay block for the Higgs.
+    '''
+    
+    try:
+        BRs = run(basis, electroweak=True)
+        # BR2 = run(basis, interpolate=True)
+    except eHDECAYInterfaceError:
+        print e
+        return
+
+    sum_BRs = sum([v for k,v in BRs.items() if k is not 'WTOT'])
+
+    # sometimes eHDECAY gives a sum of BRs slightly greater than 1.
+    # for now a hacky global rescaling is implemented to deal with this.
+    if sum_BRs > 1:
+        if abs(sum_BRs - 1.) > 1e-2: # complain if its too wrong
+            raise RuntimeError('Sum of branching fractions > 1 by more than 1%')
+        else:
+            for channel, BR in BRs.iteritems():
+                if channel!='WTOT':
+                    BRs[channel] = BR/sum_BRs
+
+    # return SLHA.Decay block
+
+    totalwidth = BRs.pop('WTOT')
+
+    if totalwidth < 0.:
+        session.log('eHDECAY: Negative total Higgs width. Check your EFT inputs.')
+        return
+
+    hdecays = {}
+
+    # sometimes eHDECAY gives negative branching fractions.
+    for channel, BR in BRs.iteritems():
+        # n1, n2 = particle_names[channel[0]], particle_names[channel[1]]
+        # comment = 'H -> {}{}'.format(n1,n2)
+        # if BR < 0.:
+        #     print ('eHDECAY: Negative branching fraction encountered ' +
+        #           'for {}. Rosetta will ignore it.'.format(comment))
+        #     totalwidth -= BR # adjust total width
+        #     continue
+        # elif BR == 0.:
+        #     continue
+        if BR==0.:
+            continue
+        else:
+            hdecays[channel] = BR
+
+    # credit
+    preamble = ('# Higgs widths and branching fractions '
+                'calculated by eHDECAY.\n')
+                
+    return SLHA.Decay(25, totalwidth, data=hdecays, preamble=preamble)
+
 def run(basis, electroweak=True, interpolate=False, SM_BRs=None):
     '''
     Translate basis instance to SILH and convert to eHDECAY input. 
@@ -58,6 +116,7 @@ def run(basis, electroweak=True, interpolate=False, SM_BRs=None):
                  to rescale as a dict formatted as {(PID1, PID2):BR,...}.
                  for example the 
     '''
+    session.once(cite_msg)
 
     # ensure required masses & inputs
     check.masses(basis, masses, message='eHDECAY interface')
@@ -80,6 +139,7 @@ def SM_BR(basis=None, inputs={}, electroweak=True):
     Calculate the Higgs width and BRs in the SM using the input parameters 
     specified in a basis instance or the defaults.
     '''
+    session.once(cite_msg)
     wid ={}
     if basis is not None:
         # ensure required masses & inputs

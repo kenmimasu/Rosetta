@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+################################################################################
+import StringIO, os, argparse, sys
+sys.path.append('{}/../../'.format(os.path.dirname(__file__)))
+
+from Rosetta import session, settings
+from Rosetta.internal.parsers import set_subparsers
+
+################################################################################
+parser = argparse.ArgumentParser(
+                  description=(
+                  "Main Rosetta command-line executable."
+                  )
+        )
+        
+parser.add_argument("-s", "--silent", action='store_true', 
+                    help=("Suppress all warnings and take default answers to " 
+                          "all questions"))
+parser.add_argument("-v", "--verbose", action='store_true', 
+                    help=("Activate verbose setting for program output"))
+                
+parser.add_argument("--force", action='store_true', 
+                    help=("Take default answers to all questions"))
+                    
+subparsers = parser.add_subparsers(title="argument", metavar="INTERFACE")
+################################################################################
+set_subparsers(subparsers)
+
+# print subparsers
+args = parser.parse_args()
+
+settings.silent = args.silent
+settings.verbose = args.verbose
+settings.force = args.force
+
+args.interface(args)
+# print args
+
+# Split the command line arguments by the first non option (positional) argument
+# ipos = 2
+# for ar in sys.argv[1:]:
+#     if ar.startswith('-'):
+#         ipos += 1
+#     else:
+#         break
+#
+# # parse rosetta arguments
+#
+# ignored = sys.argv[1:ipos-1]
+# if ignored:
+#     session.log('rosetta ignored options: {}\n'.format(','.join(ignored)))
+#     session.log('    '+parser.format_usage())
+#     session.log('    Please place all other options at [OPTIONS],\n'
+#                 '    after the INTERFACE argument.\n')
+#
+#
+# interfacer = TranslateInterface
+#
+# # interface arguments
+# intargs = sys.argv[ipos:]
+#
+# interface = interfacer(*intargs)
+#
+# interface()
+#
+#

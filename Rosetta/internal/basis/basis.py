@@ -126,9 +126,11 @@ class Basis(MutableMapping):
     required_inputs, required_masses = set(), set()
     translate = translate
     
-    def __init__(self, param_card=None, output_basis='bsmc', flavor = 'general',
-                 ehdecay=False, translate=True, dependent=True, 
-                 modify_inputs=True):
+    # def __init__(self, param_card=None, output_basis='bsmc', flavor = 'general',
+    #              ehdecay=False, translate=True, dependent=True,
+    #              modify_inputs=True):
+    def __init__(self, param_card=None, flavor = 'general',
+                 dependent=True):
         '''
         Keyword arguments:
             param_card   - SLHA formatted card conforming to the definitions in 
@@ -150,8 +152,8 @@ class Basis(MutableMapping):
         self.flavor = flavor
 
         self.param_card = param_card
-        self.output_basis = output_basis
-        self.newname = 'Basis'
+        # self.output_basis = output_basis
+        # self.newname = 'Basis'
         if not hasattr(self, 'dependent'): self.dependent=[]
 
         self.set_dependents()
@@ -183,40 +185,40 @@ class Basis(MutableMapping):
             # user defined function
             self.calculate_dependent()
 
-            if translate:
-                # translate to new basis (User defined) 
-                # return an instance of a class derived from Basis
-                self.newbasis = self.translate() 
-            else:
-                # do nothing
-                self.newbasis = self
-            
-            if modify_inputs:
-                self.newbasis.modify_inputs()
-                check.modified_inputs(self.newbasis)
-            
-            # delete imaginary parts of diagonal elements in hermitian matrices
-            if self.output_basis != 'bsmc':
-                self.newbasis.reduce_hermitian_matrices()
-                
-            # set new SLHA card
-            self.newcard = self.newbasis.card 
-            self.newname = self.newbasis.name
-            
-            preamble = ('###################################\n'
-                      + '## DECAY INFORMATION\n'
-                      + '###################################')
-            for decay in self.card.decays.values():
-                decay.preamble = preamble
-                break
-                        
-            try: 
-                if ehdecay: 
-                    self.run_eHDECAY()
-            except TranslationError as e:
-                print e
-                print 'Translation to SILH Basis required, skipping eHDECAY.'
-            
+            # if translate:
+            #     # translate to new basis (User defined)
+            #     # return an instance of a class derived from Basis
+            #     self.newbasis = self.translate()
+            # else:
+            #     # do nothing
+            #     self.newbasis = self
+            #
+            # if modify_inputs:
+            #     self.newbasis.modify_inputs()
+            #     check.modified_inputs(self.newbasis)
+            #
+            # # delete imaginary parts of diagonal elements in hermitian matrices
+            # if self.output_basis != 'bsmc':
+            #     self.newbasis.reduce_hermitian_matrices()
+            #
+            # # set new SLHA card
+            # self.newcard = self.newbasis.card
+            # self.newname = self.newbasis.name
+            #
+            # preamble = ('###################################\n'
+            #           + '## DECAY INFORMATION\n'
+            #           + '###################################')
+            # for decay in self.card.decays.values():
+            #     decay.preamble = preamble
+            #     break
+            #
+            # try:
+            #     if ehdecay:
+            #         self.run_eHDECAY()
+            # except TranslationError as e:
+            #     print e
+            #     print 'Translation to SILH Basis required, skipping eHDECAY.'
+            #
         # if param_card option not given, instantiate with class name 
         # and all coeffs set to 0 (used for creating an empty basis 
         # instance for use in translate() method)
@@ -559,74 +561,6 @@ class Basis(MutableMapping):
                     if len(blk)==0:
                         del container[name]
         
-        
-    def run_eHDECAY(self):
-        '''
-        Interface Rosetta with eHDECAY to calculate Higgs widths and branching 
-        fractions. 
-        '''
-        from ...interfaces.eHDECAY import eHDECAY, eHDECAYInterfaceError, eHDECAYImportError
-        try:
-            BRs = eHDECAY.run(self, electroweak=True)
-            # BR2 = eHDECAY.run(self, interpolate=True)
-            # for (k,v) in BRs.iteritems():
-            #     if v!=0.:
-            #         print k,v, abs(1.-(BR2[k]/v))
-            #     else:
-            #         print k,v,BR2[k]
-        except eHDECAYInterfaceError:
-            print e
-            return
-        
-        sum_BRs = sum([v for k,v in BRs.items() if k is not 'WTOT'])
-        
-        # sometimes eHDECAY gives a sum of BRs slightly greater than 1. 
-        # for now a hacky global rescaling is implemented to deal with this.
-        if sum_BRs > 1: 
-            if abs(sum_BRs - 1.) > 1e-2: # complain if its too wrong
-                raise RuntimeError('Sum of branching fractions > 1 by more than 1%')
-            else:
-                for channel, BR in BRs.iteritems():
-                    if channel!='WTOT':
-                        BRs[channel] = BR/sum_BRs
-                
-        totalwidth = BRs.pop('WTOT')
-        
-        if totalwidth < 0.:
-            session.log('eHDECAY: Negative total Higgs width. Check your EFT inputs.')
-            return
-        
-        hdecays = {}
-        
-        # sometimes eHDECAY gives negative branching fractions. 
-        for channel, BR in BRs.iteritems(): 
-            # n1, n2 = particle_names[channel[0]], particle_names[channel[1]]
-            # comment = 'H -> {}{}'.format(n1,n2)
-            # if BR < 0.:
-            #     print ('eHDECAY: Negative branching fraction encountered ' +
-            #           'for {}. Rosetta will ignore it.'.format(comment))
-            #     totalwidth -= BR # adjust total width
-            #     continue
-            # elif BR == 0.:
-            #     continue
-            if BR==0.:
-                continue
-            else:
-                hdecays[channel] = BR
-
-        # credit
-        preamble = ('# Higgs widths and branching fractions '
-                    'calculated by eHDECAY.\n# Please cite '
-                    'arXiv:hep-ph/974448 & arXiv:1403.3381.')
-        # new SLHA.Decay block
-        decayblock = SLHA.Decay(25, totalwidth, data=hdecays, preamble=preamble)
-        
-        if 25 not in self.newcard.decays:
-            self.newcard.add_decay(decayblock)
-        else:
-            self.newcard.decays[25] = decayblock
-        session.log('#############################\n')
-        
     def calculate_dependent(self):
         '''
         Default behaviour of calculate_dependent(). Called if a subclass of 
@@ -637,7 +571,7 @@ class Basis(MutableMapping):
               
     def modify_inputs(self):
         '''
-        Default behavoiur of modify_inputs(). Called if a subclass of 
+        Default behaviour of modify_inputs(). Called if a subclass of 
         Basis has not implemented the function.
         '''
         session.verbose('Nothing done for {}.modify_'\

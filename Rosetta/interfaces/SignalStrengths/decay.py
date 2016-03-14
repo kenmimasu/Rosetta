@@ -30,7 +30,7 @@ def decay(basis, electroweak=True, SM_BRs=None, ratio=False):
     '''
     # get partial width rescaling factors
     rscl = partial_width_ratios(basis)
-
+    
     # calculate SM Higgs Branching ratios
     if SM_BRs is None:
         if use_eHDECAY:
@@ -42,6 +42,7 @@ def decay(basis, electroweak=True, SM_BRs=None, ratio=False):
     
     # SM total width
     SMwid = BRs['WTOT']
+    
     # Compute total width rescaling factor
     rscl['WTOT'] = 0.
     for k, v in rscl.iteritems():

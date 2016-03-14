@@ -1,41 +1,76 @@
 import sys
 import settings
 from StringIO import StringIO
+import textwrap
+import re
 
 __once = set()
 output = StringIO()
 suppressed = StringIO()
 
-def stdout(msg, log=False):
-    '''Display a message.'''
-    print >> output, msg
-    print msg
+def split(s, wid, lead=''):
+
+    right = lead+(s.strip())    
+    res = []
+    while len(right) > wid:
+        isplit = wid
+        
+        for char in right[:wid][::-1]:
+            if char == ' ': break
+            isplit -= 1
+            
+        if isplit < float(wid)/2: 
+            isplit=wid
+            
+        left, right = right[:isplit], lead+right[isplit:]
+        res.append(left)
+        
+    res.append(right)
     
-def log(msg):
+    return res
+    
+def fmt(istr, lim):
+    
+    substrs = []
+    for s in istr.split('\n'):
+        if len(s) > lim:
+            lead = re.match(r'(\s*).*',s).group(1)
+            substrs += split(s, lim, lead=lead)
+        else:
+            substrs.append(s)
+
+    return '\n'.join(substrs)
+    
+def stdout(msg, log=False, width=80):
+    '''Display a message.'''
+    wrapped = fmt(msg, width)
+    print >> output, wrapped
+    print wrapped
+    
+def log(msg, width=80):
     '''Display a message if settings.silent == False.'''
     
     if not settings.silent: 
-        stdout(msg)
+        stdout(msg, width=width)
     else:
         print >> suppressed, msg
-    
 
-def once(msg):
+def once(msg, width=80):
     '''
     Display a message that should be shown only once during runtime. 
     Once printed, msg is stored in module state variable '__once'.
     '''
     if msg not in __once:
-        log(msg)
+        log(msg, width=width)
         __once.add(msg)
 
-def verbose(msg):
+def verbose(msg, width=80):
     '''
     Display a message that should only be shown if settings.verbose == True 
     and settings.silent == False.
     '''
     if settings.verbose: 
-        log(msg)
+        log(msg, width=width)
     else:
         print >> suppressed, msg
     
@@ -55,10 +90,10 @@ def query(question, default="yes"):
              "no":False, "n":False}
     
     if settings.silent: 
-        print >> suppressed, question+' [{}]'.format(default)
+        print >> suppressed, question+'    [{}]\n'.format(default)
         return valid[default]
     elif settings.force: 
-        stdout(question+' [{}]'.format(default))
+        stdout(question+'    [{}]\n'.format(default))
         return valid[default]
     
     if default == None:
@@ -92,14 +127,21 @@ def exit(code=0):
         logfile.write(suppressed.getvalue())
     log('Exit.')
     log('Output and suppressed output written to rosetta.log and '
-           'rosetta.suppressed.log respectively.')
+        'rosetta.suppressed.log respectively.')
     log('#############################')
     log('')
     sys.exit(code)
 
 log('')
-once('########## Rosetta ##########')
+once('''########## Rosetta ##########
+Adam Falkowski, Benjamin Fuks,
+Kentarou Mawatari, Ken Mimasu,
+Francesco Riva & Veronica Sanz.
+Eur.Phys.J. C75 (2015) 12, 583 
+#############################''')
 log('')
+
+
 
 
     
