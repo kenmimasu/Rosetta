@@ -1,5 +1,6 @@
 # import sys
 import math
+import re
 from math import sqrt
 #
 from ..internal import basis
@@ -59,10 +60,73 @@ class HiggsBasis(basis.Basis):
     blocks = {'HBxMASS':HBxMASS, 'HBxTGC':HBxTGC, 'HBxQGC':HBxQGC, 
               'HBxh':HBxh, 'HBxhh':HBxhh, 'HBxhself':HBxhself, 'HBx4F':HBx4F}
               
-    # copy flavored block structure from MassBasis.MassBasis          
-    flavored = {k.replace('BC','HB'):v for k,v in 
-                BSMCharacterisation.flavored.iteritems()} 
-
+    # copy flavored block structure from BSMCharacterisation
+    # flavored = {k.replace('BC','HB'):v for k,v in
+    #             BSMCharacterisation.flavored.iteritems()}
+    # same flavored block structure as BSMCharacterisation except dipole 
+    # operators, which are general complex matrices instead of a pair of 
+    # hermitian ones for the CP conserving and CP-violating interactions
+    flavored = {
+        # Z Vertex Corrections [Eqn (3.4)]
+        'HBxdGLze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLze'},
+        'HBxdGRze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRze'},
+        'HBxdGLzv': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLzv'},
+        'HBxdGLzu': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLzu'},
+        'HBxdGRzu': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRzu'},
+        'HBxdGLzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLzd'},
+        'HBxdGRzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRzd'},
+        # W Vertex Corrections [Eqn (3.4)]
+        'HBxdGLwl': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLwl'},
+        'HBxdGLwq': {'kind':'general', 'domain':'complex', 'cname':'dGLwq'},
+        'HBxdGRwq': {'kind':'general', 'domain':'complex', 'cname':'dGRwq'},
+        # Dipole interactions with single gauge bosons [Eqn. (3.5)]
+        'HBxdgu': {'kind':'general', 'domain':'complex', 'cname':'dgu'},
+        'HBxdgd': {'kind':'general', 'domain':'complex', 'cname':'dgd'},
+        'HBxdau': {'kind':'general', 'domain':'complex', 'cname':'dau'},
+        'HBxdad': {'kind':'general', 'domain':'complex', 'cname':'dad'},
+        'HBxdae': {'kind':'general', 'domain':'complex', 'cname':'dae'},
+        'HBxdzu': {'kind':'general', 'domain':'complex', 'cname':'dzu'},
+        'HBxdzd': {'kind':'general', 'domain':'complex', 'cname':'dzd'},
+        'HBxdze': {'kind':'general', 'domain':'complex', 'cname':'dze'},
+        'HBxdwu': {'kind':'general', 'domain':'complex', 'cname':'dwu'},
+        'HBxdwd': {'kind':'general', 'domain':'complex', 'cname':'dwd'},
+        'HBxdwl': {'kind':'general', 'domain':'complex', 'cname':'dwl'},
+        # single Higgs couplings to fermions [Eqn. (3.8)]
+        'HBxdYu': {'kind':'general', 'domain':'real', 'cname':'dYu'},
+        'HBxdYd': {'kind':'general', 'domain':'real', 'cname':'dYd'},
+        'HBxdYe': {'kind':'general', 'domain':'real', 'cname':'dYe'},
+        'HBxSu': {'kind':'general', 'domain':'real', 'cname':'Su' },
+        'HBxSd': {'kind':'general', 'domain':'real', 'cname':'Sd' },
+        'HBxSe': {'kind':'general', 'domain':'real', 'cname':'Se' },
+        # Higgs contact interactions HVff [Eqn. (3.10)]
+        'HBxdGLhze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhze'},
+        'HBxdGRhze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRhze'},
+        'HBxdGLhzv': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhzv'},
+        'HBxdGLhzu': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhzu'},
+        'HBxdGRhzu': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRhzu'},
+        'HBxdGLhzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhzd'},
+        'HBxdGRhzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRhzd'},
+        'HBxdGLhwl': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhwl'},
+        'HBxdGLhwq': {'kind':'general', 'domain':'complex', 'cname':'dGLhwq'},
+        'HBxdGRhwq': {'kind':'general', 'domain':'complex', 'cname':'dGRhwq'},
+        # Dipole interactions with single higgs and gauge boson [Eqn. (3.11)]
+        'HBxdhgu': {'kind':'general', 'domain':'complex', 'cname':'dhgu'},
+        'HBxdhgd': {'kind':'general', 'domain':'complex', 'cname':'dhgd'},
+        'HBxdhau': {'kind':'general', 'domain':'complex', 'cname':'dhau'},
+        'HBxdhad': {'kind':'general', 'domain':'complex', 'cname':'dhad'},
+        'HBxdhae': {'kind':'general', 'domain':'complex', 'cname':'dhae'},
+        'HBxdhzu': {'kind':'general', 'domain':'complex', 'cname':'dhzu'},
+        'HBxdhzd': {'kind':'general', 'domain':'complex', 'cname':'dhzd'},
+        'HBxdhze': {'kind':'general', 'domain':'complex', 'cname':'dhze'},
+        'HBxdhwu': {'kind':'general', 'domain':'complex', 'cname':'dhwu'},
+        'HBxdhwd': {'kind':'general', 'domain':'complex', 'cname':'dhwd'},
+        'HBxdhwl': {'kind':'general', 'domain':'complex', 'cname':'dhwl'},
+        # couplings of two Higgs bosons to fermions [Sec. 3.8]
+        'HBxY2u': {'kind':'general', 'domain':'complex', 'cname':'Y2u'},
+        'HBxY2d': {'kind':'general', 'domain':'complex', 'cname':'Y2d'},
+        'HBxY2e': {'kind':'general', 'domain':'complex', 'cname':'Y2e'}
+    }
+    
     # independent coefficients
     independent = [
     # [Eqn. (5.1)]
@@ -71,8 +135,8 @@ class HiggsBasis(basis.Basis):
     'HBxdGRzu', 'HBxdGLzd', 'HBxdGRzd', 'HBxdGRwq', 
     'HBxdgu', 'HBxdgd', 'HBxdau', 'HBxdad', 'HBxdae', 
     'HBxdzu', 'HBxdzd', 'HBxdze',
-    'HBxtdgu', 'HBxtdgd', 'HBxtdau', 'HBxtdad', 'HBxtdae', 
-    'HBxtdzu', 'HBxtdzd', 'HBxtdze',
+    # 'HBxtdgu', 'HBxtdgd', 'HBxtdau', 'HBxtdad', 'HBxtdae',
+    # 'HBxtdzu', 'HBxtdzd', 'HBxtdze',
     # [Eqn. (5.2)]
     'Cgg', 'dCz', 'Caa', 'Cza', 'Czz', 'Czbx', 'tCgg', 'tCaa', 'tCza', 'tCzz', 
     'HBxdYu', 'HBxdYd', 'HBxdYe', 'HBxSu', 'HBxSd', 'HBxSe', 'dL3',
@@ -128,7 +192,6 @@ class HiggsBasis(basis.Basis):
                    A['HBxdGLwq'])
         
         # W dipole interaction
-        ii = complex(0.,1.)
         for f in ('u','d','e'):
             eta = 1. if f=='u' else -1.
             
@@ -137,11 +200,24 @@ class HiggsBasis(basis.Basis):
             else:
                 wdip = 'HBxdw'+f
                 
-            adip, tadip = 'HBxda'+f, 'HBxtda'+f
-            zdip, tzdip = 'HBxdz'+f, 'HBxtdz'+f
+            adip, zdip = 'HBxda'+f, 'HBxdz'+f
+
             for i,j in A[wdip].keys():
-                A[wdip][i,j] = eta*( A[zdip][i,j] - ii*A[tzdip][i,j] + 
-                                s2w*(A[adip][i,j] - ii*A[tadip][i,j]) )
+                A[wdip][i,j] = eta*( A[zdip][i,j] + s2w*A[adip][i,j] )
+        # ii = complex(0.,1.)
+        # for f in ('u','d','e'):
+        #     eta = 1. if f=='u' else -1.
+        #
+        #     if f=='e':
+        #         wdip = 'HBxdwl'
+        #     else:
+        #         wdip = 'HBxdw'+f
+        #
+        #     adip, tadip = 'HBxda'+f, 'HBxtda'+f
+        #     zdip, tzdip = 'HBxdz'+f, 'HBxtdz'+f
+        #     for i,j in A[wdip].keys():
+        #         A[wdip][i,j] = eta*( A[zdip][i,j] - ii*A[tzdip][i,j] +
+        #                         s2w*(A[adip][i,j] - ii*A[tadip][i,j]) )
 
         # list of all z/w vertex correction blocks
         vertex = ['HBxdGLze', 'HBxdGRze', 'HBxdGLzv', 'HBxdGLzu', 'HBxdGRzu', 
@@ -149,8 +225,9 @@ class HiggsBasis(basis.Basis):
         # list of all z/w/a dipole interaction blocks
         dipole = ['HBxdgu', 'HBxdgd', 'HBxdau', 'HBxdad', 'HBxdae', 
                   'HBxdzu', 'HBxdzd', 'HBxdze', 'HBxdwu', 'HBxdwd', 'HBxdwl', 
-                  'HBxtdgu', 'HBxtdgd', 'HBxtdau', 'HBxtdad', 'HBxtdae', 
-                  'HBxtdzu', 'HBxtdzd', 'HBxtdze']
+                  # 'HBxtdgu', 'HBxtdgd', 'HBxtdau', 'HBxtdad', 'HBxtdae',
+                  # 'HBxtdzu', 'HBxtdzd', 'HBxtdze'
+              ]
                   
         # HVFF coeffs and dipole-like Higgs couplings [Eqns. (3.10) & (5.6)]
         for dG in vertex + dipole: 
@@ -221,12 +298,42 @@ class HiggsBasis(basis.Basis):
         
     @basis.translation('bsmc')        
     def to_bsmc(self, instance):
-        # trivial translation
+        # trivial translation apart from dipole terms
+        H = self
+        B = instance
+        dipoles = ['Cdau','Cdzu']
         for k, v in self.iteritems():
-            instance[k] = v
+            
+            is_dipole = re.match(r'Cdh{0,1}[a,z,g][u,d,e]\dx\d', k)
+            
+            if not is_dipole:
+                B[k] = v
+        
+        # splitting dipole coefficients
+        ii = complex(0.,1.)
+        for f in ('u','d','e'):
+
+            glu, tglu = 'BCxdg'+f, 'BCxtdg'+f
+            pho, tpho = 'BCxda'+f, 'BCxtda'+f
+            zed, tzed = 'BCxdz'+f, 'BCxtdz'+f
+
+            for i,j in B[zed].keys():
+                if f in ('u','d'):
+                    Gij, Gji = H['HBxdg'+f][i,j], H['HBxdg'+f][j,i]
+                    B[glu][i,j] = -(Gij + Gji.conjugate())
+                    B[tglu][i,j] =  -ii*(Gij - Gji.conjugate())
+
+                Aij, Aji = H['HBxda'+f][i,j], H['HBxda'+f][j,i]
+                B[pho][i,j] = -(Aij + Aji.conjugate())
+                B[tpho][i,j] =  -ii*(Aij - Aji.conjugate())
+
+                Zij, Zji = H['HBxdz'+f][i,j], H['HBxdz'+f][j,i]
+                B[zed][i,j] = -(Zij + Zji.conjugate())
+                B[tzed][i,j] =  -ii*(Zij - Zji.conjugate())
+        
         return instance
         
-    @basis.translation('warsaw')
+    @basis.translation('m-warsaw')
     def to_warsaw(self, wbinstance):
 
         def delta(i,j):
@@ -306,6 +413,28 @@ class HiggsBasis(basis.Basis):
                 im = yuk*sin*sqrt(2.)
                 W['WBx'+f][i,j] = complex(re, im)
         
+        # #OLD Dipole interactions
+        # ii = complex(0.,1.)
+        # for f in ('u','d','e'):
+        #     eta = 1 if f=='u' else -1
+        #     for i,j in W['WBx'+f+'W'].keys():
+        #         # gluon
+        #         if f in ('u','d'):
+        #             W['WBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
+        #                              - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
+        #         # Weak
+        #         ff = 'l' if f=='e' else f
+        #         W['WBx'+f+'W'][i,j] = - H['HBxdw'+ff][i,j]/(2.*sqrt(2.))
+        #         # Hypercharge
+        #         W['WBx'+f+'B'][i,j] = (eta*H['HBxdw'+ff][i,j]
+        #                                - (H['HBxda'+f][i,j]
+        #                                   - ii*H['HBxtda'+f][i,j])
+        #                               )/(2.*sqrt(2.))
+        #
+        # W['c3G'], W['tc3G'] = H['C3g'], H['tC3g']
+        # W['c3W'], W['tc3W'] = -2./3./gw2**2*H['Lz'], -2./3./gw2**2*H['tLz']
+        # W['cll1122'], W['cpuu3333'] = H['cll1122'], H['cpuu3333']
+        #
         # Dipole interactions
         ii = complex(0.,1.)
         for f in ('u','d','e'):
@@ -313,16 +442,13 @@ class HiggsBasis(basis.Basis):
             for i,j in W['WBx'+f+'W'].keys():
                 # gluon
                 if f in ('u','d'):
-                    W['WBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
-                                     - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
+                    W['WBx'+f+'G'][i,j] = - H['HBxdg'+f][i,j]/sqrt(2.)
                 # Weak
-                ff = 'l' if f=='e' else f
-                W['WBx'+f+'W'][i,j] = - H['HBxdw'+ff][i,j]/(2.*sqrt(2.))
+                W['WBx'+f+'W'][i,j] = - eta*(H['HBxdz'+f][i,j] 
+                                            + s2w*H['HBxda'+f][i,j])
                 # Hypercharge
-                W['WBx'+f+'B'][i,j] = (eta*H['HBxdw'+ff][i,j]
-                                       - (H['HBxda'+f][i,j] 
-                                          - ii*H['HBxtda'+f][i,j])
-                                      )/(2.*sqrt(2.))
+                W['WBx'+f+'B'][i,j] = (H['HBxdz'+f][i,j] 
+                                      - c2w*H['HBxda'+f][i,j])
         
         W['c3G'], W['tc3G'] = H['C3g'], H['tC3g']
         W['c3W'], W['tc3W'] = -2./3./gw2**2*H['Lz'], -2./3./gw2**2*H['tLz']
@@ -330,7 +456,7 @@ class HiggsBasis(basis.Basis):
 
         return W
         
-    @basis.translation('silh')
+    @basis.translation('m-silh')
     def to_silh(self,instance):
         
         H = self
@@ -434,6 +560,26 @@ class HiggsBasis(basis.Basis):
                 im = yuk*sin*sqrt(2.)
                 S['SBx'+f][i,j] = complex(re, im)
 
+        # OLD Dipole interactions
+        # ii = complex(0.,1.)
+        # for f in ('u','d','e'):
+        #     eta = 1 if f=='u' else -1
+        #     for i,j in S['SBx'+f+'W'].keys():
+        #         # gluon
+        #         if f in ('u','d'):
+        #             S['SBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
+        #                              - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
+        #
+        #         ff = 'l' if f=='e' else f
+        #
+        #         # Weak
+        #         S['SBx'+f+'W'][i,j] = - H['HBxdw'+ff][i,j]/(2.*sqrt(2.))
+        #         # Hypercharge
+        #         S['SBx'+f+'B'][i,j] =  (eta*H['HBxdw'+ff][i,j]
+        #                                - (H['HBxda'+f][i,j]
+        #                                   - ii*H['HBxtda'+f][i,j])
+        #                                )/(2.*sqrt(2.))
+        
         # Dipole interactions
         ii = complex(0.,1.)
         for f in ('u','d','e'):
@@ -441,18 +587,13 @@ class HiggsBasis(basis.Basis):
             for i,j in S['SBx'+f+'W'].keys():
                 # gluon
                 if f in ('u','d'):
-                    S['SBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
-                                     - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
-                
-                ff = 'l' if f=='e' else f
-                
+                    S['SBx'+f+'G'][i,j] = - H['HBxdg'+f][i,j]/sqrt(2.)
                 # Weak
-                S['SBx'+f+'W'][i,j] = - H['HBxdw'+ff][i,j]/(2.*sqrt(2.))
+                S['SBx'+f+'W'][i,j] = - eta*(H['HBxdz'+f][i,j] 
+                                            + s2w*H['HBxda'+f][i,j])
                 # Hypercharge
-                S['SBx'+f+'B'][i,j] =  (eta*H['HBxdw'+ff][i,j]
-                                       - (H['HBxda'+f][i,j] 
-                                          - ii*H['HBxtda'+f][i,j])
-                                       )/(2.*sqrt(2.))
+                S['SBx'+f+'B'][i,j] = (H['HBxdz'+f][i,j] 
+                                      - c2w*H['HBxda'+f][i,j])
         
         return S
     

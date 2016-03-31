@@ -1,6 +1,7 @@
 ################################################################################
 ####################### ROSETTA: HIGGS BASIS INPUT CARD ########################
-###################### GENERATED THU FEB 18 16:18:33 2016 ######################
+#### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) for more details ####
+###################### GENERATED THU MAR 31 14:28:35 2016 ######################
 ################################################################################
 
 BLOCK mass # 
@@ -77,14 +78,26 @@ BLOCK HBxTGC #
 BLOCK HBxdad
     1   1    +0.00000e+00 # Rdad1x1
 
+BLOCK IMHBxdad
+    1   1    +0.00000e+00 # Idad1x1
+
 BLOCK HBxdae
     1   1    +0.00000e+00 # Rdae1x1
+
+BLOCK IMHBxdae
+    1   1    +0.00000e+00 # Idae1x1
 
 BLOCK HBxdau
     1   1    +0.00000e+00 # Rdau1x1
 
+BLOCK IMHBxdau
+    1   1    +0.00000e+00 # Idau1x1
+
 BLOCK HBxdgd
     1   1    +0.00000e+00 # Rdgd1x1
+
+BLOCK IMHBxdgd
+    1   1    +0.00000e+00 # Idgd1x1
 
 BLOCK HBxdGLwl
     1   1    +0.00000e+00 # RdGLwl1x1
@@ -116,6 +129,9 @@ BLOCK HBxdGRzu
 BLOCK HBxdgu
     1   1    +0.00000e+00 # Rdgu1x1
 
+BLOCK IMHBxdgu
+    1   1    +0.00000e+00 # Idgu1x1
+
 BLOCK HBxdYd
     1   1    +0.00000e+00 # dYd1x1
 
@@ -128,11 +144,20 @@ BLOCK HBxdYu
 BLOCK HBxdzd
     1   1    +0.00000e+00 # Rdzd1x1
 
+BLOCK IMHBxdzd
+    1   1    +0.00000e+00 # Idzd1x1
+
 BLOCK HBxdze
     1   1    +0.00000e+00 # Rdze1x1
 
+BLOCK IMHBxdze
+    1   1    +0.00000e+00 # Idze1x1
+
 BLOCK HBxdzu
     1   1    +0.00000e+00 # Rdzu1x1
+
+BLOCK IMHBxdzu
+    1   1    +0.00000e+00 # Idzu1x1
 
 BLOCK HBxSd
     1   1    +0.00000e+00 # Sd1x1
@@ -143,29 +168,14 @@ BLOCK HBxSe
 BLOCK HBxSu
     1   1    +0.00000e+00 # Su1x1
 
-BLOCK HBxtdad
-    1   1    +0.00000e+00 # Rtdad1x1
+#        PDG        Width
+DECAY    23         +2.49520e+00 # 
 
-BLOCK HBxtdae
-    1   1    +0.00000e+00 # Rtdae1x1
+#        PDG        Width
+DECAY    24         +2.08500e+00 # 
 
-BLOCK HBxtdau
-    1   1    +0.00000e+00 # Rtdau1x1
-
-BLOCK HBxtdgd
-    1   1    +0.00000e+00 # Rtdgd1x1
-
-BLOCK HBxtdgu
-    1   1    +0.00000e+00 # Rtdgu1x1
-
-BLOCK HBxtdzd
-    1   1    +0.00000e+00 # Rtdzd1x1
-
-BLOCK HBxtdze
-    1   1    +0.00000e+00 # Rtdze1x1
-
-BLOCK HBxtdzu
-    1   1    +0.00000e+00 # Rtdzu1x1
+#        PDG        Width
+DECAY    6          +1.49150e+00 # 
 
 ################################################################################
 ################################################################################

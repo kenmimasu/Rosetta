@@ -72,7 +72,7 @@ translations = {}
 for basis, instance in bases.iteritems():
     functions = [i for i in instance.__dict__.values() 
                  if hasattr(i,'_target')]
-    tmap = {f._target:f for f in functions}
+    tmap = {f._target:f for f in functions if f._target in bases}
     translations[basis] = tmap
 
 relationships = {k:djik(translations, k) for k in translations}

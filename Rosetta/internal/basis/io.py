@@ -3,6 +3,7 @@ import os
 
 from .. import SLHA
 from .. import session
+from errors import BasisNameError, ParamCardReadError
 
 def read_param_card(basis, SLHAcard = None):
     '''
@@ -21,9 +22,9 @@ def read_param_card(basis, SLHAcard = None):
                  + 'but read the name '
                  + '"{}" in block "basis" of {}.'.format(card_name,
                                                          basis.param_card))
-            raise RosettaError(err)
+            raise BasisNameError(err)
     except KeyError:
-        raise RosettaError('Formatting error for block basis. '
+        raise  ReadParamCardError('Formatting error for block basis. '
                            'Check input card, {}.'.format(basis.param_card))
     
     if not basis.blocks:
@@ -91,14 +92,15 @@ def write_param_card(card, filename, overwrite=False):
     if 'vckm' in card.matrices:
         card.matrices['vckm'].preamble = ckm_preamble
 
-    card_preamble = ('################################################'
-                +'######################\n'
+    card_preamble = ('#'*80 +'\n'
                 +'############# COEFFICIENTS TRANSLATED BY ROSETTA'
                 +' MODULE  #############\n'
-                +'########### PARAM CARD GENERATED {}  ##########'\
-                 '#\n'.format(datetime.datetime.now().ctime().upper())
-                +'################################################'
-                +'######################\n\n')
+                +'#### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) '\
+                 'for more details ####\n'
+                +'########### {} BASIS PARAM CARD GENERATED {}  ##########'\
+                 '#\n'.format(card.blocks['basis'][0].upper(),
+                              datetime.datetime.now().ctime().upper())
+                +'#'*80 +'\n\n')
         
     if os.path.exists(filename) and not overwrite:
         session.log('{} already exists.'.format(filename))
@@ -177,6 +179,8 @@ def write_template_card(basis, filename, value=0.):
     nright = 80-len(title)-nleft
     preamble = ( '#'*80 + '\n'
                 +'#'*nleft + title + '#'*nright +'\n'
+                +'#### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) '\
+                 'for more details ####\n'
                 +'#'*22 + time + '#'*22 + '\n'
                 +'#'*80 +'\n')
     

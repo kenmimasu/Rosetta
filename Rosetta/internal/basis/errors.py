@@ -5,5 +5,9 @@ class FlavorMatrixError(RosettaError):
     pass
 
 class ParamCardReadError(RosettaError):
-    '''Error in calling flavor_matrix()'''
+    '''Error in reading parameter card'''
+    pass
+
+class BasisNameError(RosettaError):
+    '''Error reading basis name in parameter card'''
     pass

@@ -15,7 +15,7 @@ from ..matrices import (TwoDMatrix, CTwoDMatrix, HermitianMatrix,
                       SymmetricMatrix, AntisymmetricMatrix)
 from ..constants import (PID, default_inputs, default_masses, input_names, 
                        default_ckm, particle_names, input_to_PID, 
-                      PID_to_input)
+                       PID_to_input, GammaZ, GammaW, Gammat)
 from ..errors import TranslationError, TranslationPathError
 from errors import FlavorMatrixError, ParamCardReadError
 from .. import session
@@ -52,7 +52,7 @@ class Basis(MutableMapping):
 
     self.blocks, self.required_inputs and self.required_masses should be defined 
     in accordance with block structure of the SLHA parameter card, Blocks 
-    "sminput" and "mass" respectively (the Z ahd Higgs masses are also stored 
+    "sminput" and "mass" respectively (the Z and Higgs masses are also stored 
     in self.inputs). Specifically, the block names specified as keys in 
     self.blocks should match those in the SLHA card as well as the names and 
     indices of the elements (taken to be the order in which the appear in the 
@@ -62,7 +62,7 @@ class Basis(MutableMapping):
     definitions are performed by check_param_data(), check_mass() and 
     check_sminputs() on the data read in from the parameter card. An example is 
     shown below where the required data members are defined outside the class 
-    construtor so as to instrinsically belong to all instances of the class.
+    constructor so as to intrinsically belong to all instances of the class.
     
         >> from internal import Basis
         >> class MyBasis(Basis.Basis):
@@ -94,10 +94,10 @@ class Basis(MutableMapping):
     The user can define calculate_dependent() to set any dependent parameters 
     (those listed in in self.blocks but not in self.independent) and any number 
     of additional functions, usually to translate the coefficients into a given 
-    basis which sets the SLHA.Card object, self.newcard. Rosetta differentiaties 
+    basis which sets the SLHA.Card object, self.newcard. Rosetta differentiates 
     from general utility functions and translation functions using the 
     "translation" decorator. Any function designed to take you to another 
-    existing basis implemenation should be decorated with the "translation" 
+    existing basis implementation should be decorated with the "translation" 
     decorator with an argument corresponding to the name of the target basis. 
     This name should match the unique name of an existing basis implementation 
     also contained in the Rosetta root directory. Below would be example of a 
@@ -109,7 +109,7 @@ class Basis(MutableMapping):
         >>     instance['cpHl11'] = self['myparam']
         >>     return instance
     
-    Any python module saved in the root directory of the Rosetta package is 
+    Any python module saved in the bases/ directory of the Rosetta package is 
     assumed to be a basis implementation. Furthermore, the class name of the 
     basis implementation should be the same as the file name of the python 
     module. In our example above, the class `MyBasis` would have to be saved in 
@@ -126,21 +126,12 @@ class Basis(MutableMapping):
     required_inputs, required_masses = set(), set()
     translate = translate
     
-    # def __init__(self, param_card=None, output_basis='bsmc', flavor = 'general',
-    #              ehdecay=False, translate=True, dependent=True,
-    #              modify_inputs=True):
-    def __init__(self, param_card=None, flavor = 'general',
-                 dependent=True):
+    def __init__(self, param_card=None, flavor = 'general', dependent=True):
         '''
         Keyword arguments:
             param_card   - SLHA formatted card conforming to the definitions in 
                            self.blocks, self.required_masses and 
                            self.required_inputs.
-            output_basis - target basis to which to translate coefficients.
-            ehdecay      - whether to run the eHDECAY interface to calculate the 
-                           Higgs width and BRs.
-            translate    - Whether to call the translate method when reading in 
-                           from a parameter card.
             flavor      - flavor structure of matrices: 'diagonal, 'universal' 
                            , 'MFV' or 'general'.
             dependent    - when param_card is None, whether or not to include 
@@ -152,8 +143,7 @@ class Basis(MutableMapping):
         self.flavor = flavor
 
         self.param_card = param_card
-        # self.output_basis = output_basis
-        # self.newname = 'Basis'
+
         if not hasattr(self, 'dependent'): self.dependent=[]
 
         self.set_dependents()
@@ -173,11 +163,13 @@ class Basis(MutableMapping):
             check.masses(self, self.required_masses) 
             check.param_data(self)
             check.flavored_data(self)
-            # generalises potentially reduced flavor structure
             
+            # generalises potentially reduced flavor structure
             self.set_flavor(self.flavor, 'general')
+            
             # add dependent coefficients/blocks to self.card
             self.init_dependent()
+            
             # generate internal OrderedDict() object for __len__, __iter__, 
             # items() and iteritems() method
             self._gen_thedict()
@@ -185,40 +177,6 @@ class Basis(MutableMapping):
             # user defined function
             self.calculate_dependent()
 
-            # if translate:
-            #     # translate to new basis (User defined)
-            #     # return an instance of a class derived from Basis
-            #     self.newbasis = self.translate()
-            # else:
-            #     # do nothing
-            #     self.newbasis = self
-            #
-            # if modify_inputs:
-            #     self.newbasis.modify_inputs()
-            #     check.modified_inputs(self.newbasis)
-            #
-            # # delete imaginary parts of diagonal elements in hermitian matrices
-            # if self.output_basis != 'bsmc':
-            #     self.newbasis.reduce_hermitian_matrices()
-            #
-            # # set new SLHA card
-            # self.newcard = self.newbasis.card
-            # self.newname = self.newbasis.name
-            #
-            # preamble = ('###################################\n'
-            #           + '## DECAY INFORMATION\n'
-            #           + '###################################')
-            # for decay in self.card.decays.values():
-            #     decay.preamble = preamble
-            #     break
-            #
-            # try:
-            #     if ehdecay:
-            #         self.run_eHDECAY()
-            # except TranslationError as e:
-            #     print e
-            #     print 'Translation to SILH Basis required, skipping eHDECAY.'
-            #
         # if param_card option not given, instantiate with class name 
         # and all coeffs set to 0 (used for creating an empty basis 
         # instance for use in translate() method)
@@ -387,6 +345,10 @@ class Basis(MutableMapping):
         thecard.ckm = vckm
         thecard.set_complex()
         self.fix_matrices(card = thecard)
+        
+        for ptcl, wid in zip((23, 24, 6),(GammaZ, GammaW, Gammat)):
+            thecard.add_decay(SLHA.Decay(ptcl, wid))
+        
         return thecard
     
     def set_flavor(self, _from, to):

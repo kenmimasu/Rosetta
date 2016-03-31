@@ -35,6 +35,9 @@ default_inputs = {1: 1.27916e+02, 2: 1.166379e-05, 3: 1.184e-01,
                   6: default_masses[6], 7: default_masses[15],
                   25:default_masses[25], 9:default_masses[24]}
 
+# Z, W & top decay widths for default decay blocks
+GammaZ, GammaW, Gammat= 2.4952, 2.085, 1.4915
+
 # Construct default CKM matrix
 # Wolfenstein parameterisation (PDG best fit)
 lam, A, rho, eta = 0.22535, 0.811, 0.131, 0.345

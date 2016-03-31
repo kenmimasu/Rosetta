@@ -25,7 +25,6 @@ def translate(basis, target=None, cache=True, avoid_cache = False,
                       etc. to the new basis instance
     '''
     from ..machinery import get_path, bases
-
     # default target
     target = target if target is not None else basis.output_basis
     

@@ -34,6 +34,10 @@ class eHDECAYInterface(RosettaInterface):
             'action':'store_true', 
             'help':'Also write out dependent parameters to output card'
         },
+        ('--EW',):{
+            'action':'store_true', 
+            'help':'switch on electroweak corrections in eHDECAY'
+        }
     }
     def __call__(self, args):
 
@@ -42,15 +46,14 @@ class eHDECAYInterface(RosettaInterface):
         basis_instance.modify_inputs()
         check.modified_inputs(basis_instance)
 
-        if not args.dependent:
-            basis_instance.delete_dependent()
-
         # run eHDECAY
         try:
-            decayblock = SLHAblock(basis_instance)
+            decayblock = SLHAblock(basis_instance, electroweak=args.EW)
         except TranslationError as e:
             print e
-            print 'Translation to SILH Basis required, skipping eHDECAY.'
+            print ('Translation to modified-SILH Basis '
+                   'required for eHDECAY interface.')
+            session.exit(1)
 
         if not args.output:
             session.stdout('###### eHDECAY results ######')
@@ -58,6 +61,10 @@ class eHDECAYInterface(RosettaInterface):
             session.stdout('#############################')
             session.exit(0)
         else:
+
+            if not args.dependent:
+                basis_instance.delete_dependent()
+                
             preamble = ('###################################\n'
                       + '## DECAY INFORMATION\n'
                       + '###################################')

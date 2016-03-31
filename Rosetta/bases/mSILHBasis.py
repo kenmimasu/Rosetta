@@ -5,7 +5,7 @@ from ..internal import basis
 from ..internal import PID
 from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
-class SILHBasis(basis.Basis):
+class mSILHBasis(basis.Basis):
     '''
     Basis class for Rosetta based on [Giudice et al., JHEP 0706 (2007) 045 ] 
     and a number of succesive publications. Part of the three intrinsic basis 
@@ -19,7 +19,7 @@ class SILHBasis(basis.Basis):
     in section 5.
     '''
 
-    name = 'silh'
+    name = 'm-silh'
     ##########################
     # declare coefficients
     # [Tab. 1]
@@ -191,31 +191,47 @@ class SILHBasis(basis.Basis):
                 M[XB+'xdY'+f][i,j], M[XB+'xS'+f][i,j] = dy_sf(dy_cosphi, 
                                                               dy_sinphi)
 
+        # # Dipole interactions
+        # ii = complex(0.,1.)
+        # for f in ('u','d','e'):
+        #     eta = 1 if f=='u' else -1
+        #
+        #     glu, tglu = XB+'xdg'+f, XB+'xtdg'+f
+        #     pho, tpho = XB+'xda'+f, XB+'xtda'+f
+        #     zed, tzed = XB+'xdz'+f, XB+'xtdz'+f
+        #     dub = XB+'xdwl' if f=='e' else XB+'xdw'+f
+        #
+        #     for i,j in M[zed].keys():
+        #         if f in ('u','d'):
+        #             Gij, Gji = S['SBx'+f+'G'][i,j], S['SBx'+f+'G'][j,i]
+        #             M[glu][i,j] = -sqrt(2.)*(Gij + Gji.conjugate())
+        #             M[tglu][i,j] =  -ii*sqrt(2.)*(Gij - Gji.conjugate())
+        #
+        #         Aij = eta*S['SBx'+f+'W'][i,j] + S['SBx'+f+'B'][i,j]
+        #         Aji = eta*S['SBx'+f+'W'][j,i] + S['SBx'+f+'B'][j,i]
+        #         M[pho][i,j] = -sqrt(2.)*(Aij + Aji.conjugate())
+        #         M[tpho][i,j] =  -ii*sqrt(2.)*(Aij - Aji.conjugate())
+        #
+        #         Zij = gw2*eta*S['SBx'+f+'W'][i,j] - gp2*S['SBx'+f+'B'][i,j]
+        #         Zji = gw2*eta*S['SBx'+f+'W'][j,i] - gp2*S['SBx'+f+'B'][j,i]
+        #         M[zed][i,j] = -sqrt(2.)/(gw2+gp2)*(Zij + Zji.conjugate())
+        #         M[tzed][i,j] =  -ii*sqrt(2.)/(gw2+gp2)*(Zij - Zji.conjugate())
+        
         # Dipole interactions
         ii = complex(0.,1.)
         for f in ('u','d','e'):
             eta = 1 if f=='u' else -1
             
-            glu, tglu = XB+'xdg'+f, XB+'xtdg'+f
-            pho, tpho = XB+'xda'+f, XB+'xtda'+f
-            zed, tzed = XB+'xdz'+f, XB+'xtdz'+f
-            dub = XB+'xdwl' if f=='e' else XB+'xdw'+f
+            glu, pho, zed = XB+'xdg'+f,  XB+'xda'+f, XB+'xdz'+f
             
             for i,j in M[zed].keys():
                 if f in ('u','d'):
-                    Gij, Gji = S['SBx'+f+'G'][i,j], S['SBx'+f+'G'][j,i]
-                    M[glu][i,j] = -sqrt(2.)*(Gij + Gji.conjugate())
-                    M[tglu][i,j] =  -ii*sqrt(2.)*(Gij - Gji.conjugate())
+                    M[glu][i,j] = -sqrt(2.)*(S['SBx'+f+'G'][i,j])
 
-                Aij = eta*S['SBx'+f+'W'][i,j] + S['SBx'+f+'B'][i,j]
-                Aji = eta*S['SBx'+f+'W'][j,i] + S['SBx'+f+'B'][j,i]
-                M[pho][i,j] = -sqrt(2.)*(Aij + Aji.conjugate())
-                M[tpho][i,j] =  -ii*sqrt(2.)*(Aij - Aji.conjugate())
-            
-                Zij = gw2*eta*S['SBx'+f+'W'][i,j] - gp2*S['SBx'+f+'B'][i,j]
-                Zji = gw2*eta*S['SBx'+f+'W'][j,i] - gp2*S['SBx'+f+'B'][j,i]
-                M[zed][i,j] = -sqrt(2.)/(gw2+gp2)*(Zij + Zji.conjugate())
-                M[tzed][i,j] =  -ii*sqrt(2.)/(gw2+gp2)*(Zij - Zji.conjugate())
+                M[pho][i,j] = -(eta*S['SBx'+f+'W'][i,j] + S['SBx'+f+'B'][i,j])
+
+                M[zed][i,j] = -(eta*c2w*S['SBx'+f+'W'][i,j] 
+                               - s2w*S['SBx'+f+'B'][i,j])
 
         # Triple gauge couplings [eqn. (5.18)]
         M['Lz'] = -S['s3W']*3./2.*gw2**2
@@ -233,7 +249,7 @@ class SILHBasis(basis.Basis):
         
         return M
     
-    @basis.translation('warsaw')
+    @basis.translation('m-warsaw')
     def to_warsaw(self, instance):
 
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 

@@ -49,8 +49,8 @@ class LilithInterface(RosettaInterface):
         
         likelihood = compute_likelihood(basis_instance, sqrts=8)
         
-        session.stdout('###### Lilith results ######')
-        session.stdout('Likelihood = {:.3f} '.format(likelihood))         
+        session.stdout('###### Lilith results #######\n')
+        session.stdout('Likelihood = {:.3f}\n'.format(likelihood))         
         session.stdout('#############################')
         session.exit(0)
 

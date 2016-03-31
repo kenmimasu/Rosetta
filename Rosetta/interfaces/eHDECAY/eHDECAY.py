@@ -48,7 +48,7 @@ cite_msg = ('########## eHDECAY ##########\n'
             'Comput.Phys.Commun. 108 (1998) 56 \n')
             
 ################################################################################
-def SLHAblock(basis):
+def SLHAblock(basis, electroweak=True):
     '''
     Interface Rosetta with eHDECAY to calculate Higgs widths and branching
     fractions and return an SLHA decay block for the Higgs.
@@ -123,7 +123,7 @@ def run(basis, electroweak=True, interpolate=False, SM_BRs=None):
     check.sminputs(basis, inputs, message='eHDECAY interface')
     
     # translate to silh instance
-    thesilh = basis.translate(target='silh')
+    thesilh = basis.translate(target='m-silh')
 
     thesilh.set_flavor(thesilh.flavor, 'general')
     # slightly modify silh to get eHDECAY inputs

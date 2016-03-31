@@ -5,18 +5,18 @@ from ..internal import basis
 from ..internal import PID
 from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
 ################################################################################
-class WarsawBasis(basis.Basis):
+class mWarsawBasis(basis.Basis):
     '''
     Basis class for Rosetta based on [Grzadkowski et al., JHEP 1010 (2010) 085]. 
     Part of the three intrinsic basis implementations in Rosetta along with the 
-    Higgs and SILH bases. The exact list of operators included as well as the 
+    Higgs and modified-SILH bases. The exact list of operators included as well as the 
     equations for the translation to the Higgs basis can be found in the HXSWG 
     note, for which all references to tables and equations are in this 
     implementation. Table 1 of the note shows full list of operators. The block 
-    structure of the basis implementation maps to this table.
+    structure of the basis implementation maps to this table. 
     '''
     
-    name = 'warsaw'
+    name = 'm-warsaw'
     ###### 
     # [Tab. 1]
     WBV2H2 = ['cGG','cWW','cBB','cWB','tcGG','tcWW','tcBB','tcWB']
@@ -173,31 +173,46 @@ class WarsawBasis(basis.Basis):
                 M[XB+'xdY'+f][i,j], M[XB+'xS'+f][i,j] = dy_sf(dy_cosphi, 
                                                             dy_sinphi)
                 
-        # Dipole interactions
+        # # Dipole interactions
+        # ii = complex(0.,1.)
+        # for f in ('u','d','e'):
+        #     eta = 1 if f=='u' else -1
+        #
+        #     glu, tglu = XB+'xdg'+f, XB+'xtdg'+f
+        #     pho, tpho = XB+'xda'+f, XB+'xtda'+f
+        #     zed, tzed = XB+'xdz'+f, XB+'xtdz'+f
+        #     dub = XB+'xdwl' if f=='e' else XB+'xdw'+f
+        #
+        #     for i,j in M[zed].keys():
+        #         if f in ('u','d'):
+        #             Gij, Gji = W['WBx'+f+'G'][i,j], W['WBx'+f+'G'][j,i]
+        #             M[glu][i,j] = -sqrt(2.)*(Gij + Gji.conjugate())
+        #             M[tglu][i,j] =  -ii*sqrt(2.)*(Gij - Gji.conjugate())
+        #
+        #         Aij = eta*W['WBx'+f+'W'][i,j] + W['WBx'+f+'B'][i,j]
+        #         Aji = eta*W['WBx'+f+'W'][j,i] + W['WBx'+f+'B'][j,i]
+        #         M[pho][i,j] = -sqrt(2.)*(Aij + Aji.conjugate())
+        #         M[tpho][i,j] =  -ii*sqrt(2.)*(Aij - Aji.conjugate())
+        #
+        #         Zij = gw2*eta*W['WBx'+f+'W'][i,j] - gp2*W['WBx'+f+'B'][i,j]
+        #         Zji = gw2*eta*W['WBx'+f+'W'][j,i] - gp2*W['WBx'+f+'B'][j,i]
+        #         M[zed][i,j] = -sqrt(2.)/(gw2+gp2)*(Zij + Zji.conjugate())
+        #         M[tzed][i,j] =  -ii*sqrt(2.)/(gw2+gp2)*(Zij - Zji.conjugate())
+        #
         ii = complex(0.,1.)
         for f in ('u','d','e'):
             eta = 1 if f=='u' else -1
             
-            glu, tglu = XB+'xdg'+f, XB+'xtdg'+f
-            pho, tpho = XB+'xda'+f, XB+'xtda'+f
-            zed, tzed = XB+'xdz'+f, XB+'xtdz'+f
-            dub = XB+'xdwl' if f=='e' else XB+'xdw'+f
+            glu, pho, zed = XB+'xdg'+f,  XB+'xda'+f, XB+'xdz'+f
             
             for i,j in M[zed].keys():
                 if f in ('u','d'):
-                    Gij, Gji = W['WBx'+f+'G'][i,j], W['WBx'+f+'G'][j,i]
-                    M[glu][i,j] = -sqrt(2.)*(Gij + Gji.conjugate())
-                    M[tglu][i,j] =  -ii*sqrt(2.)*(Gij - Gji.conjugate())
+                    M[glu][i,j] = -sqrt(2.)*(W['WBx'+f+'G'][i,j])
 
-                Aij = eta*W['WBx'+f+'W'][i,j] + W['WBx'+f+'B'][i,j]
-                Aji = eta*W['WBx'+f+'W'][j,i] + W['WBx'+f+'B'][j,i]
-                M[pho][i,j] = -sqrt(2.)*(Aij + Aji.conjugate())
-                M[tpho][i,j] =  -ii*sqrt(2.)*(Aij - Aji.conjugate())
-            
-                Zij = gw2*eta*W['WBx'+f+'W'][i,j] - gp2*W['WBx'+f+'B'][i,j]
-                Zji = gw2*eta*W['WBx'+f+'W'][j,i] - gp2*W['WBx'+f+'B'][j,i]
-                M[zed][i,j] = -sqrt(2.)/(gw2+gp2)*(Zij + Zji.conjugate())
-                M[tzed][i,j] =  -ii*sqrt(2.)/(gw2+gp2)*(Zij - Zji.conjugate())
+                M[pho][i,j] = -(eta*W['WBx'+f+'W'][i,j] + W['WBx'+f+'B'][i,j])
+
+                M[zed][i,j] = -(eta*c2w*W['WBx'+f+'W'][i,j] 
+                               - s2w*W['WBx'+f+'B'][i,j])
         
         # TGC's [eqn. (5.18)]
         M['Lz']   = -W['c3W']*3./2.*gw2**2
@@ -217,7 +232,7 @@ class WarsawBasis(basis.Basis):
         
         return M
     
-    @basis.translation('silh')
+    @basis.translation('m-silh')
     def to_silh(self, instance):
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MH = self.mass[25]
