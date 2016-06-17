@@ -121,7 +121,7 @@ elif CM == 100 : A = A100tev
 else : print ("invalid LHC energy")
 
 def f(kl,kt,c2,cg,c2g):
-    return A[0]*kt**4 + A[1]*c2**2 + (A[2]*kt**2 + A[3]*cg**2)*kl**2  + A[4]*c2g**2 + ( A[5]*c2 + A[6]*kt*kl )*kt**2  + (A[7]*kt*kl + A[0]*cg*kl )*c2 + A[9]*c2*c2g  + (A[10]*cg*kl + A[11]*c2g)*kt**2+ (A[12]*kl*cg + A[13]*c2g )*kt*kl + A[14]*cg*c2g*kl
+    return A[0]*kt**4 + A[1]*c2**2 + (A[2]*kt**2 + A[3]*cg**2)*kl**2  + A[4]*c2g**2 + ( A[5]*c2 + A[6]*kt*kl )*kt**2  + (A[7]*kt*kl + A[8]*cg*kl )*c2 + A[9]*c2*c2g  + (A[10]*cg*kl + A[11]*c2g)*kt**2+ (A[12]*kl*cg + A[13]*c2g )*kt*kl + A[14]*cg*c2g*kl
 
 
 print "RHH = %f" % f(kl,kt,c2,cg,c2g)
@@ -204,8 +204,15 @@ for x in range(0, len(clusters) ) :
            print("Neigbours: ", Vkl[list4min[4]], Vkt[list4min[4]],Vc2[list4min[4]],Vcg[list4min[4]],Vc2g[list4min[4]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[4]])
            print " "
        XS[x].append(f(Vkl[clusters[x][y]], Vkt[clusters[x][y]],Vc2[clusters[x][y]],Vcg[clusters[x][y]],Vc2g[clusters[x][y]])*xs)
-
 #print XS[11]
+
+# FG: veto points that feature distance to a grid point larger than half the grid spacing in a certain direction -> veto points that lie in holes (directions not covered in scan) or outside grid (perhaps still refine by looking at strength of xsec variation in each direction)
+# possible improvement: if point vetoed (due to 'central' point being too diferent), could also look if point with larger total distance would meet criterion (not really expected - depends however on weighting in distance measure...)
+if (abs(Vkl[min_value]-kl)>2.5) or (abs(Vkt[min_value]-kt)>0.25) or (abs(Vc2[min_value]-c2)>0.25) or (abs(Vcg[min_value]-cg)>0.1) or (abs(Vc2g[min_value]-c2g)>0.1):
+    print "---------------------------------------------CAUTION!--------------------------------------------"
+    print "Distance to next point too large for reliable intra/extrapolation (hole in scan or outside grid)!"
+    print "---------------------------------------------CAUTION!--------------------------------------------"
+
 print "SigmaHH = %f" % (f(kl,kt,c2,cg,c2g)*xs)
 
        #else :  continue
