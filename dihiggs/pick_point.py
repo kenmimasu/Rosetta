@@ -10,16 +10,17 @@ parser = OptionParser()
 '''A simple function returning a value, used in an expression'''
 
 parser.add_option("-n", type="int", dest="num", help="Number of clusters")
-parser.add_option("--LHC", type="int", dest="lhc", help="LHC CM energy in TeV")
-parser.add_option("--kl", type="float", dest="kll", help="LHC CM energy in TeV")
-parser.add_option("--kt", type="float", dest="ktt", help="LHC CM energy in TeV")
-parser.add_option("--c2", type="float", dest="c22", help="LHC CM energy in TeV")
-parser.add_option("--cg", type="float", dest="cgg", help="LHC CM energy in TeV")
-parser.add_option("--c2g", type="float", dest="c2gg", help="LHC CM energy in TeV")
+parser.add_option("--LHC", type="int", dest="lhc", help="pp CM energy in TeV")
+parser.add_option("--kl", type="float", dest="kll", help="effective trilinear coupling, relative to SM")
+parser.add_option("--kt", type="float", dest="ktt", help="effective top yukawa coupling, relative to SM")
+parser.add_option("--c2", type="float", dest="c22", help="tthh coupling")
+parser.add_option("--cg", type="float", dest="cgg", help="ggh coupling")
+parser.add_option("--c2g", type="float", dest="c2gg", help="gghh coupling")
+# for normalization see 1507.02245v4
 
 (options, args) = parser.parse_args()
-print "Let's talk about %s clusters" % options.num
-print "LHC @ %s TeV" % options.lhc
+print "Employ %s clusters" % options.num
+print "pp @ %s TeV" % options.lhc
 print " "
 
 number = options.num
@@ -118,7 +119,7 @@ elif CM == 8 : A = A8tev
 elif CM == 13 : A = A13tev
 elif CM == 14 : A = A14tev
 elif CM == 100 : A = A100tev
-else : print ("invalid LHC energy")
+else : print ("invalid COM energy")
 
 def f(kl,kt,c2,cg,c2g):
     return A[0]*kt**4 + A[1]*c2**2 + (A[2]*kt**2 + A[3]*cg**2)*kl**2  + A[4]*c2g**2 + ( A[5]*c2 + A[6]*kt*kl )*kt**2  + (A[7]*kt*kl + A[8]*cg*kl )*c2 + A[9]*c2*c2g  + (A[10]*cg*kl + A[11]*c2g)*kt**2+ (A[12]*kl*cg + A[13]*c2g )*kt*kl + A[14]*cg*c2g*kl
@@ -161,7 +162,7 @@ elif CM ==100 :
     scalem = -6.6
     PDF = 1.7
     alphas = 2.1
-else : print ("invalid LHC energy")
+else : print ("invalid COM energy")
 #
 #######################
 
@@ -169,13 +170,16 @@ else : print ("invalid LHC energy")
 ########################
 #
 # make the distances
+# weigh different directions in parameterspace according to their impact on cross section: w = |Rhh[ki=2,others=SM]-(Rhh[SM]=1)|
+# (and w = |Rhh[ki=1,others=SM]-(Rhh[SM]=1)| for pure BSM couplings)
+# [changing weighting to impact on kinematics?]
+
 distance =[]
 for x in range(0, 1507): 
-   distance.append(math.sqrt( ((Vkl[x] - kl)/2.5)**2 + ((Vkt[x] - kt)/0.5)**2 + (Vc2[x] - c2)**2 + ((Vcg[x] - cg)/0.1)**2 +((Vc2g[x] - c2g)/0.1)**2 ))
-min_index = np.amin(distance)
-min_value = np.argmin(distance)
+   distance.append(math.sqrt( ((Vkl[x] - kl)*0.53)**2 + ((Vkt[x] - kt)*23)**2 + ((Vc2[x] - c2)*4.5)**2 + ((Vcg[x] - cg)*0.25)**2 +((Vc2g[x] - c2g)*2.4)**2 ))
+#min_value = np.amin(distance)
+min_index = np.argmin(distance)
 list4min = np.argsort(distance)[:5]
-#print (min_index,min_value)
 #print("Center again: ", Vkl[list4min[0]], Vkt[list4min[0]],Vc2[list4min[0]],Vcg[list4min[0]],Vc2g[list4min[0]])
 
 #
@@ -187,28 +191,28 @@ list4min = np.argsort(distance)[:5]
 counterf=0
 for x in range(0, len(clusters) ) :
     for y in range(0, len(clusters[x]) ) : 
-       if clusters[x][y] == min_value : 
-           print("Center: ",Vkl[min_value], Vkt[min_value],Vc2[min_value],Vcg[min_value],Vc2g[min_value], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[min_value])
+       if clusters[x][y] == min_index : 
+           print("Center: ",Vkl[min_index], Vkt[min_index],Vc2[min_index],Vcg[min_index],Vc2g[min_index], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[min_index])
            print " "
            counterf+=1
        if clusters[x][y] == list4min[1] : 
-           print("Neigbours: ", Vkl[list4min[1]], Vkt[list4min[1]],Vc2[list4min[1]],Vcg[list4min[1]],Vc2g[list4min[1]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[1]])
+           print("Neighbours: ", Vkl[list4min[1]], Vkt[list4min[1]],Vc2[list4min[1]],Vcg[list4min[1]],Vc2g[list4min[1]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[1]])
            print " "
        if clusters[x][y] == list4min[2] : 
-           print("Neigbours: ", Vkl[list4min[2]], Vkt[list4min[2]],Vc2[list4min[2]],Vcg[list4min[2]],Vc2g[list4min[2]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[2]])
+           print("Neighbours: ", Vkl[list4min[2]], Vkt[list4min[2]],Vc2[list4min[2]],Vcg[list4min[2]],Vc2g[list4min[2]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[2]])
            print " "
        if clusters[x][y] == list4min[3] : 
-           print("Neigbours: ", Vkl[list4min[3]], Vkt[list4min[3]],Vc2[list4min[3]],Vcg[list4min[3]],Vc2g[list4min[3]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[3]])
+           print("Neighbours: ", Vkl[list4min[3]], Vkt[list4min[3]],Vc2[list4min[3]],Vcg[list4min[3]],Vc2g[list4min[3]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[3]])
            print " "
        if clusters[x][y] == list4min[4] : 
-           print("Neigbours: ", Vkl[list4min[4]], Vkt[list4min[4]],Vc2[list4min[4]],Vcg[list4min[4]],Vc2g[list4min[4]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[4]])
+           print("Neighbours: ", Vkl[list4min[4]], Vkt[list4min[4]],Vc2[list4min[4]],Vcg[list4min[4]],Vc2g[list4min[4]], "Cluster ", x+1, " sample ", clusters[x][y], " distance: ", distance[list4min[4]])
            print " "
        XS[x].append(f(Vkl[clusters[x][y]], Vkt[clusters[x][y]],Vc2[clusters[x][y]],Vcg[clusters[x][y]],Vc2g[clusters[x][y]])*xs)
 #print XS[11]
 
 # FG: veto points that feature distance to a grid point larger than half the grid spacing in a certain direction -> veto points that lie in holes (directions not covered in scan) or outside grid (perhaps still refine by looking at strength of xsec variation in each direction)
 # possible improvement: if point vetoed (due to 'central' point being too diferent), could also look if point with larger total distance would meet criterion (not really expected - depends however on weighting in distance measure...)
-if (abs(Vkl[min_value]-kl)>2.5) or (abs(Vkt[min_value]-kt)>0.25) or (abs(Vc2[min_value]-c2)>0.25) or (abs(Vcg[min_value]-cg)>0.1) or (abs(Vc2g[min_value]-c2g)>0.1):
+if (abs(Vkl[min_index]-kl)>2.5) or (abs(Vkt[min_index]-kt)>0.25) or (abs(Vc2[min_index]-c2)>0.25) or (abs(Vcg[min_index]-cg)>0.1) or (abs(Vc2g[min_index]-c2g)>0.1):
     print "---------------------------------------------CAUTION!--------------------------------------------"
     print "Distance to next point too large for reliable intra/extrapolation (hole in scan or outside grid)!"
     print "---------------------------------------------CAUTION!--------------------------------------------"
@@ -219,13 +223,13 @@ print "SigmaHH = %f" % (f(kl,kt,c2,cg,c2g)*xs)
        # check neighbors
 #for x in range(0, len(clusters) ) :
 #    for y in range(0, len(clusters[x]) ) : 
-#       if Vkl[clusters[x][y]] == Vkl[min_value] + 5 and Vkt[clusters[x][y]] ==kt and Vc2[clusters[x][y]] ==c2 and Vcg[clusters[x][y]] ==cg and Vc2g[clusters[x][y]] == c2g and counterf==1 :
+#       if Vkl[clusters[x][y]] == Vkl[min_index] + 5 and Vkt[clusters[x][y]] ==kt and Vc2[clusters[x][y]] ==c2 and Vcg[clusters[x][y]] ==cg and Vc2g[clusters[x][y]] == c2g and counterf==1 :
 #          print ("one kl more, Cluster:", clusters[x][y] )
 #          print("one kl more: ",Vkl[clusters[x][y]], Vkt[clusters[x][y]],Vc2[clusters[x][y]],Vcg[clusters[x][y]],Vc2g[clusters[x][y]], "Cluster ",x+1)
 #       #
-#       if Vkl[clusters[x][y]] == Vkl[min_value] - 5 and Vkt[clusters[x][y]] ==kt and Vc2[clusters[x][y]] ==c2 and Vcg[clusters[x][y]] ==cg and Vc2g[clusters[x][y]] == c2g and counterf==1 :
+#       if Vkl[clusters[x][y]] == Vkl[min_index] - 5 and Vkt[clusters[x][y]] ==kt and Vc2[clusters[x][y]] ==c2 and Vcg[clusters[x][y]] ==cg and Vc2g[clusters[x][y]] == c2g and counterf==1 :
 #          print ("one kl less, Cluster:", clusters[x][y] )
 #          print("one kl less: ",Vkl[clusters[x][y]], Vkt[clusters[x][y]],Vc2[clusters[x][y]],Vcg[clusters[x][y]],Vc2g[clusters[x][y]], "Cluster ",x+1)
-#print("one less: ",Vkl[min_value], Vkt[min_value],Vc2[min_value],Vcg[min_value],Vc2g[min_value])
+#print("one less: ",Vkl[min_index], Vkt[min_index],Vc2[min_index],Vcg[min_index],Vc2g[min_index])
 #if counterf ==1 :  continue
 
