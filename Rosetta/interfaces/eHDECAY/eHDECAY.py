@@ -6,7 +6,8 @@ import subprocess as sub
 from collections import namedtuple
 
 from ...internal.constants import (particle_names, default_masses, 
-                                   default_ckm, default_inputs)
+                                   default_ckm, default_inputs, 
+                                   GammaZ, GammaW)
 
 from ...internal.basis import checkers as check
 from ...internal import session, SLHA
@@ -23,11 +24,9 @@ and branching ratio to SM particles. Relies on the existence of a translation of
 ones basis to the SILH basis. The minimal set of SILH coefficients that should 
 be translated to are:
 
-    'sH','sT','sW','sB','sHW','sHB','sBB','sGG',
-    'se33Re','se22Re','su33Re','su22Re','sd33Re','sd22Re'
+    'sH','sT','sW','sB','sHW','sHB','sa','g',
+    'RsHe3x3','RsHe2x2','RsHu3x3','RsHu2x2','RsHd3x3','RsHd2x2'
     
-The values of the SILH coefficients are then 
-rescaled from the convention of the LHXSWG draft to match those of eHDECAY. 
 Required SM inputs are: 
 
     'MH','aSMZ','MC','MB','MT','MTAU','MMU','aEWM1','Gf','MZ', 'MW'. 
@@ -38,7 +37,6 @@ The absolute path to the local eHDECAY directory containing the executable
 should be specified in config.txt as:
 
 eHDECAY_dir     /FULL/PATH/TO/eHDECAY
- 
 '''
 
 cite_msg = ('########## eHDECAY ##########\n'
@@ -48,7 +46,7 @@ cite_msg = ('########## eHDECAY ##########\n'
             'Comput.Phys.Commun. 108 (1998) 56 \n')
             
 ################################################################################
-def SLHAblock(basis, electroweak=True):
+def create_SLHA_block(basis, electroweak=True):
     '''
     Interface Rosetta with eHDECAY to calculate Higgs widths and branching
     fractions and return an SLHA decay block for the Higgs.
@@ -72,8 +70,6 @@ def SLHAblock(basis, electroweak=True):
             for channel, BR in BRs.iteritems():
                 if channel!='WTOT':
                     BRs[channel] = BR/sum_BRs
-
-    # return SLHA.Decay block
 
     totalwidth = BRs.pop('WTOT')
 
@@ -114,7 +110,6 @@ def run(basis, electroweak=True, interpolate=False, SM_BRs=None):
         interpolate - use the numerical formulae given in the eHDECAY paper
         SM_BRs - if interpolate==True provide the SM Higgs branching fractions 
                  to rescale as a dict formatted as {(PID1, PID2):BR,...}.
-                 for example the 
     '''
     session.once(cite_msg)
 
@@ -123,16 +118,57 @@ def run(basis, electroweak=True, interpolate=False, SM_BRs=None):
     check.sminputs(basis, inputs, message='eHDECAY interface')
     
     # translate to silh instance
-    thesilh = basis.translate(target='m-silh')
-
+    thesilh = basis.translate(target='silh')
+    
+    # generalise flavour matrices
     thesilh.set_flavor(thesilh.flavor, 'general')
-    # slightly modify silh to get eHDECAY inputs
+    
+    # convert silh to eHDECAY inputs
     inpt = from_silh(thesilh, ew = electroweak) 
     
     if interpolate:
         return interpolated(inpt, electroweak=electroweak, SM_BRs=SM_BRs)
     else:
         return execute(inpt)
+
+def execute(inpt):
+    '''
+    Run local installation of eHDECAY and return the resulting Higgs width 
+    and branching fraction information. Takes a dictionary as input containing 
+    the following keys:
+        'MH','aSMZ','MC','MB','MT','MTAU','MMU','aEWM1','Gf','MZ', 'MW'.
+    Keyword arguments:  
+        electroweak - switch for electroweak corrections, IELW
+    '''
+    if not os.path.exists(executable):
+        err = ('Rosetta: could not find eHDECAY ' +
+               'executable in {}'.format(eHDECAY_dir))
+        raise eHDECAYInterfaceError(err)
+        
+    session.once(cite_msg)
+    
+    tmpdir = mkdtemp(prefix='eHDECAY_',dir = os.getcwd())
+    
+    # write out eHDECAY input file
+    with open('{}/ehdecay.in'.format(tmpdir),'w') as infile:
+        infile.write( create_input(inpt) )
+        
+    process = sub.Popen(executable, stdout = sub.PIPE, 
+                        stderr = sub.PIPE, cwd = tmpdir)
+    out, err = process.communicate()
+    
+    if err: raise eHDECAYInterfaceError(err)
+    
+    session.verbose('eHDECAY output:\n{}'.format(out))
+    
+    # read BRs and total width
+    result = read_output(tmpdir)
+    
+    # clean up temp directory
+    sub.call(['cp', '{}/ehdecay.in'.format(tmpdir), '.'])
+    sub.call(['rm', '-r', tmpdir])
+    
+    return result
 
 def SM_BR(basis=None, inputs={}, electroweak=True):
     '''
@@ -151,9 +187,9 @@ def SM_BR(basis=None, inputs={}, electroweak=True):
         
         # get W,Z widths if present
         if basis.card.has_decay(23):
-            wid['GAMZ'] = si.card.decays[23].total
+            wid['GAMZ'] = basis.card.decays[23].total
         if basis.card.has_decay(24):
-            wid['GAMW'] = si.card.decays[24].total
+            wid['GAMW'] = basis.card.decays[24].total
     else:
         mass = default_masses
         sminputs = default_inputs
@@ -195,49 +231,11 @@ def SM_BR(basis=None, inputs={}, electroweak=True):
     einpts['MZ'] = mass[23]
     einpts['MW'] = mass[24]
     
-    einpts['GAMZ'] = wid.get('GAMZ',2.4952)
-    einpts['GAMW'] = wid.get('GAMW',2.085)
+    # W & Z widths
+    einpts['GAMZ'] = wid.get('GAMZ', GammaZ)
+    einpts['GAMW'] = wid.get('GAMW', GammaW)
     
     return execute(einpts)
-
-def execute(inpt):
-    '''
-    Run local installation of eHDECAY and return the resulting Higgs width 
-    and branching fraction information. Takes a dictionary as input containing 
-    the following keys:
-        'MH','aSMZ','MC','MB','MT','MTAU','MMU','aEWM1','Gf','MZ', 'MW'.
-    Keyword arguments:  
-        electroweak - switch for electroweak corrections, IELW
-    '''
-    if not os.path.exists(executable):
-        err = ('Rosetta: could not find eHDECAY ' +
-               'executable in {}'.format(eHDECAY_dir))
-        raise eHDECAYInterfaceError(err)
-        
-    session.once(cite_msg)
-    
-    tmpdir = mkdtemp(prefix='eHDECAY_',dir = os.getcwd())
-    
-    # write out eHDECAY input file
-    with open('{}/ehdecay.in'.format(tmpdir),'w') as infile:
-        infile.write( create_input(inpt) )
-        
-    process = sub.Popen(executable, stdout = sub.PIPE, 
-                        stderr = sub.PIPE, cwd = tmpdir)
-    out, err = process.communicate()
-    
-    if err: raise eHDECAYInterfaceError(err)
-    
-    session.verbose('eHDECAY output:\n{}'.format(out))
-    
-    # read BRs and total width
-    result = read_output(tmpdir)
-    
-    # clean up temp directory
-    sub.call(['cp', '{}/ehdecay.in'.format(tmpdir), '.'])
-    sub.call(['rm', '-r', tmpdir])
-    
-    return result
 
 def read_output(workdir):
     '''
@@ -258,18 +256,16 @@ def read_output(workdir):
 
 def from_silh(silh_instance, ew=True):
     '''
-    Rescaling of the relevant SILH parameters in the LHCXSWG convention to that 
-    of the eHDECAY publication (arXiv:1403.3381). Function relies on the 
-    calculate_inputs() implemented in bases/SILHBasis.py to derive require SM 
-    inputs.
+    Set up eHDECAY inputs from SILH basis instance.
     '''
     si = silh_instance
-    s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = silh_instance.calculate_inputs()
-    g=sqrt(gw2)
+
     SILH = {}
     mass = {k:nonzero_mass(si,k) for k in masses}
+    
     # EW option
     SILH['IELW'] = 1 if ew else 0
+    
     # SM inputs & masses
     SILH['MH'] = mass[25]
     SILH['aSMZ'] = si.inputs[3]
@@ -282,41 +278,43 @@ def from_silh(silh_instance, ew=True):
     SILH['Gf'] = si.inputs[2]
     SILH['MZ'] = mass[23]
     SILH['MW'] = mass[24]
+    
+    # W & Z widths
     if si.card.has_decay(23):
         SILH['GAMZ'] = si.card.decays[23].total
     else:
-        SILH['GAMZ'] = 2.4952 # default
+        SILH['GAMZ'] = GammaZ # default
     if si.card.has_decay(24):
         SILH['GAMW'] = si.card.decays[24].total
     else:
-        SILH['GAMW'] = 2.085 # default
+        SILH['GAMW'] = GammaW # default
+        
     # gauge & Higgs coefficients
-    SILH['CHbar'] = 2.*si['sH']
-    SILH['CTbar'] = 2.*si['sT']
-    SILH['CWbar'] = gw2/4.*si['sW']
-    SILH['CBbar'] = gw2/4.*si['sB']
-    SILH['CHWbar'] = gw2/4.*si['sHW']
-    SILH['CHBbar'] = gw2/4.*si['sHB']
-    SILH['Cgambar'] = gw2/16.*si['sBB']
-    SILH['Cgbar'] = gw2/16.*si['sGG']
+    SILH['CHbar'] = si['sH']
+    SILH['CTbar'] = si['sT']
+    SILH['CWbar'] = si['sW']
+    SILH['CBbar'] = si['sB']
+    SILH['CHWbar'] = si['sHW']
+    SILH['CHBbar'] = si['sHB']
+    SILH['Cgambar'] = si['sa']
+    SILH['Cgbar'] = si['sg']
     
-    SILH['Ctaubar'] = sqrt(2.)*si['SBxe'][3,3].real
-    SILH['Cmubar'] = sqrt(2.)*si['SBxe'][2,2].real
-    SILH['Ctbar'] = sqrt(2.)*si['SBxu'][3,3].real
-    SILH['Ccbar'] = sqrt(2.)*si['SBxu'][2,2].real
-    SILH['Cbbar'] = sqrt(2.)*si['SBxd'][3,3].real
-    SILH['Csbar'] = sqrt(2.)*si['SBxd'][2,2].real
+    # Flavor diagonal Yukawa operators for 2nd & 3rd generations
+    SILH['Ctaubar'] = si['SBxHe'][3,3].real
+    SILH['Cmubar'] = si['SBxHe'][2,2].real
+    SILH['Ctbar'] = si['SBxHu'][3,3].real
+    SILH['Ccbar'] = si['SBxHu'][2,2].real
+    SILH['Cbbar'] = si['SBxHd'][3,3].real
+    SILH['Csbar'] = si['SBxHd'][2,2].real
     
     return SILH
 
-def nonzero_mass(basis,PID):
+def nonzero_mass(basis, PID):
     '''
     Force non-zero values for all relevant masses. eHDECAY gives nan otherwise.
     '''
     themass = basis.mass[PID]
     if themass == 0.:
-        # name = Rosetta.particle_names[PID]
-        # default = Rosetta.default_masses[PID]
         name = particle_names[PID]
         default = default_masses[PID]
         session.log('eHDECAY requires nonzero mass for {}. '.format(name) +

@@ -14,16 +14,18 @@ class HiggsBasis(basis.Basis):
     '''
     Main basis class for Rosetta, based on the recommendation for the 
     parametrisation of Higgs Effective Field theory in the LHC Higgs cross 
-    section working group note (LHCHXSWG-INT-2015-001). Part of the three 
-    intrinsic basis implementations in Rosetta along with the Warsaw and SILH 
-    bases. This implementation includes almost all operators listed in the note 
-    apart from the dipole-type Lorentz structures (\sigma^{\mu\nu}). The 
-    implementation only includes the minimal set (3) of four-fermion operators 
-    required to consistently map between the three intrinsic bases as defined 
-    in the note. A number of structures involving more than two Higgs fields 
-    (apart from the triple Higgs vertex) or interactions between a single higgs 
-    field and 3 or more gauge bosons are not currently included. Besides this, 
-    the Higgs Basis encodes relations between certain parameters to ensure 
+    section working group note, LHCHXSWG-INT-2015-001 
+    
+    https://cds.cern.ch/record/2001958
+    
+    Part of the three intrinsic basis implementations in Rosetta along with the 
+    Warsaw and SILH bases. The implementation only includes the minimal set (3) 
+    of four-fermion operators required to consistently map between the three 
+    intrinsic bases as defined in the note. A number of structures involving 
+    more than two Higgs fields (apart from the triple Higgs vertex) or 
+    interactions between a single higgs field and 3 or more gauge bosons are 
+    not currently included. 
+    The Higgs Basis encodes relations between certain parameters to ensure 
     SU(2)xU(1) invariance such that it is consistent with a dimension six 
     operator basis for an effective field theory with linearly realised 
     electroweak symmetry breaking (in unitary gauge) and a general flavor 
@@ -60,9 +62,6 @@ class HiggsBasis(basis.Basis):
     blocks = {'HBxMASS':HBxMASS, 'HBxTGC':HBxTGC, 'HBxQGC':HBxQGC, 
               'HBxh':HBxh, 'HBxhh':HBxhh, 'HBxhself':HBxhself, 'HBx4F':HBx4F}
               
-    # copy flavored block structure from BSMCharacterisation
-    # flavored = {k.replace('BC','HB'):v for k,v in
-    #             BSMCharacterisation.flavored.iteritems()}
     # same flavored block structure as BSMCharacterisation except dipole 
     # operators, which are general complex matrices instead of a pair of 
     # hermitian ones for the CP conserving and CP-violating interactions
@@ -729,28 +728,6 @@ class HiggsBasis(basis.Basis):
                 im = yuk*sin*sqrt(2.)
                 W['WBx'+f][i,j] = complex(re, im)
         
-        # #OLD Dipole interactions
-        # ii = complex(0.,1.)
-        # for f in ('u','d','e'):
-        #     eta = 1 if f=='u' else -1
-        #     for i,j in W['WBx'+f+'W'].keys():
-        #         # gluon
-        #         if f in ('u','d'):
-        #             W['WBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
-        #                              - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
-        #         # Weak
-        #         ff = 'l' if f=='e' else f
-        #         W['WBx'+f+'W'][i,j] = - H['HBxdw'+ff][i,j]/(2.*sqrt(2.))
-        #         # Hypercharge
-        #         W['WBx'+f+'B'][i,j] = (eta*H['HBxdw'+ff][i,j]
-        #                                - (H['HBxda'+f][i,j]
-        #                                   - ii*H['HBxtda'+f][i,j])
-        #                               )/(2.*sqrt(2.))
-        #
-        # W['c3G'], W['tc3G'] = H['C3g'], H['tC3g']
-        # W['c3W'], W['tc3W'] = -2./3./gw2**2*H['Lz'], -2./3./gw2**2*H['tLz']
-        # W['cll1122'], W['cpuu3333'] = H['cll1122'], H['cpuu3333']
-        #
         # Dipole interactions
         for f in ('u','d','e'):
             eta = 1 if f=='u' else -1
@@ -875,26 +852,6 @@ class HiggsBasis(basis.Basis):
                 re = ( yuk*cos - diag )*sqrt(2.)
                 im = yuk*sin*sqrt(2.)
                 S['SBx'+f][i,j] = complex(re, im)
-
-        # OLD Dipole interactions
-        # ii = complex(0.,1.)
-        # for f in ('u','d','e'):
-        #     eta = 1 if f=='u' else -1
-        #     for i,j in S['SBx'+f+'W'].keys():
-        #         # gluon
-        #         if f in ('u','d'):
-        #             S['SBx'+f+'G'][i,j] = (ii*H['HBxtdg'+f][i,j]
-        #                              - H['HBxdg'+f][i,j])/(2.*sqrt(2.))
-        #
-        #         ff = 'l' if f=='e' else f
-        #
-        #         # Weak
-        #         S['SBx'+f+'W'][i,j] = - H['HBxdw'+ff][i,j]/(2.*sqrt(2.))
-        #         # Hypercharge
-        #         S['SBx'+f+'B'][i,j] =  (eta*H['HBxdw'+ff][i,j]
-        #                                - (H['HBxda'+f][i,j]
-        #                                   - ii*H['HBxtda'+f][i,j])
-        #                                )/(2.*sqrt(2.))
         
         # Dipole interactions
         ii = complex(0.,1.)

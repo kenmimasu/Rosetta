@@ -6,7 +6,7 @@ import os
 # for translate
 from ..internal.basis import checkers as check
 from ..internal.basis import write_param_card
-from ..interfaces.eHDECAY.eHDECAY import SLHAblock
+from ..interfaces.eHDECAY.eHDECAY import create_SLHA_block
 from ..internal.errors import TranslationError
 # for defaultcard
 from ..internal.basis.io import write_template_card
@@ -123,7 +123,7 @@ class TranslateInterface(RosettaInterface):
         # run eHDECAY
         try:
             if args.ehdecay:
-                decayblock = SLHAblock(basis_instance)
+                decayblock = create_SLHA_block(basis_instance)
                 
                 if 25 not in newbasis.card.decays:
                     newbasis.card.add_decay(decayblock)
@@ -184,7 +184,7 @@ class DefaultCardInterface(RosettaInterface):
                     ', '.join(allowed_flav)+' (default = general)')
         },
         ('--value',):{
-            'type':str, 'metavar':'VALUE', 'default': 0.,
+            'type':str, 'metavar':'VALUE', 'default': '0',
             'help':'Set value of all parameters to VALUE'
         }
         # ('--dependent',):{
@@ -213,14 +213,14 @@ class DefaultCardInterface(RosettaInterface):
             carry_on=True
         
         if args.value.lower()!='random':
-            val = float(val)
+            val = float(args.value)
         else:
             val = args.value.lower()
         
         if carry_on:
             write_template_card(instance, 
                                 outputfile,
-                                value = args.value)
+                                value = val)
                                 
         session.log('#############################')
         session.exit(0)

@@ -1,7 +1,7 @@
 from ..interface import RosettaInterface, allowed_flav
 from ...internal.basis import checkers as check
 from ...internal.errors import TranslationError
-from eHDECAY import SLHAblock
+from eHDECAY import create_SLHA_block
 from ...internal import session
 
 #
@@ -48,7 +48,7 @@ class eHDECAYInterface(RosettaInterface):
 
         # run eHDECAY
         try:
-            decayblock = SLHAblock(basis_instance, electroweak=args.EW)
+            decayblock = create_SLHA_block(basis_instance, electroweak=args.EW)
         except TranslationError as e:
             print e
             print ('Translation to modified-SILH Basis '
