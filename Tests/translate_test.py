@@ -8,13 +8,15 @@ import random
 sys.path.append('../')
 
 from Rosetta import HiggsBasis as HB
-from Rosetta import mWarsawBasis as WB
-from Rosetta import mSILHBasis as SB
+from Rosetta import mWarsawBasis as mWB
+from Rosetta import mSILHBasis as mSB
+from Rosetta import WarsawBasis as WB
+from Rosetta import SILHBasis as SB
 from Rosetta import BSMCharacterisation as MB
 from Rosetta import TemplateBasis as TB
 from Rosetta import HISZ as HZ
 from Rosetta.internal import SLHA
-from Rosetta.internal.basis.io import write_param_card,write_template_card
+from Rosetta.internal.basis.io import write_param_card, write_template_card
 from Rosetta import settings
 
 
@@ -148,7 +150,7 @@ def triangle_test(basis, card, target, tolerance=1e-4):
     other = [x for x in ('silh','warsaw', 'higgs') 
              if x not in (basis.name,target)][0]
     
-    one = basis(param_card=card)
+    one = basis(param_card=card, flavor=flavor)
     two = one.translate(target=target)
     three = one.translate(target=other)
     three.set_flavor(three.flavor, 'general')
@@ -219,15 +221,15 @@ if __name__=='__main__':
     settings.silent=False
     settings.verbose=True
 ################################################################################
-# # card writers
-#     # for flav in ('general',):
-#     # for flav in ('universal',):
-#     # for flav in ('diagonal',):
-#     for flav in ('diagonal','general','universal'):
-#         if flav =='general':
-#             tail = ''
-#         else:
-#             tail = '_%s' % flav
+# card writers
+    # for flav in ('general',):
+    # for flav in ('universal',):
+    # for flav in ('diagonal',):
+    # for flav in ('diagonal','general','universal'):
+    #     if flav =='general':
+    #         tail = ''
+    #     else:
+    #         tail = '_%s' % flav
 #
 #         instance = TB.TemplateBasis(flavor=flav)
 #         # write_template_card(instance.card,'Cards/TemplateBasis{}.dat'.format(tail))
@@ -237,97 +239,106 @@ if __name__=='__main__':
 #         write_template_card(instance,'HISZ{}_rand.dat'.format(tail), value='random')
 #         write_template_card(instance,'HISZ{}_1e-3.dat'.format(tail), value=0.001)
 #
-#         instance = HB.HiggsBasis(flavor=flav)
-#         write_template_card(instance,'HiggsBasis{}.dat'.format(tail))
-#         write_template_card(instance,'HiggsBasis{}_rand.dat'.format(tail), value='random')
-#         write_template_card(instance,'HiggsBasis{}_1e-3.dat'.format(tail), value=0.001)
+        # instance = HB.HiggsBasis(flavor=flav)
+        # write_template_card(instance,'HiggsBasis{}.dat'.format(tail))
+        # write_template_card(instance,'HiggsBasis{}_rand.dat'.format(tail), value='random')
+        # write_template_card(instance,'HiggsBasis{}_1e-3.dat'.format(tail), value=0.001)
 #
-#         instance = WB.mWarsawBasis(flavor=flav)
+#         instance = mWB.mWarsawBasis(flavor=flav)
 #         write_template_card(instance,'mWarsawBasis{}.dat'.format(tail))
 #         write_template_card(instance,'mWarsawBasis{}_rand.dat'.format(tail), value='random')
 #         write_template_card(instance,'mWarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
+#
+        # instance = WB.WarsawBasis(flavor=flav)
+        # write_template_card(instance,'WarsawBasis{}.dat'.format(tail))
+        # write_template_card(instance,'WarsawBasis{}_rand.dat'.format(tail), value='random')
+        # write_template_card(instance,'WarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
 # #     #
-#         instance = SB.mSILHBasis(flavor=flav)
+#         instance = mSB.mSILHBasis(flavor=flav)
 #         write_template_card(instance,'mSILHBasis{}.dat'.format(tail))
 #         write_template_card(instance,'mSILHBasis{}_rand.dat'.format(tail), value='random')
 #         write_template_card(instance,'mSILHBasis{}_1e-3.dat'.format(tail), value=0.001)
 #
-#     # #
+#         instance = SB.SILHBasis(flavor=flav)
+#         write_template_card(instance,'SILHBasis{}.dat'.format(tail))
+#         write_template_card(instance,'SILHBasis{}_rand.dat'.format(tail), value='random')
+#         write_template_card(instance,'SILHBasis{}_1e-3.dat'.format(tail), value=0.001)
+
+    # #
 ################################################################################
-# translation testers   
-    # two_way_test(HZ.HISZ,'HISZ_rand.dat','higgs')
-    # two_way_test(HZ.HISZ,'HISZ_rand.dat','warsaw')
-    # two_way_test(HZ.HISZ,'HISZ_rand.dat','silh')
-    # two_way_test(HB.HiggsBasis,'HiggsBasis_rand.dat','hisz')
-    # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','hisz')
-    # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','hisz')
+# translation testers 
+# Two way tests
+# 
+    # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','higgs')
+    # two_way_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','higgs',flavor='diagonal')
+    # two_way_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','higgs',flavor='universal')
     #
-    # print '#'*80+'\n'
-    # two_way_test(WB.mWarsawBasis,'mWarsawBasis_rand.dat','higgs')
-    # two_way_test(WB.mWarsawBasis,'mWarsawBasis_diagonal_rand.dat','higgs',flavor='diagonal')
-    # two_way_test(WB.mWarsawBasis,'mWarsawBasis_universal_rand.dat','higgs',flavor='universal')
-    # print '#'*80+'\n'
-    two_way_test(WB.mWarsawBasis,'mWarsawBasis_rand.dat','m-silh')
-    two_way_test(WB.mWarsawBasis,'mWarsawBasis_diagonal_rand.dat','m-silh',flavor='diagonal')
-    two_way_test(WB.mWarsawBasis,'mWarsawBasis_universal_rand.dat','m-silh',flavor='universal')
-    # print '#'*80+'\n'
+    # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','warsaw')
+    # two_way_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','warsaw',flavor='diagonal')
+    # two_way_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','warsaw',flavor='universal')
+    #
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs')
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','higgs',flavor='diagonal')
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','higgs',flavor='universal')
+    #
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','silh')
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','silh',flavor='diagonal')
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','silh',flavor='universal')
+    #
     # two_way_test(HB.HiggsBasis,'HiggsBasis_rand.dat','warsaw')
     # two_way_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat','warsaw',flavor='diagonal')
     # two_way_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','warsaw',flavor='universal')
-    # print '#'*80+'\n'
+    #
     # two_way_test(HB.HiggsBasis,'HiggsBasis_rand.dat','silh')
     # two_way_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat','silh',flavor='diagonal')
     # two_way_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','silh',flavor='universal')
-    # print '#'*80+'\n'
-    # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','higgs',flavor='general')
-    # two_way_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','higgs',flavor='diagonal')
-    # two_way_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','higgs',flavor='universal')
-    # print '#'*80+'\n'
-    
+################################################################################
+# translation testers 
+# Circle tests   
     # circle_test(HB.HiggsBasis,'HiggsBasis_rand.dat')
-    # circle_test(SB.SILHBasis,'SILHBasis_rand.dat')
-    # circle_test(WB.WarsawBasis,'WarsawBasis_rand.dat')
-    # circle_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat', flavor='diagonal')
-    # circle_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat', flavor='universal')
+    # circle_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat', flavor='diagonal')
+    # circle_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat', flavor='universal')
     # circle_test(HB.HiggsBasis,'HiggsBasis_rand.dat', reverse=True)
     # circle_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat', reverse=True, flavor='diagonal')
     # circle_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat', reverse=True, flavor='universal')
+    #
+    # circle_test(SB.SILHBasis,'SILHBasis_rand.dat')
+    # circle_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat', flavor='diagonal')
+    # circle_test(SB.SILHBasis,'SILHBasis_universal_rand.dat', flavor='universal')
     # circle_test(SB.SILHBasis,'SILHBasis_rand.dat', reverse=True)
     # circle_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat', reverse=True, flavor='diagonal')
     # circle_test(SB.SILHBasis,'SILHBasis_universal_rand.dat', reverse=True, flavor='universal')
-    # circle_test(WB.WarsawBasis,'WarsawBasis_rand.dat', reverse=True)
-    # circle_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat', reverse=True, flavor='diagonal')
-    # circle_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat', reverse=True, flavor='universal')
+    #
+    # circle_test(WB.WarsawBasis,'WarsawBasis_rand.dat')
+    # circle_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat', flavor='diagonal')
+    # circle_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat', flavor='universal')
+    # circle_test(WB.WarsawBasis,'WarsawBasis_rand.dat',reverse=True)
+    # circle_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat', flavor='diagonal',reverse=True)
+    # circle_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat', flavor='universal',reverse=True)
 
+################################################################################
+# translation testers 
+# Triangle tests   
     # triangle_test(HB.HiggsBasis,'HiggsBasis_rand.dat','silh')
-    # triangle_test(HB.HiggsBasis,'HiggsBasis_rand.dat','warsaw')
-    # triangle_test(SB.SILHBasis,'SILHBasis_rand.dat','higgs')
-    # triangle_test(SB.SILHBasis,'SILHBasis_rand.dat','warsaw')
-    # triangle_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs')
-    # triangle_test(WB.WarsawBasis,'WarsawBasis_rand.dat','silh')
     # triangle_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat','silh', flavor='diagonal')
+    # triangle_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','silh', flavor='universal')
+    # triangle_test(HB.HiggsBasis,'HiggsBasis_rand.dat','warsaw')
     # triangle_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat','warsaw', flavor='diagonal')
-    # triangle_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','higgs', flavor='diagonal')
-    # triangle_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','warsaw', flavor='diagonal')
-    # triangle_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','higgs', flavor='diagonal')
+    # triangle_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','warsaw', flavor='universal')
+    #
+    # triangle_test(WB.WarsawBasis,'WarsawBasis_rand.dat','silh')
     # triangle_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','silh', flavor='diagonal')
-    # triangle_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','silh', flavor = 'universal')
-    # triangle_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','warsaw', flavor = 'universal')
-    # triangle_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','higgs', flavor = 'universal')
-    # triangle_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','warsaw', flavor = 'universal')
-    # triangle_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','higgs', flavor = 'universal')
-    # triangle_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','silh', flavor = 'universal')
+    # triangle_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','silh', flavor='universal')
+    # triangle_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs')
+    # triangle_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','higgs', flavor='diagonal')
+    # triangle_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','higgs', flavor='universal')
+    #
+    # triangle_test(SB.SILHBasis,'SILHBasis_rand.dat','warsaw')
+    # triangle_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','warsaw', flavor='diagonal')
+    # triangle_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','warsaw', flavor='universal')
+    # triangle_test(SB.SILHBasis,'SILHBasis_rand.dat','higgs')
+    # triangle_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','higgs', flavor='diagonal')
+    # triangle_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','higgs', flavor='universal')
+
 ######################################################
-    
-    
-    # generate_coeffs(WB.WarsawBasis,0.,rand=True)
-    # generate_coeffs(SB.SILHBasis,0.,rand=True)
-    # generate_coeffs(HB.HiggsBasis,0.,rand=True)
-    # generate_coeffs(TB.TemplateBasis,0.,rand=True)
-    # generate_coeffs(MassBasis,1.,rand=True)
-    # generate_frdef(HiggsBasis,'HB_definitions.fr')
-    # generate_frdef(MB.MassBasis,'MB_definitions.fr')
-    # higgs_basis_check(SB.SILHBasis,'Cards/param_card_SILHBasis.dat',tolerance=1e-3)
-    # higgs_basis_check(SILHBasis,'../Cards/param_card_SILHBasis.dat')
-    # SILH_Warsaw_triangle('Cards/param_card_SILHBasis.dat', tolerance=1e-4)
 

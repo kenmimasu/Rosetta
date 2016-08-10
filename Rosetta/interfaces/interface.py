@@ -184,7 +184,7 @@ class DefaultCardInterface(RosettaInterface):
                     ', '.join(allowed_flav)+' (default = general)')
         },
         ('--value',):{
-            'type':float, 'metavar':'VALUE', 'default': 0.,
+            'type':str, 'metavar':'VALUE', 'default': 0.,
             'help':'Set value of all parameters to VALUE'
         }
         # ('--dependent',):{
@@ -211,6 +211,11 @@ class DefaultCardInterface(RosettaInterface):
             carry_on = session.query('Overwrite?', default='no')
         else:
             carry_on=True
+        
+        if args.value.lower()!='random':
+            val = float(val)
+        else:
+            val = args.value.lower()
         
         if carry_on:
             write_template_card(instance, 

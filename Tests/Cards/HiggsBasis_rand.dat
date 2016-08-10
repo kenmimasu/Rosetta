@@ -1,0 +1,452 @@
+################################################################################
+####################### ROSETTA: HIGGS BASIS INPUT CARD ########################
+#### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) for more details ####
+###################### GENERATED TUE JUL 26 17:44:59 2016 ######################
+################################################################################
+
+BLOCK mass # 
+    1    +4.80000e-03 # Mu
+    2    +2.30000e-03 # Md
+    3    +9.50000e-02 # Ms
+    4    +1.42000e+00 # Mc
+    5    +4.70000e+00 # Mb
+    6    +1.73000e+02 # Mt
+    11   +5.11000e-04 # Me
+    13   +1.05658e-01 # Mmu
+    15   +1.77680e+00 # Mta
+    24   +8.03850e+01 # MW
+    25   +1.25000e+02 # MH
+
+BLOCK sminputs # 
+    1    +1.27916e+02 # aEWM1
+    2    +1.16638e-05 # Gf
+    3    +1.18400e-01 # aS
+    4    +9.11876e+01 # MZ
+
+###################################
+## CKM INFORMATION
+###################################
+
+BLOCK VCKM
+    1   1    +9.74272e-01 # RVud1x1
+    1   2    +2.25349e-01 # RVus1x2
+    1   3    +1.21581e-03 # RVub1x3
+    2   1    -2.25208e-01 # RVcd2x1
+    2   2    +9.73440e-01 # RVcs2x2
+    2   3    +4.11845e-02 # RVcb2x3
+    3   1    +8.09744e-03 # RVtd3x1
+    3   2    -4.03991e-02 # RVts3x2
+    3   3    +9.99146e-01 # RVtb3x3
+
+BLOCK IMVCKM
+    1   1    +0.00000e+00 # IVud1x1
+    1   2    +0.00000e+00 # IVus1x2
+    1   3    -3.20194e-03 # IVub1x3
+    2   1    -1.28479e-04 # IVcd2x1
+    2   2    -2.97171e-05 # IVcs2x2
+    2   3    +0.00000e+00 # IVcb2x3
+    3   1    -3.11693e-03 # IVtd3x1
+    3   2    -7.20944e-04 # IVts3x2
+    3   3    +0.00000e+00 # IVtb3x3
+
+###################################
+## INFORMATION FOR HIGGS BASIS
+###################################
+
+BLOCK basis # 
+    1    higgs # translated basis
+
+BLOCK HBx4F # 
+    1    +1.23454e-01 # cll1122
+    2    +6.21029e-01 # cpuu3333
+
+BLOCK HBxh # 
+    1    -6.13228e-01 # dCz
+    2    +9.36850e-01 # Cgg
+    3    +1.40496e-01 # Caa
+    4    +4.46777e-01 # Cza
+    5    +1.60676e-01 # Czz
+    6    +5.66111e-01 # Czbx
+    8    +9.92489e-01 # tCgg
+    9    +7.02401e-01 # tCaa
+    10   +7.48766e-01 # tCza
+    11   +8.75512e-01 # tCzz
+
+BLOCK HBxhself # 
+    1    +3.74689e-01 # dL3
+
+BLOCK HBxMASS # 
+    1    -1.56116e-01 # dM
+
+BLOCK HBxTGC # 
+    1    -7.69867e-01 # Lz
+    2    -6.18737e-01 # tLz
+    3    -5.55928e-01 # C3g
+    4    +9.28756e-01 # tC3g
+
+BLOCK HBxdad
+    1   1    -6.84814e-01 # Rdad1x1
+    1   2    +4.34849e-02 # Rdad1x2
+    1   3    +6.64188e-01 # Rdad1x3
+    2   1    -1.48206e-02 # Rdad2x1
+    2   2    -5.58527e-01 # Rdad2x2
+    2   3    +3.84237e-01 # Rdad2x3
+    3   1    -9.87920e-01 # Rdad3x1
+    3   2    +1.52310e-01 # Rdad3x2
+    3   3    -9.00994e-01 # Rdad3x3
+
+BLOCK IMHBxdad
+    1   1    -1.27305e-01 # Idad1x1
+    1   2    +7.93350e-01 # Idad1x2
+    1   3    +4.56574e-01 # Idad1x3
+    2   1    -7.44252e-01 # Idad2x1
+    2   2    +7.97477e-01 # Idad2x2
+    2   3    -4.99217e-01 # Idad2x3
+    3   1    -5.08652e-01 # Idad3x1
+    3   2    +1.68938e-01 # Idad3x2
+    3   3    -6.25660e-01 # Idad3x3
+
+BLOCK HBxdae
+    1   1    -5.50323e-01 # Rdae1x1
+    1   2    -2.23256e-01 # Rdae1x2
+    1   3    +5.95874e-01 # Rdae1x3
+    2   1    +4.12692e-01 # Rdae2x1
+    2   2    -3.74786e-01 # Rdae2x2
+    2   3    -8.10129e-01 # Rdae2x3
+    3   1    -3.90181e-01 # Rdae3x1
+    3   2    +2.90111e-02 # Rdae3x2
+    3   3    +6.23074e-01 # Rdae3x3
+
+BLOCK IMHBxdae
+    1   1    +1.46904e-01 # Idae1x1
+    1   2    +2.91464e-01 # Idae1x2
+    1   3    +6.23549e-01 # Idae1x3
+    2   1    -1.48873e-01 # Idae2x1
+    2   2    +7.64455e-01 # Idae2x2
+    2   3    -6.92177e-01 # Idae2x3
+    3   1    -7.32779e-01 # Idae3x1
+    3   2    -4.69381e-01 # Idae3x2
+    3   3    +5.61059e-01 # Idae3x3
+
+BLOCK HBxdau
+    1   1    +5.55907e-01 # Rdau1x1
+    1   2    -2.27387e-01 # Rdau1x2
+    1   3    +7.28159e-02 # Rdau1x3
+    2   1    +8.57360e-01 # Rdau2x1
+    2   2    +6.54294e-01 # Rdau2x2
+    2   3    -2.79366e-01 # Rdau2x3
+    3   1    -3.47801e-01 # Rdau3x1
+    3   2    -7.52939e-01 # Rdau3x2
+    3   3    -5.65285e-02 # Rdau3x3
+
+BLOCK IMHBxdau
+    1   1    -8.64179e-01 # Idau1x1
+    1   2    -5.88919e-01 # Idau1x2
+    1   3    -5.33004e-01 # Idau1x3
+    2   1    -4.66485e-01 # Idau2x1
+    2   2    +4.52106e-01 # Idau2x2
+    2   3    +8.96468e-01 # Idau2x3
+    3   1    -2.78610e-02 # Idau3x1
+    3   2    -6.05700e-01 # Idau3x2
+    3   3    +4.28979e-02 # Idau3x3
+
+BLOCK HBxdgd
+    1   1    -4.85635e-02 # Rdgd1x1
+    1   2    +7.25620e-01 # Rdgd1x2
+    1   3    +9.70341e-01 # Rdgd1x3
+    2   1    -6.52548e-01 # Rdgd2x1
+    2   2    -9.72498e-01 # Rdgd2x2
+    2   3    +8.31372e-01 # Rdgd2x3
+    3   1    +2.81819e-02 # Rdgd3x1
+    3   2    +1.43190e-01 # Rdgd3x2
+    3   3    +9.51485e-01 # Rdgd3x3
+
+BLOCK IMHBxdgd
+    1   1    +2.90607e-01 # Idgd1x1
+    1   2    -5.56732e-01 # Idgd1x2
+    1   3    +3.93145e-01 # Idgd1x3
+    2   1    -3.74334e-01 # Idgd2x1
+    2   2    +8.07004e-01 # Idgd2x2
+    2   3    +8.53926e-01 # Idgd2x3
+    3   1    -2.48820e-01 # Idgd3x1
+    3   2    -6.21021e-02 # Idgd3x2
+    3   3    -8.25305e-02 # Idgd3x3
+
+BLOCK HBxdGLwl
+    1   1    -1.85625e-01 # RdGLwl1x1
+    1   2    -3.85120e-01 # RdGLwl1x2
+    1   3    -3.95599e-01 # RdGLwl1x3
+    2   2    -6.45008e-01 # RdGLwl2x2
+    2   3    -3.00311e-01 # RdGLwl2x3
+    3   3    -2.21843e-01 # RdGLwl3x3
+
+BLOCK IMHBxdGLwl
+    1   2    +9.53830e-01 # IdGLwl1x2
+    1   3    -6.05743e-01 # IdGLwl1x3
+    2   3    +5.41002e-01 # IdGLwl2x3
+
+BLOCK HBxdGLzd
+    1   1    +4.00656e-01 # RdGLzd1x1
+    1   2    +3.59936e-01 # RdGLzd1x2
+    1   3    -3.28679e-01 # RdGLzd1x3
+    2   2    -8.49962e-01 # RdGLzd2x2
+    2   3    -2.87010e-01 # RdGLzd2x3
+    3   3    -5.47816e-01 # RdGLzd3x3
+
+BLOCK IMHBxdGLzd
+    1   2    +4.03455e-01 # IdGLzd1x2
+    1   3    +4.25261e-01 # IdGLzd1x3
+    2   3    -3.63395e-01 # IdGLzd2x3
+
+BLOCK HBxdGLze
+    1   1    +1.00755e-01 # RdGLze1x1
+    1   2    +7.26048e-01 # RdGLze1x2
+    1   3    -9.32029e-01 # RdGLze1x3
+    2   2    +6.84207e-01 # RdGLze2x2
+    2   3    -1.72029e-01 # RdGLze2x3
+    3   3    -5.17766e-01 # RdGLze3x3
+
+BLOCK IMHBxdGLze
+    1   2    -4.54312e-01 # IdGLze1x2
+    1   3    -5.58139e-01 # IdGLze1x3
+    2   3    +9.86296e-01 # IdGLze2x3
+
+BLOCK HBxdGLzu
+    1   1    +1.74889e-01 # RdGLzu1x1
+    1   2    +5.09581e-01 # RdGLzu1x2
+    1   3    -3.58791e-01 # RdGLzu1x3
+    2   2    -7.85673e-01 # RdGLzu2x2
+    2   3    -6.69174e-01 # RdGLzu2x3
+    3   3    +8.75893e-01 # RdGLzu3x3
+
+BLOCK IMHBxdGLzu
+    1   2    -9.25871e-01 # IdGLzu1x2
+    1   3    -3.87186e-01 # IdGLzu1x3
+    2   3    -8.80364e-01 # IdGLzu2x3
+
+BLOCK HBxdGRwq
+    1   1    -2.03415e-01 # RdGRwq1x1
+    1   2    +8.96547e-03 # RdGRwq1x2
+    1   3    +6.54732e-01 # RdGRwq1x3
+    2   1    -4.41159e-01 # RdGRwq2x1
+    2   2    +9.91376e-01 # RdGRwq2x2
+    2   3    +3.89055e-01 # RdGRwq2x3
+    3   1    -6.53229e-01 # RdGRwq3x1
+    3   2    +9.09266e-01 # RdGRwq3x2
+    3   3    -4.16983e-02 # RdGRwq3x3
+
+BLOCK IMHBxdGRwq
+    1   1    +9.56660e-01 # IdGRwq1x1
+    1   2    +7.60851e-01 # IdGRwq1x2
+    1   3    +9.48300e-01 # IdGRwq1x3
+    2   1    -1.37920e-01 # IdGRwq2x1
+    2   2    -2.60521e-01 # IdGRwq2x2
+    2   3    +9.00119e-01 # IdGRwq2x3
+    3   1    +7.38021e-01 # IdGRwq3x1
+    3   2    +2.10925e-01 # IdGRwq3x2
+    3   3    +2.95374e-01 # IdGRwq3x3
+
+BLOCK HBxdGRzd
+    1   1    -3.22946e-01 # RdGRzd1x1
+    1   2    +3.07875e-01 # RdGRzd1x2
+    1   3    +1.35998e-01 # RdGRzd1x3
+    2   2    -3.22669e-01 # RdGRzd2x2
+    2   3    -1.82448e-02 # RdGRzd2x3
+    3   3    -4.63943e-01 # RdGRzd3x3
+
+BLOCK IMHBxdGRzd
+    1   2    -7.76629e-02 # IdGRzd1x2
+    1   3    +4.40446e-01 # IdGRzd1x3
+    2   3    -3.33316e-01 # IdGRzd2x3
+
+BLOCK HBxdGRze
+    1   1    -8.74208e-01 # RdGRze1x1
+    1   2    +6.44391e-01 # RdGRze1x2
+    1   3    +2.40841e-01 # RdGRze1x3
+    2   2    +6.23659e-01 # RdGRze2x2
+    2   3    +7.29668e-02 # RdGRze2x3
+    3   3    +7.62068e-01 # RdGRze3x3
+
+BLOCK IMHBxdGRze
+    1   2    +9.49105e-01 # IdGRze1x2
+    1   3    +4.77980e-01 # IdGRze1x3
+    2   3    -7.00323e-01 # IdGRze2x3
+
+BLOCK HBxdGRzu
+    1   1    -4.73014e-01 # RdGRzu1x1
+    1   2    +4.05673e-01 # RdGRzu1x2
+    1   3    -8.16469e-01 # RdGRzu1x3
+    2   2    -6.32109e-01 # RdGRzu2x2
+    2   3    +9.36510e-01 # RdGRzu2x3
+    3   3    -5.82782e-01 # RdGRzu3x3
+
+BLOCK IMHBxdGRzu
+    1   2    -5.48832e-01 # IdGRzu1x2
+    1   3    -2.16512e-01 # IdGRzu1x3
+    2   3    -4.14169e-02 # IdGRzu2x3
+
+BLOCK HBxdgu
+    1   1    -1.52369e-02 # Rdgu1x1
+    1   2    -4.13607e-01 # Rdgu1x2
+    1   3    +3.79461e-01 # Rdgu1x3
+    2   1    +6.40312e-01 # Rdgu2x1
+    2   2    +9.25439e-01 # Rdgu2x2
+    2   3    +6.02185e-01 # Rdgu2x3
+    3   1    +1.76080e-01 # Rdgu3x1
+    3   2    +6.35595e-01 # Rdgu3x2
+    3   3    -9.33579e-01 # Rdgu3x3
+
+BLOCK IMHBxdgu
+    1   1    -7.92596e-01 # Idgu1x1
+    1   2    -4.44400e-01 # Idgu1x2
+    1   3    +6.19831e-01 # Idgu1x3
+    2   1    -7.65128e-01 # Idgu2x1
+    2   2    +5.65414e-01 # Idgu2x2
+    2   3    +6.08801e-01 # Idgu2x3
+    3   1    +2.56129e-01 # Idgu3x1
+    3   2    +6.39199e-01 # Idgu3x2
+    3   3    -8.94725e-01 # Idgu3x3
+
+BLOCK HBxdYd
+    1   1    -5.29235e-01 # dYd1x1
+    1   2    -1.02228e-01 # dYd1x2
+    1   3    +7.08434e-01 # dYd1x3
+    2   1    -5.38445e-01 # dYd2x1
+    2   2    -4.10189e-01 # dYd2x2
+    2   3    +5.90779e-01 # dYd2x3
+    3   1    +6.77852e-01 # dYd3x1
+    3   2    +4.22174e-01 # dYd3x2
+    3   3    -4.90420e-01 # dYd3x3
+
+BLOCK HBxdYe
+    1   1    +4.32313e-01 # dYe1x1
+    1   2    +7.64094e-01 # dYe1x2
+    1   3    -5.91333e-04 # dYe1x3
+    2   1    +3.93943e-01 # dYe2x1
+    2   2    +9.15610e-01 # dYe2x2
+    2   3    -8.53906e-01 # dYe2x3
+    3   1    +4.80429e-01 # dYe3x1
+    3   2    +2.91164e-01 # dYe3x2
+    3   3    +2.73684e-01 # dYe3x3
+
+BLOCK HBxdYu
+    1   1    +2.11899e-02 # dYu1x1
+    1   2    -7.60821e-01 # dYu1x2
+    1   3    -1.94046e-01 # dYu1x3
+    2   1    +3.18473e-02 # dYu2x1
+    2   2    -7.58257e-01 # dYu2x2
+    2   3    -5.76744e-01 # dYu2x3
+    3   1    -2.49787e-01 # dYu3x1
+    3   2    +6.32436e-01 # dYu3x2
+    3   3    -7.48954e-01 # dYu3x3
+
+BLOCK HBxdzd
+    1   1    -1.25441e-01 # Rdzd1x1
+    1   2    -1.66854e-01 # Rdzd1x2
+    1   3    -3.04850e-01 # Rdzd1x3
+    2   1    -6.33583e-01 # Rdzd2x1
+    2   2    -2.40652e-01 # Rdzd2x2
+    2   3    +7.04072e-01 # Rdzd2x3
+    3   1    +6.93500e-01 # Rdzd3x1
+    3   2    +2.09744e-01 # Rdzd3x2
+    3   3    +1.87728e-01 # Rdzd3x3
+
+BLOCK IMHBxdzd
+    1   1    +5.79219e-03 # Idzd1x1
+    1   2    -3.85386e-01 # Idzd1x2
+    1   3    +3.32464e-01 # Idzd1x3
+    2   1    -7.15349e-01 # Idzd2x1
+    2   2    -6.11384e-01 # Idzd2x2
+    2   3    +4.91933e-01 # Idzd2x3
+    3   1    -7.02645e-03 # Idzd3x1
+    3   2    -8.90364e-01 # Idzd3x2
+    3   3    +3.95064e-01 # Idzd3x3
+
+BLOCK HBxdze
+    1   1    -9.79462e-01 # Rdze1x1
+    1   2    -8.20747e-01 # Rdze1x2
+    1   3    +9.34478e-02 # Rdze1x3
+    2   1    +5.43558e-01 # Rdze2x1
+    2   2    -1.87472e-02 # Rdze2x2
+    2   3    +3.23976e-01 # Rdze2x3
+    3   1    +6.88448e-01 # Rdze3x1
+    3   2    +5.29118e-01 # Rdze3x2
+    3   3    +6.00005e-01 # Rdze3x3
+
+BLOCK IMHBxdze
+    1   1    -8.98249e-01 # Idze1x1
+    1   2    +2.87767e-01 # Idze1x2
+    1   3    -7.73998e-01 # Idze1x3
+    2   1    +6.41528e-02 # Idze2x1
+    2   2    -3.10559e-01 # Idze2x2
+    2   3    +3.34795e-01 # Idze2x3
+    3   1    +9.81451e-01 # Idze3x1
+    3   2    -1.90165e-01 # Idze3x2
+    3   3    -1.66885e-01 # Idze3x3
+
+BLOCK HBxdzu
+    1   1    +4.88980e-01 # Rdzu1x1
+    1   2    +4.52958e-01 # Rdzu1x2
+    1   3    +5.63094e-01 # Rdzu1x3
+    2   1    +7.81502e-02 # Rdzu2x1
+    2   2    -9.16435e-01 # Rdzu2x2
+    2   3    +9.66459e-01 # Rdzu2x3
+    3   1    -4.71024e-01 # Rdzu3x1
+    3   2    -3.47573e-02 # Rdzu3x2
+    3   3    +9.11522e-01 # Rdzu3x3
+
+BLOCK IMHBxdzu
+    1   1    -2.41013e-01 # Idzu1x1
+    1   2    +3.26835e-01 # Idzu1x2
+    1   3    -2.43362e-02 # Idzu1x3
+    2   1    +8.85475e-01 # Idzu2x1
+    2   2    -6.07942e-01 # Idzu2x2
+    2   3    -8.12717e-01 # Idzu2x3
+    3   1    +6.20207e-01 # Idzu3x1
+    3   2    +2.42045e-02 # Idzu3x2
+    3   3    -5.68989e-01 # Idzu3x3
+
+BLOCK HBxSd
+    1   1    +8.61117e-01 # Sd1x1
+    1   2    -1.89144e-01 # Sd1x2
+    1   3    +8.42585e-01 # Sd1x3
+    2   1    +6.77471e-01 # Sd2x1
+    2   2    -6.16258e-01 # Sd2x2
+    2   3    -3.91004e-01 # Sd2x3
+    3   1    -6.61759e-01 # Sd3x1
+    3   2    -7.97805e-01 # Sd3x2
+    3   3    +9.72573e-02 # Sd3x3
+
+BLOCK HBxSe
+    1   1    -3.65209e-01 # Se1x1
+    1   2    +3.87775e-01 # Se1x2
+    1   3    +9.19853e-01 # Se1x3
+    2   1    +3.42933e-01 # Se2x1
+    2   2    +5.84829e-02 # Se2x2
+    2   3    +7.23306e-01 # Se2x3
+    3   1    -7.67243e-02 # Se3x1
+    3   2    +4.51666e-02 # Se3x2
+    3   3    -6.20333e-01 # Se3x3
+
+BLOCK HBxSu
+    1   1    +8.67945e-01 # Su1x1
+    1   2    +7.87801e-01 # Su1x2
+    1   3    +2.95301e-01 # Su1x3
+    2   1    +7.58237e-01 # Su2x1
+    2   2    -2.34778e-01 # Su2x2
+    2   3    -3.34616e-01 # Su2x3
+    3   1    -9.69032e-01 # Su3x1
+    3   2    -9.00118e-01 # Su3x2
+    3   3    -5.40607e-01 # Su3x3
+
+#        PDG        Width
+DECAY    23         +2.49520e+00 # 
+
+#        PDG        Width
+DECAY    24         +2.08500e+00 # 
+
+#        PDG        Width
+DECAY    6          +1.49150e+00 # 
+
+################################################################################
+################################################################################

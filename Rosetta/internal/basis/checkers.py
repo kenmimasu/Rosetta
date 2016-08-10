@@ -1,6 +1,6 @@
 import sys
 
-from .. import session
+from .. import session, settings
 from ..constants import (PID, default_inputs, default_masses, input_names, 
                         default_ckm, particle_names, input_to_PID, 
                         PID_to_input) 
@@ -247,7 +247,7 @@ def param_data(basis, do_unknown=True,
             session.log('    Warning: Mismatch of coefficient names '\
                         'in {}, block "{}".'.format(basis.__class__, bname))
             for index, name, input_name in mismatched:
-                if not silent:
+                if not settings.silent:
                     session.log('    Coefficient ' +
                            '{}, named {} '.format(index, input_name) +
                            'will be renamed to {}'.format(name))

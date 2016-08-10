@@ -1,0 +1,252 @@
+################################################################################
+####################### ROSETTA: HIGGS BASIS INPUT CARD ########################
+#### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) for more details ####
+###################### GENERATED TUE JUL 26 17:44:58 2016 ######################
+################################################################################
+
+BLOCK mass # 
+    1    +4.80000e-03 # Mu
+    2    +2.30000e-03 # Md
+    3    +9.50000e-02 # Ms
+    4    +1.42000e+00 # Mc
+    5    +4.70000e+00 # Mb
+    6    +1.73000e+02 # Mt
+    11   +5.11000e-04 # Me
+    13   +1.05658e-01 # Mmu
+    15   +1.77680e+00 # Mta
+    24   +8.03850e+01 # MW
+    25   +1.25000e+02 # MH
+
+BLOCK sminputs # 
+    1    +1.27916e+02 # aEWM1
+    2    +1.16638e-05 # Gf
+    3    +1.18400e-01 # aS
+    4    +9.11876e+01 # MZ
+
+###################################
+## CKM INFORMATION
+###################################
+
+BLOCK VCKM
+    1   1    +9.74272e-01 # RVud1x1
+    1   2    +2.25349e-01 # RVus1x2
+    1   3    +1.21581e-03 # RVub1x3
+    2   1    -2.25208e-01 # RVcd2x1
+    2   2    +9.73440e-01 # RVcs2x2
+    2   3    +4.11845e-02 # RVcb2x3
+    3   1    +8.09744e-03 # RVtd3x1
+    3   2    -4.03991e-02 # RVts3x2
+    3   3    +9.99146e-01 # RVtb3x3
+
+BLOCK IMVCKM
+    1   1    +0.00000e+00 # IVud1x1
+    1   2    +0.00000e+00 # IVus1x2
+    1   3    -3.20194e-03 # IVub1x3
+    2   1    -1.28479e-04 # IVcd2x1
+    2   2    -2.97171e-05 # IVcs2x2
+    2   3    +0.00000e+00 # IVcb2x3
+    3   1    -3.11693e-03 # IVtd3x1
+    3   2    -7.20944e-04 # IVts3x2
+    3   3    +0.00000e+00 # IVtb3x3
+
+###################################
+## INFORMATION FOR HIGGS BASIS
+###################################
+
+BLOCK basis # 
+    1    higgs # translated basis
+
+BLOCK HBx4F # 
+    1    +1.00000e-03 # cll1122
+    2    +1.00000e-03 # cpuu3333
+
+BLOCK HBxh # 
+    1    +1.00000e-03 # dCz
+    2    +1.00000e-03 # Cgg
+    3    +1.00000e-03 # Caa
+    4    +1.00000e-03 # Cza
+    5    +1.00000e-03 # Czz
+    6    +1.00000e-03 # Czbx
+    8    +1.00000e-03 # tCgg
+    9    +1.00000e-03 # tCaa
+    10   +1.00000e-03 # tCza
+    11   +1.00000e-03 # tCzz
+
+BLOCK HBxhself # 
+    1    +1.00000e-03 # dL3
+
+BLOCK HBxMASS # 
+    1    +1.00000e-03 # dM
+
+BLOCK HBxTGC # 
+    1    +1.00000e-03 # Lz
+    2    +1.00000e-03 # tLz
+    3    +1.00000e-03 # C3g
+    4    +1.00000e-03 # tC3g
+
+BLOCK HBxdad
+    1   1    +1.00000e-03 # Rdad1x1
+    2   2    +1.00000e-03 # Rdad2x2
+    3   3    +1.00000e-03 # Rdad3x3
+
+BLOCK IMHBxdad
+    1   1    +1.00000e-03 # Idad1x1
+    2   2    +1.00000e-03 # Idad2x2
+    3   3    +1.00000e-03 # Idad3x3
+
+BLOCK HBxdae
+    1   1    +1.00000e-03 # Rdae1x1
+    2   2    +1.00000e-03 # Rdae2x2
+    3   3    +1.00000e-03 # Rdae3x3
+
+BLOCK IMHBxdae
+    1   1    +1.00000e-03 # Idae1x1
+    2   2    +1.00000e-03 # Idae2x2
+    3   3    +1.00000e-03 # Idae3x3
+
+BLOCK HBxdau
+    1   1    +1.00000e-03 # Rdau1x1
+    2   2    +1.00000e-03 # Rdau2x2
+    3   3    +1.00000e-03 # Rdau3x3
+
+BLOCK IMHBxdau
+    1   1    +1.00000e-03 # Idau1x1
+    2   2    +1.00000e-03 # Idau2x2
+    3   3    +1.00000e-03 # Idau3x3
+
+BLOCK HBxdgd
+    1   1    +1.00000e-03 # Rdgd1x1
+    2   2    +1.00000e-03 # Rdgd2x2
+    3   3    +1.00000e-03 # Rdgd3x3
+
+BLOCK IMHBxdgd
+    1   1    +1.00000e-03 # Idgd1x1
+    2   2    +1.00000e-03 # Idgd2x2
+    3   3    +1.00000e-03 # Idgd3x3
+
+BLOCK HBxdGLwl
+    1   1    +1.00000e-03 # RdGLwl1x1
+    2   2    +1.00000e-03 # RdGLwl2x2
+    3   3    +1.00000e-03 # RdGLwl3x3
+
+BLOCK HBxdGLzd
+    1   1    +1.00000e-03 # RdGLzd1x1
+    2   2    +1.00000e-03 # RdGLzd2x2
+    3   3    +1.00000e-03 # RdGLzd3x3
+
+BLOCK HBxdGLze
+    1   1    +1.00000e-03 # RdGLze1x1
+    2   2    +1.00000e-03 # RdGLze2x2
+    3   3    +1.00000e-03 # RdGLze3x3
+
+BLOCK HBxdGLzu
+    1   1    +1.00000e-03 # RdGLzu1x1
+    2   2    +1.00000e-03 # RdGLzu2x2
+    3   3    +1.00000e-03 # RdGLzu3x3
+
+BLOCK HBxdGRwq
+    1   1    +1.00000e-03 # RdGRwq1x1
+    2   2    +1.00000e-03 # RdGRwq2x2
+    3   3    +1.00000e-03 # RdGRwq3x3
+
+BLOCK IMHBxdGRwq
+    1   1    +1.00000e-03 # IdGRwq1x1
+    2   2    +1.00000e-03 # IdGRwq2x2
+    3   3    +1.00000e-03 # IdGRwq3x3
+
+BLOCK HBxdGRzd
+    1   1    +1.00000e-03 # RdGRzd1x1
+    2   2    +1.00000e-03 # RdGRzd2x2
+    3   3    +1.00000e-03 # RdGRzd3x3
+
+BLOCK HBxdGRze
+    1   1    +1.00000e-03 # RdGRze1x1
+    2   2    +1.00000e-03 # RdGRze2x2
+    3   3    +1.00000e-03 # RdGRze3x3
+
+BLOCK HBxdGRzu
+    1   1    +1.00000e-03 # RdGRzu1x1
+    2   2    +1.00000e-03 # RdGRzu2x2
+    3   3    +1.00000e-03 # RdGRzu3x3
+
+BLOCK HBxdgu
+    1   1    +1.00000e-03 # Rdgu1x1
+    2   2    +1.00000e-03 # Rdgu2x2
+    3   3    +1.00000e-03 # Rdgu3x3
+
+BLOCK IMHBxdgu
+    1   1    +1.00000e-03 # Idgu1x1
+    2   2    +1.00000e-03 # Idgu2x2
+    3   3    +1.00000e-03 # Idgu3x3
+
+BLOCK HBxdYd
+    1   1    +1.00000e-03 # dYd1x1
+    2   2    +1.00000e-03 # dYd2x2
+    3   3    +1.00000e-03 # dYd3x3
+
+BLOCK HBxdYe
+    1   1    +1.00000e-03 # dYe1x1
+    2   2    +1.00000e-03 # dYe2x2
+    3   3    +1.00000e-03 # dYe3x3
+
+BLOCK HBxdYu
+    1   1    +1.00000e-03 # dYu1x1
+    2   2    +1.00000e-03 # dYu2x2
+    3   3    +1.00000e-03 # dYu3x3
+
+BLOCK HBxdzd
+    1   1    +1.00000e-03 # Rdzd1x1
+    2   2    +1.00000e-03 # Rdzd2x2
+    3   3    +1.00000e-03 # Rdzd3x3
+
+BLOCK IMHBxdzd
+    1   1    +1.00000e-03 # Idzd1x1
+    2   2    +1.00000e-03 # Idzd2x2
+    3   3    +1.00000e-03 # Idzd3x3
+
+BLOCK HBxdze
+    1   1    +1.00000e-03 # Rdze1x1
+    2   2    +1.00000e-03 # Rdze2x2
+    3   3    +1.00000e-03 # Rdze3x3
+
+BLOCK IMHBxdze
+    1   1    +1.00000e-03 # Idze1x1
+    2   2    +1.00000e-03 # Idze2x2
+    3   3    +1.00000e-03 # Idze3x3
+
+BLOCK HBxdzu
+    1   1    +1.00000e-03 # Rdzu1x1
+    2   2    +1.00000e-03 # Rdzu2x2
+    3   3    +1.00000e-03 # Rdzu3x3
+
+BLOCK IMHBxdzu
+    1   1    +1.00000e-03 # Idzu1x1
+    2   2    +1.00000e-03 # Idzu2x2
+    3   3    +1.00000e-03 # Idzu3x3
+
+BLOCK HBxSd
+    1   1    +1.00000e-03 # Sd1x1
+    2   2    +1.00000e-03 # Sd2x2
+    3   3    +1.00000e-03 # Sd3x3
+
+BLOCK HBxSe
+    1   1    +1.00000e-03 # Se1x1
+    2   2    +1.00000e-03 # Se2x2
+    3   3    +1.00000e-03 # Se3x3
+
+BLOCK HBxSu
+    1   1    +1.00000e-03 # Su1x1
+    2   2    +1.00000e-03 # Su2x2
+    3   3    +1.00000e-03 # Su3x3
+
+#        PDG        Width
+DECAY    23         +2.49520e+00 # 
+
+#        PDG        Width
+DECAY    24         +2.08500e+00 # 
+
+#        PDG        Width
+DECAY    6          +1.49150e+00 # 
+
+################################################################################
+################################################################################

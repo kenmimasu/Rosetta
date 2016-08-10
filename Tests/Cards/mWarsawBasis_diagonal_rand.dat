@@ -1,0 +1,244 @@
+################################################################################
+###################### ROSETTA: M-WARSAW BASIS INPUT CARD ######################
+#### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) for more details ####
+###################### GENERATED TUE JUL 26 10:44:33 2016 ######################
+################################################################################
+
+BLOCK mass # 
+    24   +8.03850e+01 # MW
+    25   +1.25000e+02 # MH
+
+BLOCK sminputs # 
+    1    +1.27916e+02 # aEWM1
+    2    +1.16638e-05 # Gf
+    3    +1.18400e-01 # aS
+    4    +9.11876e+01 # MZ
+    25   +1.25000e+02 # MH
+
+###################################
+## CKM INFORMATION
+###################################
+
+BLOCK VCKM
+    1   1    +9.74272e-01 # RVud1x1
+    1   2    +2.25349e-01 # RVus1x2
+    1   3    +1.21581e-03 # RVub1x3
+    2   1    -2.25208e-01 # RVcd2x1
+    2   2    +9.73440e-01 # RVcs2x2
+    2   3    +4.11845e-02 # RVcb2x3
+    3   1    +8.09744e-03 # RVtd3x1
+    3   2    -4.03991e-02 # RVts3x2
+    3   3    +9.99146e-01 # RVtb3x3
+
+BLOCK IMVCKM
+    1   1    +0.00000e+00 # IVud1x1
+    1   2    +0.00000e+00 # IVus1x2
+    1   3    -3.20194e-03 # IVub1x3
+    2   1    -1.28479e-04 # IVcd2x1
+    2   2    -2.97171e-05 # IVcs2x2
+    2   3    +0.00000e+00 # IVcb2x3
+    3   1    -3.11693e-03 # IVtd3x1
+    3   2    -7.20944e-04 # IVts3x2
+    3   3    +0.00000e+00 # IVtb3x3
+
+###################################
+## INFORMATION FOR M-WARSAW BASIS
+###################################
+
+BLOCK basis # 
+    1    m-warsaw # translated basis
+
+BLOCK WBx4F # 
+    1    -8.06245e-01 # cll1221
+    2    +1.61081e-01 # cll1122
+    3    -9.07777e-01 # cpuu3333
+
+BLOCK WBxH4D2 # 
+    1    -3.42609e-01 # cH
+    2    +7.79519e-01 # cT
+
+BLOCK WBxH6 # 
+    1    +6.02398e-01 # c6H
+
+BLOCK WBxV2H2 # 
+    1    -6.37260e-01 # cGG
+    2    +5.79202e-01 # cWW
+    3    -1.52886e-01 # cBB
+    4    -5.74467e-01 # cWB
+    5    +6.24495e-01 # tcGG
+    6    -8.38277e-01 # tcWW
+    7    -8.98417e-01 # tcBB
+    8    -2.90340e-01 # tcWB
+
+BLOCK WBxV3D3 # 
+    1    -9.96758e-01 # c3W
+    2    +9.30659e-01 # c3G
+    3    -2.91974e-01 # tc3W
+    4    -2.16949e-02 # tc3G
+
+BLOCK WBxd
+    1   1    +3.46082e-01 # Rcd1x1
+    2   2    +8.30791e-01 # Rcd2x2
+    3   3    -2.80449e-01 # Rcd3x3
+
+BLOCK IMWBxd
+    1   1    -5.09402e-01 # Icd1x1
+    2   2    +4.34951e-01 # Icd2x2
+    3   3    +5.33312e-01 # Icd3x3
+
+BLOCK WBxdB
+    1   1    -3.83605e-01 # RcdB1x1
+    2   2    +1.27860e-01 # RcdB2x2
+    3   3    +3.19199e-01 # RcdB3x3
+
+BLOCK IMWBxdB
+    1   1    +1.59027e-01 # IcdB1x1
+    2   2    -3.25686e-01 # IcdB2x2
+    3   3    +7.11018e-01 # IcdB3x3
+
+BLOCK WBxdG
+    1   1    +7.47624e-02 # RcdG1x1
+    2   2    -3.39703e-01 # RcdG2x2
+    3   3    +7.65710e-02 # RcdG3x3
+
+BLOCK IMWBxdG
+    1   1    -2.59126e-01 # IcdG1x1
+    2   2    -9.52171e-02 # IcdG2x2
+    3   3    -2.08707e-01 # IcdG3x3
+
+BLOCK WBxdW
+    1   1    -9.89060e-01 # RcdW1x1
+    2   2    +8.85486e-01 # RcdW2x2
+    3   3    +6.81172e-01 # RcdW3x3
+
+BLOCK IMWBxdW
+    1   1    -1.88249e-01 # IcdW1x1
+    2   2    +4.89690e-02 # IcdW2x2
+    3   3    +7.32220e-04 # IcdW3x3
+
+BLOCK WBxe
+    1   1    +3.18717e-01 # Rce1x1
+    2   2    -4.27948e-01 # Rce2x2
+    3   3    +6.76978e-01 # Rce3x3
+
+BLOCK IMWBxe
+    1   1    +5.59316e-01 # Ice1x1
+    2   2    -4.62561e-01 # Ice2x2
+    3   3    -4.42181e-01 # Ice3x3
+
+BLOCK WBxeB
+    1   1    +2.49595e-01 # RceB1x1
+    2   2    -7.79718e-01 # RceB2x2
+    3   3    -2.28140e-01 # RceB3x3
+
+BLOCK IMWBxeB
+    1   1    -9.15154e-01 # IceB1x1
+    2   2    +2.86952e-01 # IceB2x2
+    3   3    -4.20242e-01 # IceB3x3
+
+BLOCK WBxeW
+    1   1    +6.81339e-01 # RceW1x1
+    2   2    -7.73618e-01 # RceW2x2
+    3   3    -9.84065e-01 # RceW3x3
+
+BLOCK IMWBxeW
+    1   1    +5.58638e-02 # IceW1x1
+    2   2    +9.26809e-02 # IceW2x2
+    3   3    +2.90434e-01 # IceW3x3
+
+BLOCK WBxHd
+    1   1    -4.77074e-01 # RcHd1x1
+    2   2    +6.69969e-01 # RcHd2x2
+    3   3    +4.54310e-02 # RcHd3x3
+
+BLOCK WBxHe
+    1   1    +6.41591e-01 # RcHe1x1
+    2   2    +5.37193e-03 # RcHe2x2
+    3   3    +8.93678e-01 # RcHe3x3
+
+BLOCK WBxHl
+    1   1    -9.67432e-01 # RcHl1x1
+    2   2    +9.06998e-01 # RcHl2x2
+    3   3    -2.95649e-01 # RcHl3x3
+
+BLOCK WBxHpl
+    1   1    +7.04655e-01 # RcHpl1x1
+    2   2    -8.08897e-01 # RcHpl2x2
+    3   3    -4.89791e-01 # RcHpl3x3
+
+BLOCK WBxHpq
+    1   1    +9.25263e-01 # RcHpq1x1
+    2   2    -7.99137e-01 # RcHpq2x2
+    3   3    +6.46116e-01 # RcHpq3x3
+
+BLOCK WBxHq
+    1   1    -6.25464e-01 # RcHq1x1
+    2   2    -2.58882e-02 # RcHq2x2
+    3   3    +6.76296e-01 # RcHq3x3
+
+BLOCK WBxHu
+    1   1    -3.57656e-01 # RcHu1x1
+    2   2    +2.14140e-01 # RcHu2x2
+    3   3    +7.12543e-01 # RcHu3x3
+
+BLOCK WBxHud
+    1   1    +7.53278e-01 # RcHud1x1
+    2   2    -5.07445e-02 # RcHud2x2
+    3   3    +7.07202e-01 # RcHud3x3
+
+BLOCK IMWBxHud
+    1   1    -7.50820e-01 # IcHud1x1
+    2   2    -1.04956e-01 # IcHud2x2
+    3   3    +6.99022e-01 # IcHud3x3
+
+BLOCK WBxu
+    1   1    +8.94079e-01 # Rcu1x1
+    2   2    +9.99608e-01 # Rcu2x2
+    3   3    +2.46812e-01 # Rcu3x3
+
+BLOCK IMWBxu
+    1   1    +8.57786e-01 # Icu1x1
+    2   2    +4.69403e-01 # Icu2x2
+    3   3    -1.64685e-02 # Icu3x3
+
+BLOCK WBxuB
+    1   1    +9.05000e-01 # RcuB1x1
+    2   2    +9.01889e-01 # RcuB2x2
+    3   3    +3.65387e-01 # RcuB3x3
+
+BLOCK IMWBxuB
+    1   1    +3.24396e-01 # IcuB1x1
+    2   2    -8.12803e-01 # IcuB2x2
+    3   3    +5.38677e-01 # IcuB3x3
+
+BLOCK WBxuG
+    1   1    -6.59656e-01 # RcuG1x1
+    2   2    -9.15589e-02 # RcuG2x2
+    3   3    +2.72166e-01 # RcuG3x3
+
+BLOCK IMWBxuG
+    1   1    -2.06931e-01 # IcuG1x1
+    2   2    +4.44502e-01 # IcuG2x2
+    3   3    -8.70733e-02 # IcuG3x3
+
+BLOCK WBxuW
+    1   1    +1.35546e-01 # RcuW1x1
+    2   2    -3.33696e-01 # RcuW2x2
+    3   3    -5.22563e-01 # RcuW3x3
+
+BLOCK IMWBxuW
+    1   1    -3.36454e-01 # IcuW1x1
+    2   2    -1.03748e-01 # IcuW2x2
+    3   3    +8.48517e-01 # IcuW3x3
+
+#        PDG        Width
+DECAY    23         +2.49520e+00 # 
+
+#        PDG        Width
+DECAY    24         +2.08500e+00 # 
+
+#        PDG        Width
+DECAY    6          +1.49150e+00 # 
+
+################################################################################
+################################################################################

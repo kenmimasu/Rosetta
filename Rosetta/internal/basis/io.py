@@ -98,7 +98,7 @@ def write_param_card(card, filename, overwrite=False):
                 +'#### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) '\
                  'for more details ####\n'
                 +'########### {} BASIS PARAM CARD GENERATED {}  ##########'\
-                 '#\n'.format(card.blocks['basis'][0].upper(),
+                 '#\n'.format(card.blocks['basis'][1].upper(),
                               datetime.datetime.now().ctime().upper())
                 +'#'*80 +'\n\n')
         

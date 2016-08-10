@@ -5,7 +5,9 @@ from Rosetta import SILHBasis as SB
 from Rosetta import BSMCharacterisation as MB
 from Rosetta import TemplateBasis as TB
 from Rosetta import HISZ as HZ
-# from Rosetta import MufBasis as MUF
+
+from basis.io import write_template_card
+
 import SLHA
 import tempfile
 import os
@@ -228,25 +230,25 @@ if __name__=='__main__':
 #         instance = TB.TemplateBasis(flavor=flav)
 #         # instance.write_template_card('Cards/TemplateBasis{}.dat'.format(tail))
 
-        instance = HZ.HISZ(flavor=flav)
-        instance.write_template_card('Cards/HISZ{}.dat'.format(tail))
-        instance.write_template_card('HISZ{}_rand.dat'.format(tail), value='random')
-        instance.write_template_card('HISZ{}_1e-3.dat'.format(tail), value=0.001)
+        # instance = HZ.HISZ(flavor=flav)
+        # instance.write_template_card('Cards/HISZ{}.dat'.format(tail))
+        # instance.write_template_card('HISZ{}_rand.dat'.format(tail), value='random')
+        # instance.write_template_card('HISZ{}_1e-3.dat'.format(tail), value=0.001)
 
 #         instance = HB.HiggsBasis(flavor=flav)
 #         # instance.write_template_card('Cards/HiggsBasis{}.dat'.format(tail))
 #         instance.write_template_card('HiggsBasis{}_rand.dat'.format(tail), value='random')
 #         # instance.write_template_card('HiggsBasis{}_1e-3.dat'.format(tail), value=0.001)
 #
-#         instance = WB.WarsawBasis(flavor=flav)
-#         # instance.write_template_card('Cards/WarsawBasis{}.dat'.format(tail))
-#         instance.write_template_card('WarsawBasis{}_rand.dat'.format(tail), value='random')
-#         # instance.write_template_card('WarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
-#     #
-#         instance = SB.SILHBasis(flavor=flav)
-#         # instance.write_template_card('Cards/SILHBasis{}.dat'.format(tail))
-#         instance.write_template_card('SILHBasis{}_rand.dat'.format(tail), value='random')
-#         # instance.write_template_card('SILHBasis{}_1e-3.dat'.format(tail), value=0.001)
+        instance = WB.WarsawBasis(flavor=flav)
+        # instance.write_template_card('Cards/WarsawBasis{}.dat'.format(tail))
+        instance.write_template_card('WarsawBasis{}_rand.dat'.format(tail), value='random')
+        # instance.write_template_card('WarsawBasis{}_1e-3.dat'.format(tail), value=0.001)
+    #
+        instance = SB.SILHBasis(flavor=flav)
+        # instance.write_template_card('Cards/SILHBasis{}.dat'.format(tail))
+        instance.write_template_card('SILHBasis{}_rand.dat'.format(tail), value='random')
+        # instance.write_template_card('SILHBasis{}_1e-3.dat'.format(tail), value=0.001)
 #
 #     # #
 ################################################################################
