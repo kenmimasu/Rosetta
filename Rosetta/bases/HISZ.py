@@ -53,14 +53,12 @@ class HISZ(basis.Basis):
     @basis.translation('higgs')
     def to_higgs(self, instance):
         '''
-        Translation function to Mass basis or Higgs basis, which differs only in 
-        the prefix of the flavored blocks.
+        Translation function to Higgs basis.
         '''
         # Higgs basis prefix
         XB = 'HB'
         
         s2w, c2w, ee2, gw2, gp2, MW, vev, gs2 = self.calculate_inputs() 
-        # print 's2w, c2w, ee2, gw2, gp2, MW, vev, gs2 ',s2w, c2w, ee2, gw2, gp2, MW, vev, gs2
 
         H = self
         M = instance
