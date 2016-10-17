@@ -8,8 +8,6 @@ import random
 sys.path.append('../')
 
 from Rosetta import HiggsBasis as HB
-from Rosetta import mWarsawBasis as mWB
-from Rosetta import mSILHBasis as mSB
 from Rosetta import WarsawBasis as WB
 from Rosetta import SILHBasis as SB
 from Rosetta import BSMCharacterisation as MB
@@ -266,30 +264,31 @@ if __name__=='__main__':
 
     # #
 ################################################################################
+    os.chdir('Cards')
 # translation testers 
 # Two way tests
 # 
-    # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','higgs')
+    # two_way_test(SB.SILHBasis,'SILHBasis_general_rand.dat','higgs')
     # two_way_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','higgs',flavor='diagonal')
     # two_way_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','higgs',flavor='universal')
     #
-    # two_way_test(SB.SILHBasis,'SILHBasis_rand.dat','warsaw')
+    # two_way_test(SB.SILHBasis,'SILHBasis_general_rand.dat','warsaw')
     # two_way_test(SB.SILHBasis,'SILHBasis_diagonal_rand.dat','warsaw',flavor='diagonal')
     # two_way_test(SB.SILHBasis,'SILHBasis_universal_rand.dat','warsaw',flavor='universal')
     #
-    # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','higgs')
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_general_rand.dat','higgs')
     # two_way_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','higgs',flavor='diagonal')
     # two_way_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','higgs',flavor='universal')
     #
-    # two_way_test(WB.WarsawBasis,'WarsawBasis_rand.dat','silh')
+    # two_way_test(WB.WarsawBasis,'WarsawBasis_general_rand.dat','silh')
     # two_way_test(WB.WarsawBasis,'WarsawBasis_diagonal_rand.dat','silh',flavor='diagonal')
     # two_way_test(WB.WarsawBasis,'WarsawBasis_universal_rand.dat','silh',flavor='universal')
+
+    two_way_test(HB.HiggsBasis,'HiggsBasis_general_rand.dat','warsaw')
+    two_way_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat','warsaw',flavor='diagonal')
+    two_way_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','warsaw',flavor='universal')
     #
-    # two_way_test(HB.HiggsBasis,'HiggsBasis_rand.dat','warsaw')
-    # two_way_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat','warsaw',flavor='diagonal')
-    # two_way_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','warsaw',flavor='universal')
-    #
-    # two_way_test(HB.HiggsBasis,'HiggsBasis_rand.dat','silh')
+    # two_way_test(HB.HiggsBasis,'HiggsBasis_general_rand.dat','silh')
     # two_way_test(HB.HiggsBasis,'HiggsBasis_diagonal_rand.dat','silh',flavor='diagonal')
     # two_way_test(HB.HiggsBasis,'HiggsBasis_universal_rand.dat','silh',flavor='universal')
 ################################################################################

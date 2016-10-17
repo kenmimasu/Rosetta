@@ -98,11 +98,15 @@ class TranslateInterface(RosettaInterface):
     }
 
     def __call__(self, args):
-        
-        basis_instance = self.from_param_card(args.param_card)
-        
+        # Initialise starting basis instance from card
+        basis_instance = self.from_param_card(args.param_card, flavor=args.flavor)
+
+        # Translate to target basis instance
         newbasis = basis_instance.translate(target=args.target)
         
+        # Call modify_inputs() to apply any changes in e.g. mW & check
+        # Only ever do this for the FINAL output basis instance to avoid 
+        # multiple modifications of parameters
         newbasis.modify_inputs()
         check.modified_inputs(newbasis)
         
@@ -110,9 +114,13 @@ class TranslateInterface(RosettaInterface):
         if args.target != 'bsmc':
             newbasis.reduce_hermitian_matrices()
         
+        # Remove occurrences of parameters defined as dependent for output 
+        # unless --dependent option specified OR output basis is e.g. tied to a 
+        # MC implementation that would like to see all parameters
         if not args.dependent and args.target.lower()!='bsmc':
             newbasis.delete_dependent()
         
+        # Preamble for decay blocks
         preamble = ('###################################\n'
                   + '## DECAY INFORMATION\n'
                   + '###################################')
@@ -120,11 +128,11 @@ class TranslateInterface(RosettaInterface):
             decay.preamble = preamble
             break
         
-        # run eHDECAY
+        # run eHDECAY for Higgs branching fractions
         try:
             if args.ehdecay:
                 decayblock = create_SLHA_block(basis_instance)
-                
+                # Creat Higgs decay block if not present
                 if 25 not in newbasis.card.decays:
                     newbasis.card.add_decay(decayblock)
                 else:
@@ -132,6 +140,7 @@ class TranslateInterface(RosettaInterface):
                 session.log('#############################\n')
                 
         except TranslationError as e:
+            # Catch translation error in map to SILH
             print e
             print 'Translation to SILH Basis required, skipping eHDECAY.'
     
@@ -185,7 +194,8 @@ class DefaultCardInterface(RosettaInterface):
         },
         ('--value',):{
             'type':str, 'metavar':'VALUE', 'default': '0',
-            'help':'Set value of all parameters to VALUE'
+            'help':('Set value of all parameters to VALUE. The value "random" '
+                    'will set random coefficients between -1. and 1.')
         }
         # ('--dependent',):{
         #     'action':'store_true',

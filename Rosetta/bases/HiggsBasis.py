@@ -55,8 +55,12 @@ class HiggsBasis(basis.Basis):
               'tCww2', 'tCgg2', 'tCaa2', 'tCza2', 'tCzz2']
     # Higgs self couplings [Eqn. (3.12)]
     HBxhself = ['dL3', 'dL4']
-    # 4-fermion operators
-    HBx4F = ['cll1122', 'cpuu3333', 'cll1221']
+    # 4-fermion operators. cll1221 defined as dependent
+    HBx4F = ['cll1111','cll1122','cll1221','cll1133','cll1331','cll2332',
+             'cle1111','cle1122','cle2211','cle1133','cle3311',
+             'cee1111','cee1122','cee1133',
+             'cpuu3333']
+    
     ##########################
     # block structure
     blocks = {'HBxMASS':HBxMASS, 'HBxTGC':HBxTGC, 'HBxQGC':HBxQGC, 
@@ -139,7 +143,10 @@ class HiggsBasis(basis.Basis):
     'HBxdYu', 'HBxdYd', 'HBxdYe', 'HBxSu', 'HBxSd', 'HBxSe', 'dL3',
     # [Eqn. (5.3)]
     'Lz', 'tLz', 'C3g', 'tC3g',
-    'cll1122','cpuu3333'
+    'cll1111','cll1122','cll1133','cll1331','cll2332',
+    'cle1111','cle1122','cle2211','cle1133','cle3311',
+    'cee1111','cee1122','cee1133',
+    'cpuu3333'
     ]
                 
     # Required inputs/masses
@@ -291,7 +298,10 @@ class HiggsBasis(basis.Basis):
             is_dipole = re.match(r'Cdh{0,1}[a,z,g][u,d,e]\dx\d', k)
             
             if not is_dipole:
-                B[k] = v
+                try:
+                    B[k] = v
+                except KeyError:
+                    print k + ' not found in BSMC definition.'
         
         # splitting dipole coefficients
         ii = complex(0.,1.)
@@ -443,10 +453,17 @@ class HiggsBasis(basis.Basis):
                 W['WBx'+f+'B'][i,j] = (H['HBxdz'+f][i,j] 
                                       - c2w*H['HBxda'+f][i,j])*MFVnorm
                                       
-        
+        # Some four fermion operators
         W['cll1221'] = 2.*( H['HBxdGLwl'][1,1].real + H['HBxdGLwl'][2,2].real) - 4.*dM
         
-        W['cll1122'], W['cpuu3333'] = H['cll1122'], H['cpuu3333']
+        trivial_4f =  ['cll1111','cll1122','cll1133','cll1331','cll2332',
+                       'cle1111','cle1122','cle2211','cle1133','cle3311',
+                       'cee1111','cee1122','cee1133',
+                       'cpuu3333']
+        
+        for c in trivial_4f:
+            W[c] = H[c]
+        # W['cll1122'], W['cpuu3333'] = H['cll1122'], H['cpuu3333']
 
         return W
         
@@ -573,6 +590,14 @@ class HiggsBasis(basis.Basis):
                 # Hypercharge
                 S['SBx'+f+'B'][i,j] = (H['HBxdz'+f][i,j] 
                                       - c2w*H['HBxda'+f][i,j])*gw2/16.
+        
+        # Some four fermion operators
+        trivial_4f = ['cll1111','cll1133','cll1331','cll2332',
+                      'cle1111','cle1122','cle2211','cle1133','cle3311',
+                      'cee1111','cee1122','cee1133']
+
+        for c in trivial_4f:
+            S['s'+c[1:]] = H[c]
         
         return S
 

@@ -989,7 +989,12 @@ def read(card, set_cplx=True):
         else: return ''
 
     thecard = Card()
-    pcard = open(card,'r')
+    try:
+        pcard = open(card,'r')
+    except IOError:
+        msg = 'No such file or directory: {}'.format(card)
+        raise SLHAIOError(msg)
+        
     lines = iter(pcard)
     counter = 0
     
@@ -1158,6 +1163,15 @@ def read_until(lines, here, *args):
     except IndexError:
         return [],'',stopiter
 
+# Errors
+class SLHAError(Exception):
+    '''SLHA base exception class. Never raised.'''
+    pass
+
+class SLHAIOError(SLHAError):
+    '''IOError'''
+    pass
+    
 if __name__=='__main__':
     pass
 

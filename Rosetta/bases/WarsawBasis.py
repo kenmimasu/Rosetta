@@ -27,8 +27,13 @@ class WarsawBasis(basis.Basis):
     
     WBX3 = ['cW','cG','tcW','tcG']
     
-    # affects Gf input, Warsaw <-> SILH translation
-    WB4F = ['cll1221','cll1122','cpuu3333'] 
+    # cll1221 affects Gf input
+    # cll1221, cll1122 & cpuu3333 needed for Warsaw <-> SILH translation
+    WB4F = ['cll1111','cll1122','cll1221','cll1133','cll1331','cll2332',
+            'cle1111','cle1122','cle2211','cle1133','cle3311',
+            'cee1111','cee1122','cee1133',
+            'cpuu3333']
+    
     ######
     blocks = {'WBxX2H2':WBX2H2, 'WBxH4D2':WBH4D2, 'WBxH6':WBH6, 
               'WBxX3':WBX3, 'WBx4F':WB4F}
@@ -178,11 +183,23 @@ class WarsawBasis(basis.Basis):
                 S['SBx'+f+'W'][i,j] = W['WBx'+f+'W'][i,j]*MFVnorm
                 # Hypercharge
                 S['SBx'+f+'B'][i,j] = W['WBx'+f+'B'][i,j]*MFVnorm
-        
-        # trivial2 = ['xeW','xeB','xuG','xuW','xuB','xdG','xdW','xdB']
 
-        # for coeff in trivial2:
-        #     matrix_eq(W['WB'+coeff], S['SB'+coeff])
+        # Four fermion operators
+        sll = ['sll1111','sll1133','sll1331','sll2332']
+        for coeff in sll:
+            i,j,k,l = [ind for ind in coeff[-4:]]
+            if i==j==k==l:
+                S[coeff] = W['c'+coeff[1:]] - (S['s2B']*gp2/gw2 + S['s2W'])
+            elif i==j and k==l:
+                S[coeff] = W['c'+coeff[1:]] - (S['s2B']*gp2/gw2 - S['s2W'])*2.
+            elif i==l and j==k:
+                S[coeff] = W['c'+coeff[1:]] - 4.*S['s2W']
+                
+        trivial_4f = ['sle1111','sle1122','sle2211','sle1133','sle3311',
+                      'see1111','see1122','see1133']
+
+        for c in trivial_4f:
+            S[c] = W['c'+c[1:]]
 
         return S
 
@@ -358,8 +375,13 @@ class WarsawBasis(basis.Basis):
                          - W['cH'])
         
         # Four fermion interactions
-        M['cll1122'] = W['cll1122']
-        M['cpuu3333'] = W['cpuu3333']
+        trivial_4f =  ['cll1111','cll1122','cll1133','cll1331','cll2332',
+                       'cle1111','cle1122','cle2211','cle1133','cle3311',
+                       'cee1111','cee1122','cee1133',
+                       'cpuu3333']
+        
+        for c in trivial_4f:
+            M[c] = W[c]
         
         return M
     

@@ -31,11 +31,18 @@ class SILHBasis(basis.Basis):
     SBH6 = ['s6']
     
     SBV3D3 = ['s3W','s3G','ts3W','ts3G']
-
+    
+    # Some four fermion operators. Note that sll1221, sll1122 and spuu3333 are 
+    # absent compared to the Warsaw bases as they have been traded in favour of 
+    # s2W, s2B & s2G.
+    SB4F =  ['sll1111','sll1133','sll1331','sll2332',
+             'sle1111','sle1122','sle2211','sle1133','sle3311',
+             'see1111','see1122','see1133']
+             
     ##########################
     # block structure
     blocks = {'SBxV2H2':SBV2H2, 'SBxH4D2':SBH4D2, 
-              'SBxH6':SBH6, 'SBxV3D3':SBV3D3} 
+              'SBxH6':SBH6, 'SBxV3D3':SBV3D3, 'SBx4F':SB4F} 
     
     flavored={
         'SBxu': {'cname':'su', 'kind':'general', 'domain':'complex'},
@@ -188,12 +195,41 @@ class SILHBasis(basis.Basis):
                 # Hypercharge
                 W['WBx'+f+'B'][i,j] = S['SBx'+f+'B'][i,j]/MFVnorm
 
-        # cll1221==0 in SILH
-        W['cll1221'] = 4.*S['s2W'] 
-
-        W['cll1122']=  (S['s2B']*gp2/gw2 - S['s2W'])*2.
+        
+        # non-trivial cll translation
+        # cll1221, cll1122, cpuu3333 absent in SILH
+        absent = ['cll1221', 'cll1122', 'cpuu3333']
+        
+        wll = ['cll1111','cll1122','cll1221','cll1133','cll1331','cll2332']
+        for coeff in wll:
+            
+            val = 0. if coeff in absent else S['s'+coeff[1:]]
+            
+            i,j,k,l = [ind for ind in coeff[-4:]]
+            if i==j==k==l:
+                W[coeff] = val + S['s2B']*gp2/gw2 + S['s2W']
+            elif i==j and k==l:
+                W[coeff] = val + (S['s2B']*gp2/gw2 - S['s2W'])*2.
+            elif i==l and j==k:
+                W[coeff] = val + 4.*S['s2W']
+            
+        #
+        # W['cll1111'] =  S['sll1111'] + S['s2B']*gp2/gw2 + S['s2W']
+        #
+        # W['cll1221'] = 4.*S['s2W']
+        #
+        # W['cll1331'] = 4.*S['s2W']
+        #
+        #
+        # W['cll1122'] =  (S['s2B']*gp2/gw2 - S['s2W'])*2.
         
         W['cpuu3333'] = (1./3.)*gs2*S['s2G']
+        
+        trivial_4f = ['cle1111','cle1122','cle2211','cle1133','cle3311',
+                      'cee1111','cee1122','cee1133']
+        
+        for c in trivial_4f:
+            W[c] = S['s'+c[1:]]
         
         return W
         
@@ -353,6 +389,13 @@ class SILHBasis(basis.Basis):
         M['cll1122'] = (S['s2B']*gp2/gw2 - S['s2W'])*2.
         
         M['cpuu3333'] = S['s2G']*gs2/3.
+        
+        trivial_4f = ['cll1111','cll1133','cll1331','cll2332',
+                      'cle1111','cle1122','cle2211','cle1133','cle3311',
+                      'cee1111','cee1122','cee1133']
+
+        for c in trivial_4f:
+            M[c] = S['s'+c[1:]]
         
         return M
         

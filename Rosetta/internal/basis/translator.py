@@ -74,6 +74,7 @@ def translate(basis, target=None, cache=True, avoid_cache = False,
             continue
 
         instance = bases[trgt](dependent=True, flavor='general')
+        
         # update new basis instance with non-EFT blocks, decays
         all_coeffs = (current.blocks.keys() + current.flavored.keys())
         get_other_blocks(instance, current.card, all_coeffs)
