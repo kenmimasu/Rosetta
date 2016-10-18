@@ -1,0 +1,69 @@
+################################################################################
+Rosetta: eHDECAY interface
+################################################################################
+
+interfaces/eHDECAY/            # eHDECAY interface Package
+|-> __init__.py
+|-> eHDECAY.py                 # Interface implementation
+|-> errors.py                  # package specific errors
+
+A useful program based on HDECAY (arXiv:hep-ph/9704448) for calculating the 
+Higgs total width was developed in 2014 and is described in arXiv:1403.3381. 
+The program takes as input a number of parameters in the SILH basis to calculate
+the width and branching ratios to SM particles optionally including Electroweak 
+corrections. 
+
+In order to have this working correctly the user must modify 
+Rosetta/config.txt, putting the absolute path to the base directory of a local 
+eHDECAY installation. There must exist a possible translation path between the 
+input basis and the SILH basis. The internal/eHDECAY.py module then performs 
+this translation, rescales the relevant parameters of the Rosetta SILH basis 
+implementation to match the conventions of arXiv:1403.3381 and executes a run 
+of eHDECAY. The results are stored and a copy of the input file "ehdecay.in" is 
+saved locally. The results are then written to and SLHA decay block in the 
+output card. The relevant input parameters are:
+
+    SM inputs: # ALL masses must be nonzero for eHDECAY to give a finite result
+    'MC', 'MB', 'MT', 'MMU', 'MTAU, # SM fermion masses
+    'MH', 'MZ', 'MW', 'aEWM1' 'Gf', # EW input masses, (alpha_EW)^-1, G_Fermi
+    'aSMZ'                          # alpha_S(MZ)
+
+    SILH coefficients:
+    'CHbar' , 'CTbar' , 'Ctaubar', 'Cmubar', 'Ctbar',
+    'Cbbar' , 'Ccbar' , 'Csbar'  , 'CWbar' , 'CBbar',
+    'CHWbar', 'CHBbar', 'Cgambar', 'Cgbar'
+
+    eHDECAY option:
+    'IELW' # Electroweak corrections switch (1:on, 0:off)
+
+eHDECAY can potentially give negative branching fractions and even a negative 
+total Higgs width for unreasonable choices of EFT parameters. A negative total 
+width is currently not allowed while negative branching fractions are not 
+handled and will be omitted from the parameter card.
+
+The interface has a standalone version that simply prints the SLHA decay block 
+for the Higgs or can be invoked as an option in the translate interface
+
+Command line documentation:
+
+ >> usage: rosetta ehdecay [-h] [-o OUTPUT] [--dependent] [--EW] [--flavor] [-w]
+ >>                        PARAMCARD
+ >> 
+ >> Run the eHDECAY interface to obtain the Higgs branching fractions
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD             Input parameter card
+ >> 
+ >> optional arguments:
+ >>   -h, --help            show this help message and exit
+ >>   -o OUTPUT, --output OUTPUT
+ >>                         Write out a new SLHA card containing the decay block
+ >>   --dependent           Also write out dependent parameters to output card
+ >>   --EW                  switch on electroweak corrections in eHDECAY
+ >>   --flavor              Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general)
+ >>   -w, --overwrite       Overwrite any pre-existing output file
+
+################################################################################
+Rosetta: an operator basis translator for Standard Model effective field theory
+################################################################################

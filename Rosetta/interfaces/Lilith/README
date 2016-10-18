@@ -1,0 +1,44 @@
+################################################################################
+Rosetta: Lilith interface
+################################################################################
+
+interfaces/Lilith/             # Lilith interface Package
+|-> __init__.py
+|-> Lilith.py                  # Interface implementation
+|-> errors.py                  # package specific errors
+|-> README                     # You are here
+
+A useful program for computing the combined likelihood using the latest Higgs 
+signal strength data is described in arXiv:1502.04138. Using the 
+SignalStrengths interface, Rosetta constructs the Higgs signal strengths and 
+feeds them to Lilith to obtain the chi-squared goodness of fit measure to the 
+Higgs data as calculated by a local installation of Lilith. 
+
+In order to have this working correctly the user must modify 
+Rosetta/config.txt, putting the absolute path to the base directory of a local 
+Lilith installation. The function calculate_likelihood(basis) performs the task 
+described above where basis is a Rosetta basis instance.
+
+A translation path to the BSMCharacterisation "basis" must be present.
+
+Command line documentation:
+
+ >> usage: rosetta lilith [-h] [--squares] [--flavor] PARAMCARD
+ >> 
+ >> Run the Lilith interface to obtain the likelihood value with respect to the
+ >> latest Higgs signal strength data for a particular point in EFT parameter
+ >> space
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --squares   Retain quadratic order in EFT coefficients in the
+ >>               SignalStrengths interface (NOT IMPLEMENTED)
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+ >>               universal (default = general)
+
+################################################################################
+Rosetta: an operator basis translator for Standard Model effective field theory
+################################################################################

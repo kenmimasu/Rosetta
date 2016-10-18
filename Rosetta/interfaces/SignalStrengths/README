@@ -1,0 +1,57 @@
+################################################################################
+Rosetta: SignalStrengths interface
+################################################################################
+
+interfaces/SignalStrengths/   # SignalStrengths interface Package
+|-> __init__.py
+|-> BR/                       # Folder storing tabulated SM Higgs branching 
+|   |                         # fractions and total widths provided by the 
+|   |                         # LHCHXSWG.
+|   |-> ff.dat
+|   |-> VV.dat
+|       
+|-> production.py             # Calculation of higgs production rescaling 
+|                             # factors.
+|                             
+|-> decay.py                  # Calculation of higgs decay partial width 
+|                             # rescaling factors, optionally using Rosetta's 
+|                             # eHDECAY interface.
+|                             
+|-> errors.py                 # Package-specific errors.
+|   
+|-> loopfunctions.py          # Fermion and gauge boson triangle loop functions.
+|-> README                    # You are here.
+
+Rosetta provides an interface through which to calculate the SM Higgs signal 
+strengths given an input of EFT parameters in a given basis. The 'mu' factors 
+are calculated for each production and decay channel by rescaling the 
+production cross sections partial widths, and total width of the Higgs. The 
+approach implemented is summarised in arXiv:1505.00046, where analytical or 
+numerical formulae each of the rescaling factors are provided. 
+
+A translation path to the BSM Characterisation basis must be present.
+
+This package has a standalone version that prints out a list of signal 
+strengths and is also used internally by the Lilith interace.
+
+Command line documentation:
+
+ >> usage: rosetta signalstrengths [-h] [--squares] [--sqrts] [--flavor] PARAMCARD
+ >> 
+ >> Run the SignalStrengths interface to obtain the mu's for all of the Higgs
+ >> production and decay channels.
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --squares   Retain quadratic order in EFT coefficients (NOT IMPLEMENTED)
+ >>   --sqrts     Specify pp collider centre-of mass energy in TeV. Allowed values
+ >>               are: 7, 8, 13 (default = 8).
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+              universal (default = general).
+              
+################################################################################
+Rosetta: an operator basis translator for Standard Model effective field theory
+################################################################################

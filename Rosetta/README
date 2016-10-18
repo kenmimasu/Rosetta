@@ -1,12 +1,33 @@
 ################################################################################
-Rosetta: A translator between effective field theory bases
-
+     ____                  __  __
+    / __ \____  ____ ___  / /_/ /_ ___ _
+   / /_/ / __ \/ ___/ _ \/ __/ __/ __ `/
+  / _, _/ /_/ (__  )  __/ /_/ /_/ /_/ /
+ /_/ |_|\____/____/\___/\__/\__/\__,_/
+ 
+ An operator basis translator for Standard Model effective field theory
+ 
+Version 2.0, October 2016
+################################################################################
+   References
+################################################################################
+"Rosetta: an operator basis translator for Standard Model effective field theory"
+Eur.Phys.J. C75 (2015) no.12, 583 
+arXiv:1508.05895
 Adam Falkowski, Benjamin Fuks, Kentarou Mawatari, Ken Mimasu, Veronica Sanz, 
 Francesco Riva 
 
-Version 1.1, February 2016
-################################################################################
+"Basis-independent constraints on Standard Model Effective Field Theories with 
+ Rosetta"
+arXiv:1605.02684
+Contribution 18 in "Les Houches 2015: Physics at TeV colliders - new physics 
+working group report" (p.158)
+Jeremy Bernon, Alexandra Carvalho, Adam Falkowski, Bemjamin Fuks, 
+Florian Goertz, Kentarou Mawatari, Ken Mimasu and Tevong You
 
+################################################################################
+0)  Description
+################################################################################
 Rosetta is a modular and flexible package for effective field theory (EFT) basis 
 translation and communication with event generation tools. The primary 
 framework which Rosetta has been designed to translate into is the 
@@ -37,8 +58,9 @@ is much simpler than developing from scratch new modules for existing tools in
 the context of a new basis.
 
 The tool consists of a Python package containing implementations of various EFT 
-bases and a command line tool 'translate' that performs the task of mapping a 
-given basis to a target output basis. The core of the package 
+bases and a command line tool 'rosetta' from which once can call a number of 
+interfaces described below. The main interface, 'translate', performs the task 
+of mapping a given basis to a target output basis. The core of the package 
 is based on the contents of the LHC Higgs Cross Section Working Group (HXSWG) 
 note (LHCHXSWG-INT-2015-001).
 
@@ -47,15 +69,17 @@ note (LHCHXSWG-INT-2015-001).
 ################################################################################
 1) Contact
 2) Prerequisites
-3) Usage
-4) Input cards
-5) The SLHA package
-6) The basis class
-7) Implementing your own basis
-8) Flavor option
-9) eHDECAY interface
-10) Higgs signal strengths
-11) Lilith interface
+3) Package contents
+4) Usage & translate interface
+5) Input cards
+6) The SLHA package
+7) The basis class
+8) Implementing your own basis
+9) Flavor option
+10) eHDECAY interface
+11) Higgs signal strengths
+12) Lilith interface
+13) EWPO interface
 ################################################################################
 1) Contact
 ################################################################################
@@ -68,14 +92,15 @@ etc. through k.mimasu@sussex.ac.uk.
 Python 2.7 or above in the 2.X series (not python 3).
 
 ################################################################################
-3) Package Contents
+3) Package contents
 ################################################################################
 # Main module
+
 Rosetta/                             # Top-level python package
 |-> __init__.py
-|-> config.txt                       # File storing configuration variables
 |   
-|-> bases/                           # Folder containing basis implementations
+|-> bases/                           # Package for basis implementations
+|   |
 |   |-> __init__.py
 |   |-> BSMCharacterisation.py
 |   |-> HiggsBasis.py
@@ -86,20 +111,22 @@ Rosetta/                             # Top-level python package
 |       
 |-> bin/                             # Folder for executables.
 |   |
-|   |-> translate                    # Command line tool to perform basis 
-|                                    # translation based on the implementations 
-|                                    # in Rosetta.
+|   |-> rosetta                      # Command line executable
 |                                    
 |-> Cards/                           # Sample SLHA-style parameter cards to be 
-|                                    # used as input.*
+|                                    # used as input.
 |                                    
+|-> config.txt                       # File storing configuration variables
+|
 |-> interfaces/                      # Interfaces to third party EFT/Higgs 
 |   |                                # software.
 |   |-> eHDECAY/
 |   |-> Lilith/
 |   |-> SignalStrengths/
+|   |-> EWPO/
 |       
-|   internal/
+|-> internal/
+|   |
 |   |-> __init__.py
 |   |-> basis/                       # Package containing base Basis class.
 |   |   
@@ -119,9 +146,11 @@ Rosetta/                             # Top-level python package
 |   |                                # from structures in SLHA.py such as 
 |   |                                # HermitianMatrix, AntiSymmetricMatrix, ... 
 |   |                                # Contains a number of matrix operations 
-|   |                                # such as multiplication and element-wise  
-|   |                                # addition foruse in translation functions.
+|   |                                # such as multiplication and  addition for 
+|   |                                # use in translation functions.
 |   |
+|   |-> parsers.py                   # Command line subparser manager for 
+|   |                                # Rosetta interfaces
 |   |-> session.py                   # Session manager module.
 |   |   
 |   |-> settings.py                  # Settings manager module.
@@ -131,6 +160,7 @@ Rosetta/                             # Top-level python package
 |                                    # inspired by pySLHA (A. Buckley, 
 |                                    # arXiv:1305.4194).
 |                                    
+|-> LICENSE                          # Software license.
 |-> README                           # You are here.
 
 # Existing basis implementations
@@ -140,10 +170,10 @@ BSMCharacterisation.py               # General modified interaction Lagrangian
 HiggsBasis.py                        # The Higgs Basis as defined in the HXSWG 
                                      # draft. 
                     
-WarsawBasis.py                       # The Warsaw Basis defined in 
+WarsawBasis.py                       # The Warsaw Basis as defined in 
                                      # arXiv:1008.4884 and the HXSWG draft.
 
-SILHBasis.py                         # The SILH Basis defined in e.g 
+SILHBasis.py                         # The SILH Basis as defined in, e.g., 
                                      # arXiv:1303.3876 and the HXSWG draft.
 
 HISZ.py                              # The Hagiwara-Ishihara-Szalapski-
@@ -160,21 +190,55 @@ simplified input formats one can use when employing the --flavor option of
 translate)
 
 ################################################################################
-3) Usage
+3) Usage & translate interface
 ################################################################################
-The translate command line tool takes an SLHA-style param card (see sample 
+The rosetta command line executable manages the desired functionality of the 
+tool based on the implemented interfaces included in the "interfaces" directory.
+Entering in the terminal:
+
+ >> bin/rosetta -h
+
+will bring up the command line documentation:
+
+ >> usage: rosetta [-h] [-s] [-v] [--force] INTERFACE ...
+ >> 
+ >> Main Rosetta command-line executable.
+ >> 
+ >> Global options:
+ >>   -h, --help       show this help message and exit
+ >>   -s, --silent     Suppress all warnings and take default answers to all
+ >>                    questions
+ >>   -v, --verbose    Activate verbose setting for program output
+ >>   --force          Take default answers to all questions
+ >> 
+ >> Arguments:
+ >>   INTERFACE
+ >>     translate      Translate in SLHA input card from one basis to another
+ >>     lilith         Standalone Lilith interface
+ >>     signalstrengths
+ >>                    Standalone SignalStrengths interface
+ >>     ewpo           EWPO interface
+ >>     defaultcard    Generate a parameter card for an implemented basis
+ >>     ehdecay        Standalone eHDECAY interface
+
+The desired interface the user would like to call is supplied as an argument to 
+the rosetta tool which will then invoke the corresponding sub-parser for 
+options and arguments specific to that interface. Rosetta has a few global 
+options to control the level of standard output and forcing default answers to 
+user prompts.
+
+The translate interface takes an SLHA-style param card (see sample 
 cards provided in Cards/ directory) in a particular basis and outputs a new 
-card in the specified basis (default is BSM Characterisation).  
+card in the specified basis (default is BSM Characterisation). 
 
 Command line documentation:
 
- >> usage: translate [-h] [-o OUTPUT] [-t {higgs,bsmc,template,silh,hisz,warsaw}]
- >>                  [-w] [-d] [-s] [-v] [--force]
- >>                  [-f {general,diagonal,universal}] [-e]
- >>                  PARAMCARD
+ >> usage: rosetta translate [-h] [-o OUTPUT] [--ehdecay] [--dependent] [--target]
+ >>                          [--flavor] [-w]
+ >>                          PARAMCARD
  >> 
- >> Read in an SLHA format parameter card in a particular basis and write a 
- >> new card in another implemented basis.
+ >> Read in an SLHA format parameter card in a particular basis and write a new
+ >> card in another implemented basis.
  >> 
  >> positional arguments:
  >>   PARAMCARD             Input parameter card.
@@ -183,28 +247,26 @@ Command line documentation:
  >>   -h, --help            show this help message and exit
  >>   -o OUTPUT, --output OUTPUT
  >>                         Output file name. Default: [PARAMCARD]_new
- >>   -t {silh,higgs,mass,template,warsaw}, --target {silh,higgs,mass,
- >>                                                   template,warsaw}
- >>                         Basis into which to translate, default:bsmc
+ >>   --ehdecay             Interface with eHDECAY for Higgs branching fractions.
+ >>   --dependent           Also write out dependent parameters to output card
+ >>   --target              Basis into which to translate. Allowed values are:
+ >>                         higgs, bsmc, template, silh, hisz, warsaw (default =
+ >>                         bsmc)
+ >>   --flavor              Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general).
  >>   -w, --overwrite       Overwrite any pre-existing output file.
- >>   -s, --silent          Suppress all warnings and take default answers to
- >>                         all questions.
- >>   -v, --verbose         Activate verbose setting for program output.
- >>   --force               Take default answers to all questions.
- >>   -f {general,diagonal,universal,MFV}, --flavor {general,diagonal,
- >>                                                   universal}
- >>                         Specify flavor structure, default : 'general'
- >>   -e, --ehdecay         Interface with eHDECAY for Higgs branching 
- >>                         fractions.
 
 Rosetta will read the SLHA card, look for the 1st element of block "basis", and 
 see if any implemented basis classes have this unique identifier. If so, Rosetta 
 will fill an instance of this class with the values of the parameters specified 
 in the parameter card and perform certain consistency checks, making sure all 
-required parameters are defined etc. Any dependent parameters are then 
-calculated and the translation is performed between the input basis and the 
-target basis (bsmc by default), provided the right translation path 
-exists. An SLHA style parameter card wil then written out in the new basis. 
+required parameters are defined etc. 
+
+Any dependent parameters are then calculated and the translation is performed 
+between the input basis and the target basis (bsmc by default), provided the 
+right translation path exists. An SLHA style parameter card will then written 
+out in the new basis. 
+
 Rosetta can optionally interface with eHDECAY provided a translation path 
 between the input basis and the SILH basis exists. The results of eHDECAY 
 are also written to the SLHA card in the form of a decay block for the Higgs. 
@@ -215,20 +277,20 @@ Example basic usage:
 To translate from the SILH basis to the BSMC Lagrangian, one could take 
 Cards/SILHBasis.dat as a template input card and run:
 
-bin/translate -o my_out.dat my_input.dat
+bin/rosetta translate -o my_out.dat my_input.dat
 
 To translate to the Warsaw basis instead, one should use the -t option and 
 specify 'warsaw' as the target basis:
  
-bin/translate -o my_out_warsaw.dat -t warsaw my_input.dat
+bin/rosetta translate -o my_out_warsaw.dat --target warsaw my_input.dat
 
 Example usage with the flavor option (See also section 8):
 
-The flavor option '-f' currently accepts the arguments 'general', 'diagonal' 
-and 'universal'. It tells Rosetta to assume a particular flavor structure in the 
-input file. When a translation to a basis which is NOT the bsmc is 
-specified via the '-t' option, the output file block structure also reflects 
-this choice on the flavor structure. 
+The flavor option '--flavor' currently accepts the arguments 'general', 
+'diagonal' and 'universal'. It tells Rosetta to assume a particular flavor 
+structure in the input file. When a translation to a basis which is NOT the 
+bsmc is specified via the '--target' option, the output file block structure 
+also reflects this choice on the flavor structure. 
 
 - 'general' : The default setting corresponding to the full flavor structure.
 - 'diagonal' : Keep only the diagonal terms in the flavor matrices i.e. the 
@@ -238,12 +300,12 @@ this choice on the flavor structure.
 As an example, taking Cards/WarsawBasis_diagonal.dat as a template input, the 
 command:
 
-bin/translate my_input_diagonal.dat -f diagonal -o my_out_diag.dat
+bin/rosetta translate my_input_diagonal.dat --flavor diagonal -o my_out_diag.dat
 
 Will generate a BSMC param card with only the diagonal flavor 
 components non-zero. On the other hand,
 
-bin/translate my_input_diagonal.dat -t silh -f diagonal -o my_out_diag_silh.dat 
+bin/rosetta translate my_input_diagonal.dat --target silh -flavor diagonal -o my_out_diag_silh.dat 
 
 Will generate a SILH basis parameter card respecting the original flavor 
 structure, i.e. that of Cards/SILHBasis_diagonal.dat.
@@ -253,7 +315,7 @@ respects the flavor option specified, otherwise, Rosetta will crash.
 
 Example usage with the eHDECAY option:
 
-bin/translate my_input.dat -t silh -e -o my_out_ehdecay_silh.dat 
+bin/rosetta translate my_input.dat --target silh --ehdecay -o my_out_ehdecay_silh.dat 
 
 This command will generate the same output as the basic usage example with the 
 addition of an SLHA decay block for the Higgs with the results of the eHDECAY 
@@ -365,7 +427,7 @@ following blocks would be defined
 Rosetta contains a basic SLHA card reader/writer that can parse and store the 
 contents of an SLHA formatted input card. Individual blocks and decays are 
 stored as SLHA.Block and SLHA.Decay instances that can be indexed and iterated 
-over in the same way as python dictionaries.
+over in the same way as python dictionaries, in a case-insensitive way.
  
     SLHA.Block is essentially a named OrderedDict storing index:value pairs 
     corresponding to the elements of an SLHA block. SLHA.Block has a "name" 
@@ -413,13 +475,11 @@ option. The contents of the card are stored as an SLHA.Card object and the
 special blocks "mass" and "sminputs" are stored as SLHA.NamedBlock instances in 
 self.mass and self.input respectively. Some of the key data members are:
 
-self.name   
-            - Unique basis identifier. This will be compared to the 0th element 
+self.name   - Unique basis identifier. This will be compared to the 0th element 
               of the block basis in the SLHA parameter card to ensure that 
               right basis class is being instantiated for a given input card.
               
-self.card   
-            - SLHA.Card instance containing SLHA.NamedBlock and SLHA.Decay 
+self.card    - SLHA.Card instance containing SLHA.NamedBlock and SLHA.Decay 
               instances corresponding to those specified in the parameter card. 
               Object names taken to be the first non-whitespace characters 
               after a "#" character in a block or parameter definition are also 
@@ -428,8 +488,6 @@ self.card
 self.mass    - SLHA.NamedBlock instance for the "mass" block
             
 self.inputs  - SLHA.NamedBlock instance for the "sminputs" block
-
-self.name   - Unique basis identifier
 
 self.required_inputs
             - A set of SLHA input IDs denoting those required to be defined in  
@@ -632,7 +690,7 @@ user defined basis.
 ################################################################################
 8) Flavor option
 ################################################################################
-The -f or --flavor option of Rosetta's translate tool allows users to specify 
+The  --flavor option of Rosetta's translate tool allows users to specify 
 special structure for parameters with flavor indices. These correspond to 
 those decared in the flavored attribute of a class implementation and have 3 by 
 3 flavor indices. Choosing a particular value for the flavor option amounts to 
@@ -663,16 +721,17 @@ A useful program based on HDECAY (arXiv:hep-ph/9704448) for calculating the
 Higgs total width was developed in 2014 and is described in arXiv:1403.3381. 
 The program takes as input a number of parameters in the SILH basis to calculate
 the width and branching ratios to SM particles optionally including Electroweak 
-corrections. In order to have this working correctly the user must modify 
+corrections. 
+
+In order to have this working correctly the user must modify 
 Rosetta/config.txt, putting the absolute path to the base directory of a local 
-eHDECAY installation. It goes without saying that there must exist a possible 
-translation path between the input basis and the SILH basis. The 
-internal/eHDECAY.py module then performs this translation, rescales the 
-relevant parameters of the Rosetta SILH basis implementation to match the 
-conventions of arXiv:1403.3381 and executes a run of eHDECAY. The results are 
-stored and a copy of the input file "ehdecay.in" is saved locally. The results 
-are then written to and SLHA decay block in the output card. The relevant 
-input parameters are:
+eHDECAY installation. There must exist a possible translation path between the 
+input basis and the SILH basis. The internal/eHDECAY.py module then performs 
+this translation, rescales the relevant parameters of the Rosetta SILH basis 
+implementation to match the conventions of arXiv:1403.3381 and executes a run 
+of eHDECAY. The results are stored and a copy of the input file "ehdecay.in" is 
+saved locally. The results are then written to and SLHA decay block in the 
+output card. The relevant input parameters are:
 
     SM inputs: # ALL masses must be nonzero for eHDECAY to give a finite result
     'MC', 'MB', 'MT', 'MMU', 'MTAU, # SM fermion masses
@@ -692,6 +751,28 @@ total Higgs width for unreasonable choices of EFT parameters. A negative total
 width is currently not allowed while negative branching fractions are not 
 handled and will be omitted from the parameter card.
 
+The interface has a standalone version that simply prints the SLHA decay block 
+for the Higgs or can be invoked as an option in the translate interface
+
+Command line documentation:
+
+ >> usage: rosetta ehdecay [-h] [-o OUTPUT] [--dependent] [--EW] [--flavor] [-w]
+ >>                        PARAMCARD
+ >> 
+ >> Run the eHDECAY interface to obtain the Higgs branching fractions
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD             Input parameter card
+ >> 
+ >> optional arguments:
+ >>   -h, --help            show this help message and exit
+ >>   -o OUTPUT, --output OUTPUT
+ >>                         Write out a new SLHA card containing the decay block
+ >>   --dependent           Also write out dependent parameters to output card
+ >>   --EW                  switch on electroweak corrections in eHDECAY
+ >>   --flavor              Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general)
+ >>   -w, --overwrite       Overwrite any pre-existing output file
 
 ################################################################################
 10) Higgs Signal Strengths
@@ -715,15 +796,37 @@ interfaces/SignalStrengths/   # SignalStrengths interface Package
 |-> errors.py                 # Package-specific errors.
 |   
 |-> loopfunctions.py          # Fermion and gauge boson triangle loop functions.
+|-> README                     # A copy of the contents of this section
 
 Rosetta provides an interface through which to calculate the SM Higgs signal 
 strengths given an input of EFT parameters in a given basis. The 'mu' factors 
 are calculated for each production and decay channel by rescaling the 
 production cross sections partial widths, and total width of the Higgs. The 
 approach implemented is summarised in arXiv:1505.00046, where analytical or 
-numerical formulae each of the rescaling factors are provided. A valid 
-translation path to the BSM Characterisation basis must be present.
-This Package is used by the Lilith interace.
+numerical formulae each of the rescaling factors are provided. 
+
+A translation path to the BSM Characterisation basis must be present.
+
+This package has a standalone version that prints out a list of signal 
+strengths and is also used internally by the Lilith interace.
+
+Command line documentation:
+
+ >> usage: rosetta signalstrengths [-h] [--squares] [--sqrts] [--flavor] PARAMCARD
+ >> 
+ >> Run the SignalStrengths interface to obtain the mu's for all of the Higgs
+ >> production and decay channels.
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --squares   Retain quadratic order in EFT coefficients (NOT IMPLEMENTED)
+ >>   --sqrts     Specify pp collider centre-of mass energy in TeV. Allowed values
+ >>               are: 7, 8, 13 (default = 8).
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+              universal (default = general).
 
 ################################################################################
 11) Lilith interface
@@ -733,6 +836,7 @@ interfaces/Lilith/             # Lilith interface Package
 |-> __init__.py
 |-> Lilith.py                  # Interface implementation
 |-> errors.py                  # package specific errors
+|-> README                     # A copy of the contents of this section
 
 A useful program for computing the combined likelihood using the latest Higgs 
 signal strength data is described in arXiv:1502.04138. Using the 
@@ -745,7 +849,70 @@ Rosetta/config.txt, putting the absolute path to the base directory of a local
 Lilith installation. The function calculate_likelihood(basis) performs the task 
 described above where basis is a Rosetta basis instance.
 
+A translation path to the BSMCharacterisation "basis" must be present.
+
+Command line documentation:
+
+ >> usage: rosetta lilith [-h] [--squares] [--flavor] PARAMCARD
+ >> 
+ >> Run the Lilith interface to obtain the likelihood value with respect to the
+ >> latest Higgs signal strength data for a particular point in EFT parameter
+ >> space
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --squares   Retain quadratic order in EFT coefficients in the
+ >>               SignalStrengths interface (NOT IMPLEMENTED)
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+ >>               universal (default = general)
+ 
 ################################################################################
-Rosetta: A Higgs Effective Field Theory basis translator
+11) EWPO interface
+################################################################################
+
+interfaces/EWPO/               # EWPO interface Package
+|-> __init__.py
+|-> chisq.py                   # delta chi-squared and p-value function s
+|-> errors.py                  # package specific errors
+|-> interface.py               # rosetta command line interface implementation
+|-> likelihood/                # Numerical data for likelihood
+|   |-> c0.dat
+|   |-> c0_MFV.dat
+|   |-> sigmainv2.dat
+|   |-> sigmainv2_MFV.dat
+|-> README                     # A copy of the contents of this section
+
+An implementation of a global likelihood using low energy and electroweak 
+precision observables. Using a numerical implementation of a pre-calculated 
+delta chi-squared distribution (described in the Les Houches proceedings 
+contribution) in a set of Higgs Basis parameters, the interface evaluates the 
+likelihood of a given point in EFT parameter space. 
+
+A translation path to the Higgs Basis must be available.
+
+The option of flavor universality is available and reduces the number of 
+degrees of freedom from 36 to 23.
+
+Command line documentation:
+
+ >> usage: rosetta ewpo [-h] [--flavor] PARAMCARD
+ >> 
+ >> Run the EWPO interface to obtain the compatibility of a parameter point with a
+ >> fit to electroweak precision observables
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+ >>               universal (default = general).
+
+
+################################################################################
+Rosetta: an operator basis translator for Standard Model effective field theory
 ################################################################################
 

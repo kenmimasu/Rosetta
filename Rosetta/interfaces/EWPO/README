@@ -1,0 +1,44 @@
+################################################################################
+Rosetta EWPO interface
+################################################################################
+interfaces/EWPO/               # EWPO interface Package
+|-> __init__.py
+|-> chisq.py                   # delta chi-squared and p-value function s
+|-> errors.py                  # package specific errors
+|-> interface.py               # rosetta command line interface implementation
+|-> likelihood/                # Numerical data for likelihood
+|   |-> c0.dat
+|   |-> c0_MFV.dat
+|   |-> sigmainv2.dat
+|   |-> sigmainv2_MFV.dat
+|-> README                     # you are here
+
+An implementation of a global likelihood using low energy and electroweak 
+precision observables. Using a numerical implementation of a pre-calculated 
+delta chi-squared distribution (described in the Les Houches proceedings 
+contribution) in a set of Higgs Basis parameters, the interface evaluates the 
+likelihood of a given point in EFT parameter space. 
+
+A translation path to the Higgs Basis must be available.
+
+The option of flavor universality is available and reduces the number of 
+degrees of freedom from 36 to 23.
+
+Command line documentation:
+
+ >> usage: rosetta ewpo [-h] [--flavor] PARAMCARD
+ >> 
+ >> Run the EWPO interface to obtain the compatibility of a parameter point with a
+ >> fit to electroweak precision observables
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+ >>               universal (default = general).
+ 
+################################################################################
+Rosetta: an operator basis translator for Standard Model effective field theory
+################################################################################
