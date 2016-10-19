@@ -12,3 +12,5 @@ try:
 except ImportError:
     err = ('SciPy must be installed to use EWPO interface')   
     raise EWPOImportError(err)
+    
+from interface import EWPOInterface

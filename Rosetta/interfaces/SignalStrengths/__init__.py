@@ -7,3 +7,4 @@ try:
 except eHDECAYImportError:
     use_eHDECAY = False
     
+from interface import SignalStrengthsInterface

@@ -1,7 +1,8 @@
-from ..interfaces import *
-from ..interfaces import __all__ as interface_names
-
-interfaces = {n:globals()[n] for n in interface_names}
+# from ..interfaces import *
+# from ..interfaces import __all__ as interface_names
+from ..interfaces import _all_interfaces as interfaces
+# print interfaces
+# interfaces = {n:globals()[n] for n in interface_names}
 
 # def set_subparsers(subparsers):
 #     parsers = {}

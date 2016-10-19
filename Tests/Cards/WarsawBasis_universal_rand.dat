@@ -1,7 +1,7 @@
 ################################################################################
 ####################### ROSETTA: WARSAW BASIS INPUT CARD #######################
 #### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) for more details ####
-###################### GENERATED MON OCT 17 15:20:49 2016 ######################
+###################### GENERATED WED OCT 19 15:43:12 2016 ######################
 ################################################################################
 
 BLOCK mass # 
@@ -58,137 +58,137 @@ BLOCK basis #
     1    warsaw # translated basis
 
 BLOCK WBx4F # 
-    1    +8.88438e-01 # cll1111
-    2    +4.71524e-01 # cll1122
-    3    -5.84882e-01 # cll1221
-    4    -9.63253e-01 # cll1133
-    5    -7.66531e-01 # cll1331
-    6    -2.27206e-01 # cll2332
-    7    +9.95168e-01 # cle1111
-    8    +4.69824e-02 # cle1122
-    9    +6.30752e-01 # cle2211
-    10   -9.16477e-01 # cle1133
-    11   -2.43905e-01 # cle3311
-    12   +9.52286e-01 # cee1111
-    13   +4.67812e-01 # cee1122
-    14   -4.98037e-01 # cee1133
-    15   -2.09785e-02 # cpuu3333
+    1    -6.39356e-01 # cll1111
+    2    -7.93797e-01 # cll1122
+    3    -6.68621e-01 # cll1221
+    4    +3.22438e-01 # cll1133
+    5    -5.40135e-01 # cll1331
+    6    -3.76472e-01 # cll2332
+    7    +4.85708e-01 # cle1111
+    8    -1.58090e-01 # cle1122
+    9    +3.22550e-01 # cle2211
+    10   +9.55755e-01 # cle1133
+    11   -9.59747e-01 # cle3311
+    12   -6.34079e-01 # cee1111
+    13   -1.76813e-01 # cee1122
+    14   +3.40939e-01 # cee1133
+    15   +1.68909e-01 # cpuu3333
 
 BLOCK WBxH4D2 # 
-    1    +2.64921e-01 # cHbx
-    2    -9.49554e-02 # cHD
+    1    -1.86268e-01 # cHbx
+    2    -6.17652e-02 # cHD
 
 BLOCK WBxH6 # 
-    1    +4.86878e-01 # cH
+    1    -8.97085e-01 # cH
 
 BLOCK WBxX2H2 # 
-    1    +3.52688e-01 # cHG
-    2    +3.97827e-01 # cHW
-    3    -6.16584e-02 # cHB
-    4    +2.86929e-01 # cHWB
-    5    +9.97891e-01 # tcHG
-    6    -1.90478e-01 # tcHW
-    7    +9.34147e-01 # tcHB
-    8    -2.78083e-01 # tcHWB
+    1    +8.36590e-01 # cHG
+    2    -4.46988e-01 # cHW
+    3    +3.87170e-01 # cHB
+    4    -5.15833e-01 # cHWB
+    5    +6.30802e-01 # tcHG
+    6    -8.52379e-01 # tcHW
+    7    -8.68569e-01 # tcHB
+    8    +4.77434e-01 # tcHWB
 
 BLOCK WBxX3 # 
-    1    -1.72241e-01 # cW
-    2    -1.86159e-01 # cG
-    3    -3.40382e-01 # tcW
-    4    +2.65823e-01 # tcG
+    1    -8.15839e-01 # cW
+    2    +9.42783e-02 # cG
+    3    -4.91594e-01 # tcW
+    4    +7.06323e-01 # tcG
 
 BLOCK WBxdB
-    1   1    +9.91206e-01 # RcdB1x1
+    1   1    -7.20461e-01 # RcdB1x1
 
 BLOCK IMWBxdB
-    1   1    -8.87942e-01 # IcdB1x1
+    1   1    +8.14925e-01 # IcdB1x1
 
 BLOCK WBxdG
-    1   1    +9.46209e-01 # RcdG1x1
+    1   1    -4.16798e-01 # RcdG1x1
 
 BLOCK IMWBxdG
-    1   1    -4.15036e-02 # IcdG1x1
+    1   1    +7.29975e-01 # IcdG1x1
 
 BLOCK WBxdH
-    1   1    +9.73396e-01 # RcdH1x1
+    1   1    +6.30225e-01 # RcdH1x1
 
 BLOCK IMWBxdH
-    1   1    +2.84990e-02 # IcdH1x1
+    1   1    +4.13754e-01 # IcdH1x1
 
 BLOCK WBxdW
-    1   1    -1.50061e-01 # RcdW1x1
+    1   1    -2.78234e-01 # RcdW1x1
 
 BLOCK IMWBxdW
-    1   1    +6.94368e-01 # IcdW1x1
+    1   1    +7.47697e-01 # IcdW1x1
 
 BLOCK WBxeB
-    1   1    -3.13799e-01 # RceB1x1
+    1   1    +8.73544e-02 # RceB1x1
 
 BLOCK IMWBxeB
-    1   1    -4.58031e-01 # IceB1x1
+    1   1    +9.57513e-01 # IceB1x1
 
 BLOCK WBxeH
-    1   1    +6.31271e-01 # RceH1x1
+    1   1    -9.40745e-01 # RceH1x1
 
 BLOCK IMWBxeH
-    1   1    +7.53168e-01 # IceH1x1
+    1   1    +7.28836e-01 # IceH1x1
 
 BLOCK WBxeW
-    1   1    +4.54046e-01 # RceW1x1
+    1   1    -2.98520e-01 # RceW1x1
 
 BLOCK IMWBxeW
-    1   1    -8.09019e-01 # IceW1x1
+    1   1    +8.19584e-01 # IceW1x1
 
 BLOCK WBxH1l
-    1   1    -1.41506e-01 # RcH1l1x1
+    1   1    +4.53569e-01 # RcH1l1x1
 
 BLOCK WBxH1q
-    1   1    +2.35738e-01 # RcH1q1x1
+    1   1    +4.87916e-01 # RcH1q1x1
 
 BLOCK WBxH3l
-    1   1    -1.69132e-01 # RcH3l1x1
+    1   1    +1.69322e-03 # RcH3l1x1
 
 BLOCK WBxH3q
-    1   1    -5.73686e-02 # RcH3q1x1
+    1   1    +4.55067e-01 # RcH3q1x1
 
 BLOCK WBxHd
-    1   1    -3.20957e-01 # RcHd1x1
+    1   1    +4.76667e-01 # RcHd1x1
 
 BLOCK WBxHe
-    1   1    -7.38595e-01 # RcHe1x1
+    1   1    +7.02584e-02 # RcHe1x1
 
 BLOCK WBxHu
-    1   1    +3.09887e-02 # RcHu1x1
+    1   1    +5.88063e-01 # RcHu1x1
 
 BLOCK WBxHud
-    1   1    -3.37647e-01 # RcHud1x1
+    1   1    -5.65285e-01 # RcHud1x1
 
 BLOCK IMWBxHud
-    1   1    +2.47788e-01 # IcHud1x1
+    1   1    -2.55263e-01 # IcHud1x1
 
 BLOCK WBxuB
-    1   1    +6.12978e-01 # RcuB1x1
+    1   1    +3.63771e-01 # RcuB1x1
 
 BLOCK IMWBxuB
-    1   1    +3.48648e-02 # IcuB1x1
+    1   1    -9.24017e-01 # IcuB1x1
 
 BLOCK WBxuG
-    1   1    -6.70805e-01 # RcuG1x1
+    1   1    -7.69527e-01 # RcuG1x1
 
 BLOCK IMWBxuG
-    1   1    -3.24328e-01 # IcuG1x1
+    1   1    +3.26139e-01 # IcuG1x1
 
 BLOCK WBxuH
-    1   1    +8.35340e-01 # RcuH1x1
+    1   1    +7.12970e-01 # RcuH1x1
 
 BLOCK IMWBxuH
-    1   1    +6.61678e-01 # IcuH1x1
+    1   1    -2.86307e-01 # IcuH1x1
 
 BLOCK WBxuW
-    1   1    +4.89703e-01 # RcuW1x1
+    1   1    +6.07954e-01 # RcuW1x1
 
 BLOCK IMWBxuW
-    1   1    +5.49103e-01 # IcuW1x1
+    1   1    +2.67989e-01 # IcuW1x1
 
 #        PDG        Width
 DECAY    23         +2.49520e+00 # 
