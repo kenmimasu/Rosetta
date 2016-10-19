@@ -21,7 +21,7 @@ class RosettaInterface(object):
         # Rosetta.implemented_bases i.e. a valid basis class implementation 
         # exists in the Rosetta/bases directory.
         
-        session.log('Reading "{}"\n'.format(param_card))
+        session.log('Reading "{}"'.format(param_card))
         
         thecard = SLHA.read(param_card, set_cplx = False)
         if 'basis' not in thecard.blocks:
@@ -43,7 +43,7 @@ class RosettaInterface(object):
                    '{}.'.format(', '.join(implemented_bases.keys())))
             raise ReadParamCardError(err)
         
-        session.log('Basis class used to read in param card:\n'+
+        session.log('\nBasis class used to read in param card:\n'+
                     '    {}\n'.format(mybasis))
         
         # create instance of mybasis, automatically translating to target basis

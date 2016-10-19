@@ -301,7 +301,7 @@ class HiggsBasis(basis.Basis):
                 try:
                     B[k] = v
                 except KeyError:
-                    print k + ' not found in BSMC definition.'
+                    print '    ' + k + ' not found in BSMC definition.'
         
         # splitting dipole coefficients
         ii = complex(0.,1.)

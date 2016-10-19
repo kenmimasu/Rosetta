@@ -103,7 +103,7 @@ def write_param_card(card, filename, overwrite=False):
                 +'#'*80 +'\n\n')
         
     if os.path.exists(filename) and not overwrite:
-        session.log('{} already exists.'.format(filename))
+        session.log('\n{} already exists.'.format(filename))
         carry_on = session.query('Overwrite?', default='no')
     else:
         carry_on=True

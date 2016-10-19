@@ -44,13 +44,13 @@ class EWPOInterface(RosettaInterface):
         csq, pv = chisq_and_pvalue(inpt, flavor=HB_instance.flavor)
         
         
-        session.stdout('#######  EWPO results #######')
+        session.drawline(text='EWPO results', ignore_silent=True)
         session.stdout('delta Chi^2 ({} d.o.f):'.format(DOF))
         session.stdout('{:.2f}'.format(csq))
         session.stdout('Corresponding p-value:')
         session.stdout('{:.2e}'.format(pv))
         
-        session.stdout('#############################')
+        session.drawline()
         session.exit(0)
 
 def create_input(H):

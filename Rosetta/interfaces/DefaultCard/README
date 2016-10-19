@@ -1,0 +1,40 @@
+################################################################################
+Rosetta DefaultCard interface
+################################################################################
+
+interfaces/DefaultCard/        # DefaultCard interface Package
+|-> __init__.py
+|-> interface.py               # rosetta command line interface implementation
+|-> README                     # A copy of the contents of this section
+
+DefaultCard provides a simple utility to generate a default SLHA input card for 
+an existing basis implementation in rosetta.
+
+Command line documentation:
+
+ >> usage: rosetta defaultcard [-h] [--value VALUE] [-o OUTPUT] [--flavor FLAVOR]
+ >>                            [-w]
+ >>                            BASIS
+ >> 
+ >> Generate a parameter card for an implemented basis
+ >> 
+ >> positional arguments:
+ >>   BASIS                 Basis class for which to generate the parameter card.
+ >>                         Allowed values are: higgs, bsmc, template, silh, hisz,
+ >>                         warsaw (default = bsmc)
+ >> 
+ >> optional arguments:
+ >>   -h, --help            show this help message and exit
+ >>   --value VALUE         Set value of all parameters to VALUE. The value
+ >>                         "random" will set random coefficients between -1. and
+ >>                         1.
+ >>   -o OUTPUT, --output OUTPUT
+ >>                         Output file name. Default:
+ >>                         [BASIS]_[FLAVOR]_default.dat
+ >>   --flavor FLAVOR       Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general)
+ >>   -w, --overwrite       Overwrite any pre-existing output file
+ 
+ ################################################################################
+ Rosetta: an operator basis translator for Standard Model effective field theory
+ ################################################################################

@@ -92,12 +92,12 @@ class TranslateInterface(RosettaInterface):
                     newbasis.card.add_decay(decayblock)
                 else:
                     newbasis.card.decays[25] = decayblock
-                session.log('#############################\n')
+                session.drawline()
                 
         except TranslationError as e:
             # Catch translation error in map to SILH
-            print e
-            print 'Translation to SILH Basis required, skipping eHDECAY.'
+            session.log('Translation to SILH Basis required, skipping eHDECAY.')
+            session.log('TranslationError: ' + e)
     
         # write param card
         if not args.output: # output file name
@@ -113,8 +113,8 @@ class TranslateInterface(RosettaInterface):
             
         if write_param_card(newbasis.card, new_param_card, 
                             overwrite=args.overwrite): 
-            session.log('#############################')
+            session.drawline()
             session.exit(0)
         else:
-            session.log('#############################')
+            session.drawline()
             session.exit(0)

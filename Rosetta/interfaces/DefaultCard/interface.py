@@ -77,6 +77,6 @@ class DefaultCardInterface(RosettaInterface):
                                 outputfile,
                                 value = val)
                                 
-        session.log('#############################')
+        session.drawline()
         session.exit(0)
         
