@@ -56,9 +56,9 @@ class eHDECAYInterface(RosettaInterface):
             session.exit(1)
 
         if not args.output:
-            session.stdout('###### eHDECAY results ######')
+            session.drawline(text='eHDECAY results', ignore_silent=True)
             session.stdout(str(decayblock))
-            session.stdout('#############################')
+            session.drawline(ignore_silent=True)
             session.exit(0)
         else:
 
@@ -76,12 +76,12 @@ class eHDECAYInterface(RosettaInterface):
                 basis_instance.card.add_decay(decayblock)
             else:
                 basis_instance.card.decays[25] = decayblock
-            session.log('#############################\n')
+            session.drawline()
 
             if write_param_card(basis_instance.card, args.output,
                                 overwrite=args.overwrite):
-                session.log('#############################')
+                session.drawline()
                 session.exit(0)
             else:
-                session.log('#############################')
+                session.drawline()
                 session.exit(0)

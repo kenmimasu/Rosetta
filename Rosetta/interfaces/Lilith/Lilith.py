@@ -7,9 +7,7 @@ from ..SignalStrengths.production import production
 from ..SignalStrengths.decay import decay
 from ...internal import session
 ################################################################################
-cite_msg = ('########## Lilith ##########\n'
-            'If you use this feature, please cite:\n'
-            'J. Bernon & B. Dumont, Eur. Phys. J. C75 (2015) 9, 440 \n')
+reference = 'J. Bernon & B. Dumont, Eur. Phys. J. C75 (2015) 9, 440'
 ################################################################################
 
 channels = {'bb':(5,-5),'mumu':(13,-13), 'tautau':(15,-15), 
@@ -19,11 +17,13 @@ lilithcalc = lilith.Lilith(verbose=False,timer=False)
 ################################################################################
 
 def compute_likelihood(basis, sqrts=8):
-    session.once(cite_msg)
+    session.cite('Lilith', reference)
     
     # ratios of decay partial widths and total width
+    session.verbose('Calculating Higgs decay branching fractions.')
     decays = decay(basis, electroweak=True, SM_BRs=None, ratio=True)
     # ratios of production cross sections
+    session.verbose('Calculating Higgs production cross sections')
     prods = production(basis, sqrts=sqrts)
     
     xml_input = generate_input(basis.mass[25], prods, decays)

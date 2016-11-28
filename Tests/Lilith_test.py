@@ -19,7 +19,7 @@ from Rosetta.interfaces.Lilith import Lilith
 
 # instance = HB.HiggsBasis(flavor='universal', param_card = '../HiggsBasis_universal_1e-3.dat', translate=False)
 # instance = HZ.HISZ(flavor='universal', param_card = '../HISZ_universal_1e-3.dat', translate=False)
-instance = HZ.HISZ(flavor='universal', param_card = '../HISZ_universal_0.dat', translate=False)
+instance = HZ.HISZ(flavor='universal', param_card = 'Cards/HISZ_universal.dat')
 
 lik = Lilith.compute_likelihood(instance)
 

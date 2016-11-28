@@ -48,7 +48,7 @@ def translate(basis, target=None, cache=True, avoid_cache = False,
     names = [basis.name.lower()]+[x[0] for x in chain]
     session.log('Rosetta will be performing the translation:\n'+
                     '    ' + ' -> '.join([bases[x].__name__ 
-                                          for x in names])+'\n')
+                                          for x in names]))
     
     # perform succesive translations, checking for  
     # required SM inputs/masses along the way

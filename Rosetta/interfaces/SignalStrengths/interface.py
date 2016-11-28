@@ -54,14 +54,15 @@ class SignalStrengthsInterface(RosettaInterface):
         # ratios of production cross sections
         prods = production(basis_instance, sqrts=args.sqrts)
         
-        session.stdout('###### SignalStrengths results ######')
-        session.stdout('# production  decay           mu ') 
+        session.drawline(text='SignalStrengths results', ignore_silent=True)
+        session.stdout('  production  decay           mu ') 
+        session.stdout('  ---------------------------------') 
         for kp, (kd, vd) in product(prods.keys(), channels.items()):
             mu = prods[kp]*decays[vd]/decays['WTOT']
             mustr = '  {:<8}    {:<10}      {:.3f}'.format(kp, kd, mu)
             session.stdout(mustr)
         
-        session.stdout('#############################')
+        session.drawline()
         session.exit(0)
 
 

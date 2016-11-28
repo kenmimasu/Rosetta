@@ -3,6 +3,7 @@ import settings
 from StringIO import StringIO
 import textwrap
 import re
+from ..import __version__, __author__, __url__, __date__
 
 __once = set()
 output = StringIO()
@@ -55,6 +56,17 @@ def log(msg, width=80):
     else:
         print >> suppressed, msg
 
+def drawline(text='', ignore_silent=False):
+    '''
+    Print a line of 80 hash characters to stdout via log(), optionally 
+    with some text in the middle.
+    '''
+    if text: text = ' '+ text +' '
+    printer = log if not ignore_silent else stdout
+    printer('')
+    printer(text.center(80,'#'))
+    printer('')
+
 def once(msg, width=80):
     '''
     Display a message that should be shown only once during runtime. 
@@ -63,6 +75,20 @@ def once(msg, width=80):
     if msg not in __once:
         log(msg, width=width)
         __once.add(msg)
+
+def cite(prog, ref):
+    body = """
+{0}
+If you use this feature, please cite:
+
+{1}
+{2}
+    """.format((' '+prog+' ').center(80,'#'), 
+               ref, 
+               '#'*80)
+    
+    once(body)
+
 
 def verbose(msg, width=80):
     '''
@@ -117,7 +143,7 @@ def query(question, default="yes"):
 
 def exit(code=0):
     '''
-    Exit rosetta session by raisin sys.exit(code). The contents of 
+    Exit rosetta session by raising sys.exit(code). The contents of 
     settings.output and settings.suppressed are written to 'rosetta.log' and 
     'rosetta.suppressed.log' respectively.
     '''
@@ -128,18 +154,40 @@ def exit(code=0):
     log('Exit.')
     log('Output and suppressed output written to rosetta.log and '
         'rosetta.suppressed.log respectively.')
-    log('#############################')
-    log('')
+    drawline()
     sys.exit(code)
 
-log('')
-once('''########## Rosetta ##########
-Adam Falkowski, Benjamin Fuks,
-Kentarou Mawatari, Ken Mimasu,
-Francesco Riva & Veronica Sanz.
-Eur.Phys.J. C75 (2015) 12, 583 
-#############################''')
-log('')
+_vstring = 'Version {}, {}'.format(__version__, __date__)
+header="""
+################################################################################
+
+      ########   #######   ######  ######## ########## #########    ###    
+      ##     ## ##     ## ##    ## ######## ########## #########   ## ##   
+      ##     ## ##     ## ##       ###         ###        ###     ##   ##  
+      ########  ##     ##  ######  ######      #####      ###    ##     ## 
+      ##   ##   ##     ##       ## ###         #####      ###    ######### 
+      ##    ##  ##     ## ##    ## ########    ###        ###    ##     ## 
+      ##     ##  #######   ######  ########    ###        ###    ##     ## 
+                                                                           
+
+     An operator basis translator for Standard Model effective field theory 
+
+{}                   
+
+{}
+
+################################################################################
+
+{}
+Eur.Phys.J. C75 (2015) 12, 583
+
+################################################################################
+""".format( __url__.center(80),
+            _vstring.center(80), 
+            __author__)
+
+# Print header the first time session is imported
+once(header)
 
 
 

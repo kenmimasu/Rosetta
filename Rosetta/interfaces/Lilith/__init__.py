@@ -1,6 +1,8 @@
 from distutils.version import StrictVersion
 import sys
-from .. import config 
+# from .. import config
+from ...internal.settings import config
+
 from errors import LilithImportError, LilithInterfaceError
 ################################################################################
 # check for NumPy >= 1.6.1 and Scipy >= 0.9.0
@@ -38,3 +40,4 @@ except ImportError:
                'Rosetta/config.txt')
         raise LilithImportError(err)
 ################################################################################
+from interface import LilithInterface

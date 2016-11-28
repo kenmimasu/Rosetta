@@ -46,6 +46,7 @@ def decay(basis, electroweak=True, SM_BRs=None, ratio=False):
     # Compute total width rescaling factor
     rscl['WTOT'] = 0.
     for k, v in rscl.iteritems():
+        if k == 'WTOT': continue
         rscl['WTOT'] += v*BRs[k]
     
     if not ratio:

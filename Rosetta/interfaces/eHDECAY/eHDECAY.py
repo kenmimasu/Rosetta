@@ -39,11 +39,9 @@ should be specified in config.txt as:
 eHDECAY_dir     /FULL/PATH/TO/eHDECAY
 '''
 
-cite_msg = ('########## eHDECAY ##########\n'
-            'If you use this feature, please cite:\n'
-            'R. Contino et al., Comput.Phys.Commun. 185 (2014) 3412\n'
-            'A. Djouadi, J. Kalinowski, M. Spira et al., '
-            'Comput.Phys.Commun. 108 (1998) 56 \n')
+reference = ('R. Contino et al., Comput.Phys.Commun. 185 (2014) 3412\n'
+             'A. Djouadi, J. Kalinowski, M. Spira et al., '
+             'Comput.Phys.Commun. 108 (1998) 56 \n')
             
 ################################################################################
 def create_SLHA_block(basis, electroweak=True):
@@ -111,7 +109,7 @@ def run(basis, electroweak=True, interpolate=False, SM_BRs=None):
         SM_BRs - if interpolate==True provide the SM Higgs branching fractions 
                  to rescale as a dict formatted as {(PID1, PID2):BR,...}.
     '''
-    session.once(cite_msg)
+    session.cite('eHDECAY', reference)
 
     # ensure required masses & inputs
     check.masses(basis, masses, message='eHDECAY interface')
@@ -145,7 +143,7 @@ def execute(inpt):
                'executable in {}'.format(eHDECAY_dir))
         raise eHDECAYInterfaceError(err)
         
-    session.once(cite_msg)
+    session.cite('eHDECAY', reference)
     
     tmpdir = mkdtemp(prefix='eHDECAY_',dir = os.getcwd())
     
@@ -160,7 +158,7 @@ def execute(inpt):
     if err: raise eHDECAYInterfaceError(err)
     
     session.verbose('eHDECAY output:\n{}'.format(out))
-    
+    session.drawline()
     # read BRs and total width
     result = read_output(tmpdir)
     
@@ -175,7 +173,7 @@ def SM_BR(basis=None, inputs={}, electroweak=True):
     Calculate the Higgs width and BRs in the SM using the input parameters 
     specified in a basis instance or the defaults.
     '''
-    session.once(cite_msg)
+    session.cite('eHDECAY', reference)
     wid ={}
     if basis is not None:
         # ensure required masses & inputs

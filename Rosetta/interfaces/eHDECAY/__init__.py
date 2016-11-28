@@ -1,5 +1,7 @@
 import os
-from .. import config
+# from .. import config
+from ...internal.settings import config
+
 from errors import eHDECAYImportError, eHDECAYInterfaceError
 
 # eHDECAY executable
@@ -14,3 +16,5 @@ executable = '{}/run'.format(eHDECAY_dir)
 if not os.path.exists(executable):
     err = ('Could not find eHDECAY executable at {}'.format(executable))
     raise eHDECAYImportError(err)
+
+from interface import eHDECAYInterface
