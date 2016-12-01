@@ -3,15 +3,7 @@ class RosettaError(Exception):
     '''Rosetta base exception class. Never raised.'''
     pass
 
-class RosettaInterfaceError(RosettaError):
-    '''Base error class for Rosetta interfaces.'''
-    interface=''
-    def __init__( self, msg ):
-        super(RosettaInterfaceError, self).__init__(
-             'Error in Rosetta {} interface: {}'.format(self.interface, msg))
-    pass
-
-class RosettaImportError(RosettaError):
+class RosettaImportError(RosettaError, ImportError):
     '''Base error class for Rosetta interfaces.'''
     interface=''
     def __init__( self, msg ):
@@ -25,12 +17,12 @@ class BasesError(RosettaError):
     pass
 
 class RelationshipsError(RosettaError):
-    '''Error class for locating basis implementations.'''
+    '''Error class for locating translation functions between basis implementations.'''
     interface=''
     pass
     
 class TranslationError(RosettaError):
-    '''Fancy error name.'''
+    '''Error class for basis translations.'''
     pass
     
 class TranslationPathError(TranslationError):

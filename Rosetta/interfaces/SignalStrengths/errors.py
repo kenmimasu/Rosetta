@@ -1,4 +1,5 @@
-from ...internal.errors import RosettaImportError, RosettaInterfaceError
+from ...internal.errors import RosettaImportError
+from ..errors import RosettaInterfaceError
 
 class SignalStrengthsImportError(RosettaImportError):
     '''

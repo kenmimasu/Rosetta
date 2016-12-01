@@ -1,3 +1,3 @@
-from errors import dihiggsImportError, dihiggsInterfaceError
-# from dihiggs.interface import dihiggsInterface
+from errors import DiHiggsImportError, DiHiggsInterfaceError
+from interface import DiHiggsInterface
 # from interface import TranslateInterface, DefaultCardInterface

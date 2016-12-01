@@ -1,5 +1,4 @@
 from ..internal import SLHA
-from ..internal.errors import RosettaError
 from .. import session, settings, implemented_bases
 import argparse
 import os
@@ -48,7 +47,3 @@ class RosettaInterface(object):
         
         # create instance of mybasis, automatically translating to target basis
         return  mybasis(param_card=param_card, flavor=flavor)
-        
-class ReadParamCardError(RosettaError):
-    '''Exception raised inside RosettaInterface.read_param_card()'''
-    pass

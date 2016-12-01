@@ -35,25 +35,25 @@ class HiggsBasis(basis.Basis):
     name='higgs'
     ##########################
     # declare coefficients
-    # kinetic terms [Eqn. (3.3)]
+    # kinetic terms
     HBxMASS = ['dM']
-    # triple gauge couplings [Eqn. (3.6)]
+    # triple gauge couplings
     HBxTGC = ['Lz', 'tLz',  'C3g', 'tC3g', 'dKa', 'tKa', 
               'dG1z', 'dKz', 'tKz', 'La', 'tLa']
-    # quartic gauge couplings [Eqn. (3.7)]
+    # quartic gauge couplings 
     HBxQGC = ['dGw4','dGw2z2','dGw2za', 
               'Lw4', 'Lw2z2', 'Lw2a2', 'Lw2az', 'Lw2za', 'C4g',
               'tLw4', 'tLw2z2', 'tLw2a2', 'tLw2az', 'tLw2za', 'tC4g']
-    # single Higgs couplings [Eqn. (3.8)]
+    # single Higgs couplings 
     HBxh = ['dCz', 
             'Cgg', 'Caa', 'Cza', 'Czz', 'Czbx', 'Cabx',
             'tCgg', 'tCaa', 'tCza', 'tCzz',
             'dCw', 'Cww', 'Cwbx', 'tCww' ]
-    # double Higgs couplings [Eqn. (3.13)]
+    # double Higgs couplings 
     HBxhh =  ['dCw2', 'dCz2', 'Cww2', 'Cwbx2', 
               'Cgg2', 'Caa2', 'Cza2', 'Czz2', 'Czbx2', 'Cabx2',
               'tCww2', 'tCgg2', 'tCaa2', 'tCza2', 'tCzz2']
-    # Higgs self couplings [Eqn. (3.12)]
+    # Higgs self couplings 
     HBxhself = ['dL3', 'dL4']
     # 4-fermion operators. cll1221 defined as dependent
     HBx4F = ['cll1111','cll1122','cll1221','cll1133','cll1331','cll2332',
@@ -70,7 +70,7 @@ class HiggsBasis(basis.Basis):
     # operators, which are general complex matrices instead of a pair of 
     # hermitian ones for the CP conserving and CP-violating interactions
     flavored = {
-        # Z Vertex Corrections [Eqn (3.4)]
+        # Z Vertex Corrections 
         'HBxdGLze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLze'},
         'HBxdGRze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRze'},
         'HBxdGLzv': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLzv'},
@@ -78,11 +78,11 @@ class HiggsBasis(basis.Basis):
         'HBxdGRzu': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRzu'},
         'HBxdGLzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLzd'},
         'HBxdGRzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRzd'},
-        # W Vertex Corrections [Eqn (3.4)]
+        # W Vertex Corrections 
         'HBxdGLwl': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLwl'},
         'HBxdGLwq': {'kind':'general', 'domain':'complex', 'cname':'dGLwq'},
         'HBxdGRwq': {'kind':'general', 'domain':'complex', 'cname':'dGRwq'},
-        # Dipole interactions with single gauge bosons [Eqn. (3.5)]
+        # Dipole interactions with single gauge bosons
         'HBxdgu': {'kind':'general', 'domain':'complex', 'cname':'dgu'},
         'HBxdgd': {'kind':'general', 'domain':'complex', 'cname':'dgd'},
         'HBxdau': {'kind':'general', 'domain':'complex', 'cname':'dau'},
@@ -94,14 +94,14 @@ class HiggsBasis(basis.Basis):
         'HBxdwu': {'kind':'general', 'domain':'complex', 'cname':'dwu'},
         'HBxdwd': {'kind':'general', 'domain':'complex', 'cname':'dwd'},
         'HBxdwl': {'kind':'general', 'domain':'complex', 'cname':'dwl'},
-        # single Higgs couplings to fermions [Eqn. (3.8)]
+        # single Higgs couplings to fermions 
         'HBxdYu': {'kind':'general', 'domain':'real', 'cname':'dYu'},
         'HBxdYd': {'kind':'general', 'domain':'real', 'cname':'dYd'},
         'HBxdYe': {'kind':'general', 'domain':'real', 'cname':'dYe'},
         'HBxSu': {'kind':'general', 'domain':'real', 'cname':'Su' },
         'HBxSd': {'kind':'general', 'domain':'real', 'cname':'Sd' },
         'HBxSe': {'kind':'general', 'domain':'real', 'cname':'Se' },
-        # Higgs contact interactions HVff [Eqn. (3.10)]
+        # Higgs contact interactions HVff 
         'HBxdGLhze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhze'},
         'HBxdGRhze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRhze'},
         'HBxdGLhzv': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhzv'},
@@ -112,7 +112,7 @@ class HiggsBasis(basis.Basis):
         'HBxdGLhwl': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhwl'},
         'HBxdGLhwq': {'kind':'general', 'domain':'complex', 'cname':'dGLhwq'},
         'HBxdGRhwq': {'kind':'general', 'domain':'complex', 'cname':'dGRhwq'},
-        # Dipole interactions with single higgs and gauge boson [Eqn. (3.11)]
+        # Dipole interactions with single higgs and gauge boson 
         'HBxdhgu': {'kind':'general', 'domain':'complex', 'cname':'dhgu'},
         'HBxdhgd': {'kind':'general', 'domain':'complex', 'cname':'dhgd'},
         'HBxdhau': {'kind':'general', 'domain':'complex', 'cname':'dhau'},
@@ -124,7 +124,7 @@ class HiggsBasis(basis.Basis):
         'HBxdhwu': {'kind':'general', 'domain':'complex', 'cname':'dhwu'},
         'HBxdhwd': {'kind':'general', 'domain':'complex', 'cname':'dhwd'},
         'HBxdhwl': {'kind':'general', 'domain':'complex', 'cname':'dhwl'},
-        # couplings of two Higgs bosons to fermions [Sec. 3.8]
+        # couplings of two Higgs bosons to fermions 
         'HBxY2u': {'kind':'general', 'domain':'complex', 'cname':'Y2u'},
         'HBxY2d': {'kind':'general', 'domain':'complex', 'cname':'Y2d'},
         'HBxY2e': {'kind':'general', 'domain':'complex', 'cname':'Y2e'}
@@ -132,16 +132,13 @@ class HiggsBasis(basis.Basis):
     
     # independent coefficients
     independent = [
-    # [Eqn. (5.1)]
     'dM', 
     'HBxdGLze', 'HBxdGRze', 'HBxdGLwl', 'HBxdGLzu', 
     'HBxdGRzu', 'HBxdGLzd', 'HBxdGRzd', 'HBxdGRwq', 
     'HBxdgu', 'HBxdgd', 'HBxdau', 'HBxdad', 'HBxdae', 
     'HBxdzu', 'HBxdzd', 'HBxdze',
-    # [Eqn. (5.2)]
     'Cgg', 'dCz', 'Caa', 'Cza', 'Czz', 'Czbx', 'tCgg', 'tCaa', 'tCza', 'tCzz', 
     'HBxdYu', 'HBxdYd', 'HBxdYe', 'HBxSu', 'HBxSd', 'HBxSe', 'dL3',
-    # [Eqn. (5.3)]
     'Lz', 'tLz', 'C3g', 'tC3g',
     'cll1111','cll1122','cll1133','cll1331','cll2332',
     'cle1111','cle1122','cle2211','cle1133','cle3311',
@@ -176,7 +173,7 @@ class HiggsBasis(basis.Basis):
         def delta(i,j):
             return 1. if i==j else 0.
         
-        # Higgs and EW gauge bosons [Sec 5.2] [eqn (5.5)]
+        # Higgs and EW gauge bosons
         A['dCw']  = A['dCz']  + A['dM']*4. 
         A['Cww']  = A['Czz']  + A['Cza']*2.*s2w  + A['Caa'] *s2w**2
         A['tCww'] = A['tCzz'] + A['tCza']*2.*s2w + A['tCaa']*s2w**2 
@@ -185,13 +182,13 @@ class HiggsBasis(basis.Basis):
         A['Cabx'] = (A['Czbx']*2.*gw2 + A['Czz']*(gw2+gp2) 
                     - A['Caa']*ee2 - A['Cza']*(gw2-gp2))/(gw2-gp2)
         
-        # Higgs self couplings [eqn (5.7)]
+        # Higgs self couplings
         A['dL4'] = 3./2.*A['dL3'] - MH**2/vev**2/6.*A['dCz']
         
-        # dependent dgV coeffs [eqn (5.9)]
+        # dependent dgV coeffs 
         matrix_add(A['HBxdGLze'], A['HBxdGLwl'], A['HBxdGLzv'])
 
-        # dGLwq = dGLzu.VCKM - VCKM.dGLzd [eqn (5.9)]
+        # dGLwq = dGLzu.VCKM - VCKM.dGLzd 
         matrix_sub(matrix_mult(A['HBxdGLzu'], A.ckm),
                    matrix_mult(A.ckm, A['HBxdGLzd']),
                    A['HBxdGLwq'])
@@ -220,12 +217,12 @@ class HiggsBasis(basis.Basis):
                   # 'HBxtdzu', 'HBxtdzd', 'HBxtdze'
               ]
                   
-        # HVFF coeffs and dipole-like Higgs couplings [Eqns. (3.10) & (5.6)]
+        # HVFF coeffs and dipole-like Higgs couplings 
         for dG in vertex + dipole: 
             dGh = dG[:-2]+'h'+dG[-2:]
             matrix_eq(A[dG], A[dGh])
                
-        # Triple gauge couplings [Sec 3.7] [eqn (3.21)] 
+        # Triple gauge couplings  
         A['dG1z'] = (A['Caa']*ee2*gp2 + A['Cza']*(gw2-gp2)*gp2 
                     - A['Czz']*(gw2+gp2)*gp2 - A['Czbx']*(gw2+gp2)*gw2 
                     )/2./(gw2-gp2)
@@ -238,12 +235,12 @@ class HiggsBasis(basis.Basis):
         A['La'] = A['Lz']
         A['tLa'] = A['tLz']
         
-        # Quartic gauge couplings [Sec 3.7] [eqn (3.23)] 
+        # Quartic gauge couplings 
         A['dGw4'] = 2.*c2w*A['dG1z']
         A['dGw2z2'] = 2.*A['dG1z']
         A['dGw2za'] = A['dG1z']
         
-        # two derivative quartic gauge couplings [Sec 3.7] [eqn (3.24)] 
+        # two derivative quartic gauge couplings
         A['Lw4'] = -gw2/2./MW**2*A['Lz']
         A['tLw4'] = -gw2/2./MW**2*A['tLz']
         A['Lw2z2'] = -gw2*c2w/MW**2*A['Lz']
@@ -257,7 +254,7 @@ class HiggsBasis(basis.Basis):
         A['C4g'] = 3.*sqrt(gs2)**3/vev**2*A['C3g']
         A['tC4g'] = 3.*sqrt(gs2)**3/vev**2*A['tC3g']
         
-        # Couplings of two Higgs bosons [Sec 3.8] [eqn (3.27)]
+        # Couplings of two Higgs bosons 
         # Gauge
         A['Cgg2'], A['tCgg2'] = A['Cgg'], A['tCgg']
         A['dCz2'] = A['dCz']
@@ -281,8 +278,7 @@ class HiggsBasis(basis.Basis):
                 re, im = (3.*Yij*cosij - A['dCz']*delta(i,j)), 3.*Yij*sinij
                 A[yuk2][i,j] = complex(re, im)
 
-        # 4-fermion operators [Sec. 3.9]
-        # [eqn (3.32)]
+        # 4-fermion operators
         A['cll1221'] = ( A['HBxdGLwl'][1,1].real 
                        + A['HBxdGLwl'][2,2].real - 2.*A['dM'])*2.
         
@@ -380,7 +376,7 @@ class HiggsBasis(basis.Basis):
 
         W['tcHWB'] = (H['tCzz'] - H['tCza']*(c2w-s2w) - H['tCaa']*c2w*s2w)*gw*gp/2.
 
-        W['cW'] = -H['Lz']*2./gw/3. # one or two powers?
+        W['cW'] = -H['Lz']*2./gw/3.
 
         W['cG'] = H['C3G']*gs**3
         

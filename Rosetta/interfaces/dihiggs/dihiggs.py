@@ -2,22 +2,21 @@ from math import sqrt, pi
 
 
 from ...internal.basis import checkers as check
-from ..SignalStrengths.decay import decay
 from .production_xs import xsfb
 
 masses = {25,6} # H, b, t masses
 
 
-def get_xs_times_br(basis, sqrts = 13):
-    
+def get_xs_and_br(basis, sqrts = 13):
+    from ..SignalStrengths.decay import decay
+
     decays = decay(basis)
     
     kl, kt, c2, cg, c2g = get_dihiggs_params(basis)
     
     xs, err = xsfb(sqrts, kl, kt, c2, cg, c2g, error=True)
     
-    # print xs, err
-    print decays.keys()
+    return xs, err, decays
 
 
 def get_dihiggs_params(basis):

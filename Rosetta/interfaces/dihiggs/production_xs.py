@@ -1,15 +1,15 @@
 from errors import SqrtsError
 
-# SM predictions for di-higgs production with various relative uncertainties at
-# different pp collider energies
+# SM predictions for di-higgs production with various relative (%))
+# uncertainties at different pp collider energies
 # errors in normalization, NNLL for mh = 125 GeV
 # https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHXSWGHH#Current_recommendations_for_di_H
 SM_predictions = {
-    7  :{ 'xs':7.718, 'scalep':4.0, 'scalem' :-5.7, 'PDF':3.4, 'alphas':2.8},
-    8  :{ 'xs':11.18, 'scalep':4.1, 'scalem' :-5.7, 'PDF':3.1, 'alphas':2.6},
-    13 :{ 'xs':37.95, 'scalep':4.3, 'scalem' :-6.0, 'PDF':2.1, 'alphas':2.3},
-    14 :{ 'xs':45.05, 'scalep':4.4, 'scalem' :-6.0, 'PDF':2.1, 'alphas':2.2},
-    100:{ 'xs':1749., 'scalep':5.1, 'scalem' :-6.6, 'PDF':1.7, 'alphas':2.1}
+    7  :{ 'xs':7.718, 'scalep':4.0, 'scalem' :-5.7, 'PDF':3.4, 'alphaS':2.8, 'mtop':0.1},
+    8  :{ 'xs':11.18, 'scalep':4.1, 'scalem' :-5.7, 'PDF':3.1, 'alphaS':2.6, 'mtop':0.1},
+    13 :{ 'xs':37.95, 'scalep':4.3, 'scalem' :-6.0, 'PDF':2.1, 'alphaS':2.3, 'mtop':0.1},
+    14 :{ 'xs':45.05, 'scalep':4.4, 'scalem' :-6.0, 'PDF':2.1, 'alphaS':2.2, 'mtop':0.1},
+    100:{ 'xs':1749., 'scalep':5.1, 'scalem' :-6.6, 'PDF':1.7, 'alphaS':2.1, 'mtop':0.1}
 }
 
 # Polynomial coefficients for ratio at different pp collider energies

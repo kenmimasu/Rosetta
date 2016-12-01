@@ -323,10 +323,15 @@ class Basis(MutableMapping):
             
         # otherwise follow self.blocks structure
         for blk, flds in self.blocks.iteritems():                
-            for i,fld in enumerate(flds):                    
+            for i, fld in enumerate(flds):                    
                 if dependent or (blk not in self.dependent 
                                  and fld not in self.dependent):
-                    thecard.add_entry(blk, i+1, 0., name = fld)
+                    try:
+                        thecard.add_entry(blk, self.numbers[fld], 0., name = fld)
+                        i-=1
+                    except AttributeError, KeyError:
+                        thecard.add_entry(blk, i+1, 0., name = fld)
+                    
 
         # deal with flavored
         for blk, flds in self.fblocks.iteritems():
@@ -402,7 +407,7 @@ class Basis(MutableMapping):
                     '    Reduction in flavour structure ' +
                     'from "{}" to "{}" '.format(_from, to) +
                     'encountered some unexpected non-zero elements ' +
-                    ' which were not deleted.\n    Not deleted: ' +
+                    'which were not deleted.\n    Not deleted: ' +
                     '{}\n'.format(
                     ', '.join(['{}={}'.format(x,y) for x,y in 
                                zip(no_del_names,no_del_values)])

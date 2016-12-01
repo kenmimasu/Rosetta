@@ -6,7 +6,6 @@ import os
 # for translate
 from ...internal.basis import checkers as check
 from ...internal.basis import write_param_card
-from ...interfaces.eHDECAY.eHDECAY import create_SLHA_block
 from ...internal.errors import TranslationError
 
 allowed_flav = ('general', 'diagonal', 'universal')
@@ -86,18 +85,29 @@ class TranslateInterface(RosettaInterface):
         # run eHDECAY for Higgs branching fractions
         try:
             if args.ehdecay:
+                from ...interfaces.eHDECAY.eHDECAY import create_SLHA_block
+
                 decayblock = create_SLHA_block(basis_instance)
-                # Creat Higgs decay block if not present
+                # Create Higgs decay block if not present
                 if 25 not in newbasis.card.decays:
                     newbasis.card.add_decay(decayblock)
                 else:
                     newbasis.card.decays[25] = decayblock
-                session.drawline()
+                # session.drawline()
                 
         except TranslationError as e:
             # Catch translation error in map to SILH
+            session.log('')
             session.log('Translation to SILH Basis required, skipping eHDECAY.')
-            session.log('TranslationError: ' + e)
+            session.log('TranslationError: ' + (e))
+            session.log('')
+            
+        except ImportError as e:
+            session.log('')
+            session.log('eHDECAY interface not loaded, skipping eHDECAY.')
+            session.log('ImportError: ' + str(e))
+            session.log('')
+        
     
         # write param card
         if not args.output: # output file name

@@ -8,6 +8,7 @@ from . import use_eHDECAY
 if use_eHDECAY:
     from . import SM_BR
 
+
 ################################################################################
 # required info
 masses = {25,4,5,6,15} # H, b, t masses
@@ -30,7 +31,7 @@ def decay(basis, electroweak=True, SM_BRs=None, ratio=False):
     '''
     # get partial width rescaling factors
     rscl = partial_width_ratios(basis)
-    
+
     # calculate SM Higgs Branching ratios
     if SM_BRs is None:
         if use_eHDECAY:

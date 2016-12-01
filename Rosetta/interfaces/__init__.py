@@ -2,8 +2,10 @@ from importlib import import_module
 from collections import OrderedDict
 import os
 
-# from ..internal.settings import config
 from ..internal import session
+from ..internal.errors import RosettaImportError
+
+from errors import LoadInterfaceError
 
 _all_interfaces = OrderedDict()
 
@@ -19,6 +21,14 @@ for intr in subdirs:
         _all_interfaces[intr_class] = getattr(intr_mod, intr_class)
                                             
     except ImportError as ee:
-        msg = "Rosetta couldn't load {} interface. Error:{}.".format(intr, ee)
+        msg = "Warning: Rosetta couldn't load {} interface.\n    Error:{}.\n".format(intr, ee)
         session.log(msg)
+        
+    except AttributeError as ee:
+        msg = "Warning: Rosetta couldn't load {0}Interface Class from {0} module.\n    Error:{1}.\n".format(intr, ee)
+        session.log(msg)
+
+if 'TranslateInterface' not in _all_interfaces:
+    msg = "Rosetta couldn't find the translate interface!"
+    raise LoadInterfaceError(msg)
 

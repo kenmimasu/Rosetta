@@ -6,6 +6,7 @@ import re
 from ..import __version__, __author__, __url__, __date__
 
 __once = set()
+__last = ''
 output = StringIO()
 suppressed = StringIO()
 
@@ -32,6 +33,8 @@ def split(s, wid, lead=''):
     
 def fmt(istr, lim):
     
+    if not hasattr(istr, 'split'): istr = str(istr)
+    
     substrs = []
     for s in istr.split('\n'):
         if len(s) > lim:
@@ -47,7 +50,8 @@ def stdout(msg, log=False, width=80):
     wrapped = fmt(msg, width)
     print >> output, wrapped
     print wrapped
-    
+    if wrapped != '': __last = wrapped
+        
 def log(msg, width=80):
     '''Display a message if settings.silent == False.'''
     
@@ -62,10 +66,13 @@ def drawline(text='', ignore_silent=False):
     with some text in the middle.
     '''
     if text: text = ' '+ text +' '
+    line = text.center(80,'#')
     printer = log if not ignore_silent else stdout
-    printer('')
-    printer(text.center(80,'#'))
-    printer('')
+
+    if line != __last:
+        printer('')
+        printer(line)
+        printer('')
 
 def once(msg, width=80):
     '''

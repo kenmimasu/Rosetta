@@ -17,24 +17,24 @@ class BSMCharacterisation(basis.Basis):
     '''
     
     name ='bsmc'
-    # kinetic terms [Eqn. (3.3)]
+    # kinetic terms 
     BCxMASS = ['dM']
-    # triple gauge couplings [Eqn. (3.6)]
+    # triple gauge couplings
     BCxTGC = ['dKa', 'dKz', 'dG1z', 'La', 'Lz', 'C3g', 
               'tKa', 'tKz', 'tLa', 'tLz', 'tC3g']
-    # quartic gauge couplings [Eqn. (3.7)]
+    # quartic gauge couplings 
     BCxQGC = ['dGw4','dGw2z2','dGw2za', 
               'Lw4', 'Lw2z2', 'Lw2a2', 'Lw2az', 'Lw2za', 'C4g',
               'tLw4', 'tLw2z2', 'tLw2a2', 'tLw2az', 'tLw2za', 'tC4g']
-    # single Higgs couplings [Eqn. (3.8)]
+    # single Higgs couplings 
     BCxh = ['dCw', 'dCz', 'Cww', 'Cgg', 'Caa', 'Cza', 'Czz', 
             'Cwbx', 'Czbx', 'Cabx',
             'tCww', 'tCgg', 'tCaa', 'tCza', 'tCzz']
-    # double Higgs couplings [Eqn. (3.13)]
+    # double Higgs couplings 
     BCxhh = ['dCw2', 'dCz2', 'Cww2', 'Cgg2', 'Caa2', 'Cza2', 'Czz2', 
             'Cwbx2', 'Czbx2', 'Cabx2',
             'tCww2', 'tCgg2', 'tCaa2', 'tCza2', 'tCzz2']
-    # Higgs self couplings [Eqn. (3.12)]
+    # Higgs self couplings 
     BCxhself = ['dL3', 'dL4']
     # 4-fermion operators
     BCx4F = ['cll1122', 'cpuu3333', 'cll1221']
@@ -43,7 +43,7 @@ class BSMCharacterisation(basis.Basis):
               'BCxh':BCxh, 'BCxhh':BCxhh, 'BCxhself':BCxhself, 'BCx4F':BCx4F}
     
     flavored = {
-        # Z Vertex Corrections [Eqn (3.4)]
+        # Z Vertex Corrections 
         'BCxdGLze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLze'},
         'BCxdGRze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRze'},
         'BCxdGLzv': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLzv'},
@@ -51,11 +51,11 @@ class BSMCharacterisation(basis.Basis):
         'BCxdGRzu': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRzu'},
         'BCxdGLzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLzd'},
         'BCxdGRzd': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRzd'},
-        # W Vertex Corrections [Eqn (3.4)]
+        # W Vertex Corrections 
         'BCxdGLwl': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLwl'},
         'BCxdGLwq': {'kind':'general', 'domain':'complex', 'cname':'dGLwq'},
         'BCxdGRwq': {'kind':'general', 'domain':'complex', 'cname':'dGRwq'},
-        # Dipole interactions with single gauge bosons [Eqn. (3.5)]
+        # Dipole interactions with single gauge bosons 
         'BCxdgu': {'kind':'hermitian', 'domain':'complex', 'cname':'dgu'},
         'BCxdgd': {'kind':'hermitian', 'domain':'complex', 'cname':'dgd'},
         'BCxdau': {'kind':'hermitian', 'domain':'complex', 'cname':'dau'},
@@ -75,14 +75,14 @@ class BSMCharacterisation(basis.Basis):
         'BCxtdzu': {'kind':'hermitian', 'domain':'complex', 'cname':'tdzu'},
         'BCxtdzd': {'kind':'hermitian', 'domain':'complex', 'cname':'tdzd'},
         'BCxtdze': {'kind':'hermitian', 'domain':'complex', 'cname':'tdze'},
-        # single Higgs couplings to fermions [Eqn. (3.8)]
+        # single Higgs couplings to fermions 
         'BCxdYu': {'kind':'general', 'domain':'real', 'cname':'dYu'},
         'BCxdYd': {'kind':'general', 'domain':'real', 'cname':'dYd'},
         'BCxdYe': {'kind':'general', 'domain':'real', 'cname':'dYe'},
         'BCxSu': {'kind':'general', 'domain':'real', 'cname':'Su' },
         'BCxSd': {'kind':'general', 'domain':'real', 'cname':'Sd' },
         'BCxSe': {'kind':'general', 'domain':'real', 'cname':'Se' },
-        # Higgs contact interactions HVff [Eqn. (3.10)]
+        # Higgs contact interactions HVff 
         'BCxdGLhze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhze'},
         'BCxdGRhze': {'kind':'hermitian', 'domain':'complex', 'cname':'dGRhze'},
         'BCxdGLhzv': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhzv'},
@@ -93,7 +93,7 @@ class BSMCharacterisation(basis.Basis):
         'BCxdGLhwl': {'kind':'hermitian', 'domain':'complex', 'cname':'dGLhwl'},
         'BCxdGLhwq': {'kind':'general', 'domain':'complex', 'cname':'dGLhwq'},
         'BCxdGRhwq': {'kind':'general', 'domain':'complex', 'cname':'dGRhwq'},
-        # Dipole interactions with single higgs and gauge boson [Eqn. (3.11)]
+        # Dipole interactions with single higgs and gauge boson 
         'BCxdhgu': {'kind':'hermitian', 'domain':'complex', 'cname':'dhgu'},
         'BCxdhgd': {'kind':'hermitian', 'domain':'complex', 'cname':'dhgd'},
         'BCxdhau': {'kind':'hermitian', 'domain':'complex', 'cname':'dhau'},
@@ -113,7 +113,7 @@ class BSMCharacterisation(basis.Basis):
         'BCxtdhzu': {'kind':'hermitian', 'domain':'complex', 'cname':'tdhzu'},
         'BCxtdhzd': {'kind':'hermitian', 'domain':'complex', 'cname':'tdhzd'},
         'BCxtdhze': {'kind':'hermitian', 'domain':'complex', 'cname':'tdhze'},
-        # couplings of two Higgs bosons to fermions [Sec. 3.8]
+        # couplings of two Higgs bosons to fermions
         'BCxY2u': {'kind':'general', 'domain':'complex', 'cname':'Y2u'},
         'BCxY2d': {'kind':'general', 'domain':'complex', 'cname':'Y2d'},
         'BCxY2e': {'kind':'general', 'domain':'complex', 'cname':'Y2e'}

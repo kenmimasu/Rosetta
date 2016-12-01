@@ -109,6 +109,7 @@ def run(basis, electroweak=True, interpolate=False, SM_BRs=None):
         SM_BRs - if interpolate==True provide the SM Higgs branching fractions 
                  to rescale as a dict formatted as {(PID1, PID2):BR,...}.
     '''
+
     session.cite('eHDECAY', reference)
 
     # ensure required masses & inputs
@@ -138,10 +139,10 @@ def execute(inpt):
     Keyword arguments:  
         electroweak - switch for electroweak corrections, IELW
     '''
-    if not os.path.exists(executable):
-        err = ('Rosetta: could not find eHDECAY ' +
-               'executable in {}'.format(eHDECAY_dir))
-        raise eHDECAYInterfaceError(err)
+    # if not os.path.exists(executable):
+    #     err = ('Rosetta: could not find eHDECAY ' +
+    #            'executable in {}'.format(eHDECAY_dir))
+    #     raise eHDECAYInterfaceError(err)
         
     session.cite('eHDECAY', reference)
     

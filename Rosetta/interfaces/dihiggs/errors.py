@@ -1,6 +1,7 @@
-from ...internal.errors import RosettaImportError, RosettaInterfaceError
+from ...internal.errors import RosettaImportError
+from ..errors import RosettaInterfaceError
 
-class dihiggsImportError(RosettaImportError):
+class DiHiggsImportError(RosettaImportError):
     '''
     Exception raised when a problem occurs trying to import the 
     dihiggs interface package
@@ -8,7 +9,7 @@ class dihiggsImportError(RosettaImportError):
     interface='dihiggs'
     pass
     
-class dihiggsInterfaceError(RosettaInterfaceError):
+class DiHiggsInterfaceError(RosettaInterfaceError):
     '''
     Exception raised when a problem occurs within the dihiggs 
     interface
@@ -16,9 +17,9 @@ class dihiggsInterfaceError(RosettaInterfaceError):
     interface='dihiggs'
     pass
 
-class SqrtsError(dihiggsInterfaceError):
+class SqrtsError(DiHiggsInterfaceError):
     '''
-    Exception for invalid value of sqrt(s) in TeV not in (7, 8, 13)
+    Exception for invalid value of sqrt(s) in TeV not in (7, 8, 13, 14, 100)
     '''
     interface='dihiggs'
     pass

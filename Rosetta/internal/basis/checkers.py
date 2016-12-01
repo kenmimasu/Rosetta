@@ -207,10 +207,19 @@ def param_data(basis, do_unknown=True,
             theblock = SLHA.NamedBlock(name=bname)
             basis.card.add_block(theblock)
             inputblock = theblock
-        
+        # print defined
         input_eles = set(inputblock.keys())
+        # print input_eles
+        # defined_block_2 = {i+1:v for i,v in enumerate(defined)}
+        # print defined_block_2
         
-        defined_block = {i+1:v for i,v in enumerate(defined)}
+        try:
+            defined_block = {
+                basis.numbers.get(v, i+1):v for i,v in enumerate(defined)
+            }
+        except AttributeError:
+            defined_block = {i+1:v for i,v in enumerate(defined)}
+        
         defined_eles = set(defined_block.keys())
         
         independent = {i:v for i,v in defined_block.iteritems() 
