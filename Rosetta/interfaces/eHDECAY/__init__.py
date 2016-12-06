@@ -14,7 +14,8 @@ except KeyError:
 executable = '{}/run'.format(eHDECAY_dir)
 
 if not os.path.exists(executable):
-    err = ('Could not find eHDECAY executable at {}'.format(executable))
+    err = (('Could not find eHDECAY executable at {}: check option '
+            '"eHDECAY_dir" in Rosetta/config.txt').format(executable))
     raise eHDECAYImportError(err)
 
 from interface import eHDECAYInterface
