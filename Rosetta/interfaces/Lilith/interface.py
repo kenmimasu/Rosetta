@@ -30,11 +30,11 @@ class LilithInterface(RosettaInterface):
             'help':('Specify flavor structure. Allowed values are: '+
                     ', '.join(allowed_flav)+' (default = general)')
         },
-        ('--squares',):{
-            'action':'store_true',
-            'help':('Retain quadratic order in EFT coefficients in the '
-                    'SignalStrengths interface (NOT IMPLEMENTED)')
-        }
+        # ('--squares',):{
+        #     'action':'store_true',
+        #     'help':('Retain quadratic order in EFT coefficients in the '
+        #             'SignalStrengths interface (NOT IMPLEMENTED)')
+        # }
     }
     def __call__(self, args):
 

@@ -6,9 +6,6 @@ from math import sqrt
 from ..internal import basis
 from ..internal import PID
 from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
-from . import BSMCharacterisation as BSMC
-################################################################################
-BSMCharacterisation = BSMC.BSMCharacterisation
 ################################################################################
 class HiggsBasis(basis.Basis):
     '''
@@ -19,12 +16,12 @@ class HiggsBasis(basis.Basis):
     https://cds.cern.ch/record/2001958
     
     Part of the three intrinsic basis implementations in Rosetta along with the 
-    Warsaw and SILH bases. The implementation only includes the minimal set (3) 
+    Warsaw and SILH bases. The implementation only includes a minimal set (15) 
     of four-fermion operators required to consistently map between the three 
-    intrinsic bases as defined in the note. A number of structures involving 
-    more than two Higgs fields (apart from the triple Higgs vertex) or 
-    interactions between a single higgs field and 3 or more gauge bosons are 
-    not currently included. 
+    intrinsic bases as well as thoe which contribute to EWPO. A number of 
+    structures involving more than two Higgs fields (apart from the triple 
+    Higgs vertex) or interactions between a single higgs field and 3 or more 
+    gauge bosons are not currently included. 
     The Higgs Basis encodes relations between certain parameters to ensure 
     SU(2)xU(1) invariance such that it is consistent with a dimension six 
     operator basis for an effective field theory with linearly realised 
@@ -321,7 +318,7 @@ class HiggsBasis(basis.Basis):
                 B[zed][i,j] = -(Zij + Zji.conjugate())
                 B[tzed][i,j] =  -ii*(Zij - Zji.conjugate())
         
-        return instance
+        return B
 
 
     @basis.translation('warsaw')

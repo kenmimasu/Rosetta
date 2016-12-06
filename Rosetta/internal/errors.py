@@ -36,3 +36,13 @@ class ReadSettingsError(RosettaError):
         super(RosettaSettingsError, self).__init__('Error reading config.txt.')
     pass
 ################################################################################
+class RosettaWarning(Warning):
+    '''Rosetta base warning class. Never raised.'''
+    nmax_before_suppress = None
+    pass
+
+class TranslationWarning(RosettaWarning):
+    '''Warning class for basis translations.'''
+    nmax_before_suppress = 5
+    pass
+################################################################################

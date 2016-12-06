@@ -15,7 +15,7 @@ class TranslateInterface(RosettaInterface):
     interface = 'translate'
     description = ("Read in an SLHA format parameter card in a particular "
                    "basis and write a new card in another implemented basis.")
-    helpstr = ("Translate in SLHA input card from one basis to another")
+    helpstr = ("Translate an SLHA input card from one basis to another")
     
     parser_args = {
         ('param_card',):{

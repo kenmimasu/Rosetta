@@ -4,6 +4,7 @@ from StringIO import StringIO
 import textwrap
 import re
 from ..import __version__, __author__, __url__, __date__
+import warnings
 
 __once = set()
 __last = ''
@@ -195,6 +196,31 @@ Eur.Phys.J. C75 (2015) 12, 583
 
 # Print header the first time session is imported
 once(header)
+
+################################################################################
+# set up warnings
+warned = {}
+
+def showwarning(message, category, filename, lineno, line=None):
+    warning_name = str(category.__name__)
+    try:
+        warned[warning_name] += 1
+    except KeyError:
+        warned[warning_name] = 1
+    nmax = category.nmax_before_suppress
+    if (nmax is None) or warned[warning_name] < nmax:
+        log('')
+        log('    '+ warning_name +': '+str(message))
+        log('')
+    else:
+        if not settings.verbose:
+            once(('\n    More than {} {} logged, further warnings written to '
+                  'rosetta.supressed.log\n'.format(nmax, warning_name)))
+        verbose('    '+ warning_name +': '+str(message))
+    
+warnings.showwarning = showwarning
+
+
 
 
 

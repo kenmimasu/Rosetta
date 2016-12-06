@@ -12,8 +12,7 @@ class WarsawBasis(basis.Basis):
     Higgs and modified-SILH bases. The exact list of operators included as well as the 
     equations for the translation to the Higgs basis can be found in the HXSWG 
     note, for which all references to tables and equations are in this 
-    implementation. Table 1 of the note shows full list of operators. The block 
-    structure of the basis implementation maps to this table. 
+    implementation.
     '''
     ###### 
     name = 'warsaw'

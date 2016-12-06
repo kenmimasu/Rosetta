@@ -63,6 +63,8 @@ def read_param_card(basis, SLHAcard = None):
     
     basis.card.set_complex()
     basis.fix_matrices()
+    # Deletes redundant elements of hermitian matrices
+    # basis.reduce_hermitian_matrices()
 
 def write_param_card(card, filename, overwrite=False):
     '''Write contents of card to filename'''

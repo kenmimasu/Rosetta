@@ -16,7 +16,7 @@ from ..matrices import (TwoDMatrix, CTwoDMatrix, HermitianMatrix,
 from ..constants import (PID, default_inputs, default_masses, input_names, 
                        default_ckm, particle_names, input_to_PID, 
                        PID_to_input, GammaZ, GammaW, Gammat)
-from ..errors import TranslationError, TranslationPathError
+from ..errors import TranslationError, TranslationPathError, RosettaWarning
 from errors import FlavorMatrixError, ParamCardReadError
 from .. import session
 from io import read_param_card, write_param_card
@@ -26,6 +26,14 @@ __doc__ = '''
 Base class for Rosetta bases as well as some utility functions for defining the 
 names of flavor block elements and sorting blocks names for writing SLHA output.
 '''
+################################################################################
+class SetFlavorWarning(RosettaWarning):
+    '''Warning class to raise within set_flavour'''
+    nmax_before_suppress = 5
+    pass
+    
+################################################################################
+
 # Base Basis class
 class Basis(MutableMapping):
     '''
@@ -329,7 +337,7 @@ class Basis(MutableMapping):
                     try:
                         thecard.add_entry(blk, self.numbers[fld], 0., name = fld)
                         i-=1
-                    except AttributeError, KeyError:
+                    except (AttributeError, KeyError):
                         thecard.add_entry(blk, i+1, 0., name = fld)
                     
 
@@ -402,17 +410,17 @@ class Basis(MutableMapping):
                 if no_del:
                     no_del_names = [blk.get_name(k) for k in no_del]
                     no_del_values = [blk[k] for k in no_del]
-                    session.verbose(
-                    '    Warning in {}.set_flavour():\n'.format(self.__class__)+
-                    '    Reduction in flavour structure ' +
-                    'from "{}" to "{}" '.format(_from, to) +
-                    'encountered some unexpected non-zero elements ' +
-                    'which were not deleted.\n    Not deleted: ' +
-                    '{}\n'.format(
-                    ', '.join(['{}={}'.format(x,y) for x,y in 
-                               zip(no_del_names,no_del_values)])
-                    )
-                    )
+                    not_del = ', '.join(['{}={}'.format(x,y) for x,y in 
+                                         zip(no_del_names,no_del_values)])
+                    msg = ('in {}.set_flavor():\n    Reduction in '
+                    'flavour structure from "{}" to "{}" encountered some '
+                    'unexpected non-zero elements which were not deleted. This '
+                    'can be due to the presence of a CKM matrix rotation in '
+                    'the translation function or differing MFV normalisations.'
+                    '\n    Not deleted: {}\n').format(self.__class__,
+                                                      _from, to, not_del)
+                    
+                    session.warnings.warn(msg, SetFlavorWarning)
                 
             for blk in blks_to_del:
                 del self.card.matrices[blk]

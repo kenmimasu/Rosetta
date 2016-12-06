@@ -6,11 +6,50 @@ from ..constants import (PID, default_inputs, default_masses, input_names,
                         PID_to_input) 
 from .. import SLHA
 
+################################################################################
 __doc__ = '''
 Module for Rosetta basis consistency checking functions. Compares existing data 
 stored in a basis instance with its declared data structure in the basis 
 implementation. 
 '''
+################################################################################
+from ..errors import RosettaWarning
+
+class MissingBlockWarning(RosettaWarning):
+    '''Warning to raise when expected SLHA block is missing.'''
+    pass
+
+class MassAndInputWarning(RosettaWarning):
+    '''Warning to raise when values in mass and sminput blocks clash.'''
+    pass
+
+class RequiredParameterWarning(RosettaWarning):
+    '''Warning to raise when a required parameter is missing.'''
+    pass
+
+class UnknownParameterWarning(RosettaWarning):
+    '''Warning to raise when an un defined parameter is read in.'''
+    pass
+
+class MismatchWarning(RosettaWarning):
+    '''
+    Warning to raise when SLHA block format is inconsistent with basis 
+    definition.
+    '''
+    pass
+    
+class CalculateDependentWarning(RosettaWarning):
+    '''
+    Warning to raise when an not all dependent coefficients are given values 
+    by calculate_dependent()
+    '''
+    pass
+
+class DependentParameterWarning(RosettaWarning):
+    '''Warning to raise when an un parameter defined as dependent is read in.'''
+    pass
+
+################################################################################
 
 def sminputs(basis, required_inputs, message='Rosetta'):
     '''
@@ -27,10 +66,12 @@ def sminputs(basis, required_inputs, message='Rosetta'):
             repr_default = ['{}={: .5e}'.format(input_names[k], 
                              default_inputs.get(k,0.)) for 
                              k in required_inputs]
+                             
+            msg = ('Block "sminputs" not found. Assume default values for '
+                   'required inputs?\n    Required inputs: {}').format(input_list)
             
-            session.log('    Warning: Block "sminputs" not found. '\
-                        'Assume default values for required inputs?')
-            session.log('    Required inputs: {}'.format(input_list))
+            session.warnings.warn(msg, MissingBlockWarning)
+
             carry_on = session.query('    Continue with default values '\
                              'for unspecified inputs? '\
                              '({})'.format(', '.join(repr_default)))
@@ -51,16 +92,17 @@ def sminputs(basis, required_inputs, message='Rosetta'):
                     if i in basis.inputs:
                         v2 = float(basis.inputs[i])
                         if v!=v2:
-                            session.log('    Warning: {} '.format(input_names[i])
-                            + 'specified in block sminput[{}] '.format(i)
-                            + '({:.5e}) not consistent with '.format(v2)
-                            + 'value specified in block mass '
-                            + '[{}] ({:.5e}).\n'.format(k,float(v))
-                            + '    Rosetta will keep value from sminputs.')
+                            msg = ('{} specified in block sminput[{}] ({:.5e}) '
+                            'not consistent with value specified in block mass '
+                            '[{}] ({:.5e}).\n    Rosetta will keep value from '
+                            'sminputs.').format(input_names[i], i, v2, k, float(v))
+                            
+                            session.warnings.warn(msg, MassAndInputWarning)
                             basis.mass[k]=v2
                     else:
                         mstring = 'M{}'.format(particle_names[k])
                         basis.inputs.new_entry(i, v,name=mstring)
+
 
             required = set(required_inputs)
             inputs = set(basis.inputs.keys())
@@ -71,26 +113,34 @@ def sminputs(basis, required_inputs, message='Rosetta'):
                              default_inputs.get(k,0.)) for 
                              k in missing_inputs]
             if missing_inputs: # Deal with unassigned SM inputs
-                session.log( '    Warning: Not all required SM inputs are '\
-                      'defined for {}.'.format(message))
-                session.log('    Required inputs: {}'.format(input_list))
                 missing_list = ', '.join([str(x) for x in missing_inputs])
-                session.log('    Missing inputs: {}'.format(missing_list))
-                carry_on = session.query(
-                    '    Continue with default values '\
-                    'for unspecified inputs? '\
-                    '({})'.format(', '.join(repr_default))
-                                 )
+                
+                msg = ('Not all required SM inputs are defined for {}.\n'
+                       '    Required inputs: {}\n    Missing inputs: '
+                       '{}').format(message, input_list, missing_list)
+                session.warnings.warn(msg, RequiredParameterWarning)
+                
+                carry_on = session.query((
+                    '    Continue with default values for unspecified inputs? '
+                    '({})').format(', '.join(repr_default)))
+                    
                 if carry_on: # sets unspecified inputs
                     for m in missing_inputs: 
                         basis.inputs.new_entry(m, default_inputs[m], 
                                               name=input_names[m])
                 else:
                     session.exit()
+        # create mass block if not there
+        
+        if basis.mass is None:
+            theblock = SLHA.NamedBlock(name='mass')
+            basis.card.add_block(theblock)
+            basis.mass = theblock
         # ensure presence of CKM matrix
         vckm = basis.card.matrices.get('vckm', None)
         if vckm is None:
-            session.once('Block "VCKM" not found, will use default values.\n')
+            session.warnings.warn(('Block "VCKM" not found, will use default '
+                                   'values.\n'), MissingBlockWarning)
             vckm = default_ckm
             basis.card.add_block(vckm)
         basis.ckm = vckm
@@ -112,7 +162,7 @@ def masses(basis, required_masses, message='Rosetta'):
             mass_list = ', '.join( ['{} (M{})'.format(x,particle_names[x]) 
                                     for x in required_masses] )
                                     
-            session.log( '    Warning: Block "mass" not found. ')
+            session.warnings.warn('Block "mass" not found.', MissingBlockWarning)
                   # '    Assume default values for required masses?'
             session.log( '    Required PIDs: {}'.format(mass_list))
 
@@ -139,12 +189,13 @@ def masses(basis, required_masses, message='Rosetta'):
                     if i in basis.mass:
                         v2 = float(basis.mass[i])
                         if v!=v2:
-                            session.log('    Warning: M{} '.format(particle_names[i])
+                            session.warnings.warn('M{} '.format(particle_names[i])
                             + 'specified in block sminput[{}] '.format(k)
                             + '({:.5e}) not consistent with '.format(v)
                             + 'value specified in block mass '
                             + '[{}] ({:.5e}).\n'.format(i,float(v2))
-                            + '    Rosetta will keep value from sminputs.')
+                            + '    Rosetta will keep value from sminputs.',
+                            MassAndInputWarning)
                             basis.mass[i]=v
                     else:
                         mstring = 'M{}'.format(particle_names[i])
@@ -161,8 +212,9 @@ def masses(basis, required_masses, message='Rosetta'):
                 mass_list = ', '.join(['{} (M{})'.format(x,particle_names[x]) 
                                         for x in missing_masses])
 
-                session.log('    Warning: Not all required masses are '\
-                      'defined for {}.'.format(message))
+                session.warnings.warn('Not all required masses are '\
+                                      'defined for {}.'.format(message),
+                                      RequiredParameterWarning)
                 session.log( '    Required PIDs: {}'.format(PID_list))
                 session.log( '    Missing PIDs: {}'.format(mass_list))
                 carry_on = session.query(
@@ -232,13 +284,13 @@ def param_data(basis, do_unknown=True,
         if unknown and do_unknown:
             unknown_names = {i:inputblock.get_name(i,'none') 
                              for i in unknown}
-            session.log( '    Warning: you have declared coefficients '\
-                  'undefined in {}, block:{}.'.format(basis.__class__,
-                                                      bname))
+            session.warnings.warn( 'you have declared coefficients '\
+                  'undefined in {}, block:{}.'.format(basis.__class__,bname),
+                   UnknownParameterWarning)
             session.log( '    The following will be ignored - '\
                   '{}'.format(', '.join(['{}:"{}"'.format(k,v) for k,v 
                                          in unknown_names.iteritems()])))
-                                         
+            session.log('')                             
             for x in unknown: del inputblock[x]
                                          
         # check that name, number pairs match
@@ -253,8 +305,9 @@ def param_data(basis, do_unknown=True,
                 mismatched.append((index,name,input_name))
                 
         if mismatched and do_consistency:
-            session.log('    Warning: Mismatch of coefficient names '\
-                        'in {}, block "{}".'.format(basis.__class__, bname))
+            session.warnings.warn('Mismatch of coefficient names '\
+                        'in {}, block "{}".'.format(basis.__class__, bname),
+                        MismatchWarning)
             for index, name, input_name in mismatched:
                 if not settings.silent:
                     session.log('    Coefficient ' +
@@ -262,14 +315,17 @@ def param_data(basis, do_unknown=True,
                            'will be renamed to {}'.format(name))
                 inputblock._names[index] = name
                 inputblock._numbers[name] = index
-        
+                
+            session.log('')
+            
         # check if coefficients defined as dependent 
         # have been assigned values
         defined_dependent = set(dependent).intersection(input_eles)
         if defined_dependent and do_dependent: 
-            session.log('    Warning: you have assigned values to some '\
+            session.warnings.warn('you have assigned values to some '\
                        'coefficients defined as dependent '\
-                       'in {}, block "{}".'.format(basis.__class__, bname))
+                       'in {}, block "{}".'.format(basis.__class__, bname),
+                       DependentParameterWarning)
             session.log('    Coefficients: {}'.format(', '.join(
                                             ['{}:"{}"'.format(k,v) 
                                             for k,v in dependent.items() 
@@ -287,9 +343,10 @@ def param_data(basis, do_unknown=True,
         # check if all independent coefficients are assigned values
         missing = set(independent).difference(input_eles).difference(set(dependent))
         if missing and do_independent: # Deal with unassigned independent coefficients
-            session.log('    Warning: some coefficients defined as independent '\
+            session.warnings.warn('some coefficients defined as independent '\
                   'in {}, block "{}", have not been assigned values'\
-                  '.'.format(basis.__class__,bname))
+                  '.'.format(basis.__class__,bname),
+                  RequiredParameterWarning)
             session.log('    Undefined: {}'.format(', '.join(
                                             ['{}:"{}"'.format(k,v) 
                                              for k,v in independent.items() 
@@ -349,12 +406,16 @@ def flavored_data(basis):
         if unknown:
             unknown_names = {i:inputblock.get_name(i,'none') 
                              for i in unknown}
-            session.log('    Warning: you have declared coefficients '\
-                        'undefined in {}, matrix:{}.'.format(basis.__class__,
-                                                      bname))
-            session.log('    The following will be ignored - '\
-                        '{}'.format(', '.join(['{}:"{}"'.format(k,v) for k,v 
-                                               in unknown_names.iteritems()])))
+            
+            ignored = ', '.join(['{}:"{}"'.format(k,v) for k,v 
+                                  in unknown_names.iteritems()])
+            
+            msg = ('you have declared coefficients undefined in {}, '
+                   '{}: {}.\n    The following will be ignored - '
+                   '{}').format(basis.__class__, inputblock.__class__.__name__,
+                                bname, ignored)
+            
+            session.warnings.warn(msg, UnknownParameterWarning)
                                          
             for x in unknown: del inputblock[x]
                                          
@@ -371,9 +432,9 @@ def flavored_data(basis):
                 
         if mismatched:
 
-            session.log('    Warning: Mismatch of coefficient names '\
-                  'in {}, matrix "{}".'.format(basis.__class__,
-                                                      bname))
+            session.warnings.warn('Mismatch of coefficient names '\
+                  'in {}, matrix "{}".'.format(basis.__class__, bname),
+                  MismatchWarning)
             for index, name, input_name in mismatched:
                 if not silent:
                     session.log('    Coefficient ' +
@@ -387,9 +448,10 @@ def flavored_data(basis):
         defined_dependent = set(dependent).intersection(input_eles)
         if defined_dependent: 
 
-            session.log('    Warning: you have assigned values to some '\
+            session.warnings.warn('you have assigned values to some '\
                         'coefficients defined as dependent '\
-                        'in {}, matrix "{}".'.format(basis.__class__, bname))
+                        'in {}, matrix "{}".'.format(basis.__class__, bname),
+                        DependentParameterWarning)
             session.log('    Coefficients: {}'.format(', '.join(
                                            ['{}:"{}"'.format(k,v) 
                                             for k,v in dependent.items() 
@@ -407,9 +469,10 @@ def flavored_data(basis):
         missing = set(independent).difference(input_eles).difference(set(dependent))
         if missing: # Deal with unassigned independent coefficients
 
-            session.log('    Warning: some coefficients defined as independent '\
+            session.warnings.warn('some coefficients defined as independent '\
                   'in {}, matrix "{}", have not been assigned values'\
-                  '.'.format(basis.__class__,bname))
+                  '.'.format(basis.__class__,bname),
+                  RequiredParameterWarning)
                   
             session.log('    Undefined: {}'.format(', '.join(
                                         ['{}:"{}"'.format(k,v) 
@@ -435,9 +498,10 @@ def calculated_data(basis):
     '''
     missing_dependents = set(basis.dependent).difference(basis.par_dict.keys())
     if missing_dependents and basis.dependent:
-        session.log('    Warning: Set of dependent coefficients calculated '\
+        session.warnings.warn('Set of dependent coefficients calculated '\
                     'by {0}.calculate_dependent() does not match those '\
-                    'specified in {0}.'.format(basis.__class__))
+                    'specified in {0}.'.format(basis.__class__),
+                    CalculateDependentWarning)
         session.log('    Undefined: {}'.format(', '.join(missing_dependents)))
         
         carry_on = session.query('Continue assuming coefficients are Zero?')
@@ -456,12 +520,13 @@ def modified_inputs(basis):
         if i in basis.mass:
             v2 = float(basis.mass[i])
             if v!=v2:
-                session.log('Warning: M{} '.format(particle_names[i])
+                session.warnings.warn('M{} '.format(particle_names[i])
                 + 'in block sminputs[{}] '.format(k)
                 + '({:.5e}) not consistent with '.format(v)
                 + 'value specified in block mass'
                 + '[{}] ({:.5e}) '.format(i,float(v2))
-                + 'after modify_inputs().\n')
+                + 'after modify_inputs().\n',
+                MassAndInputsWarning)
                 
                 keep_from_input = session.query(('Keep value from sminputs?'))
                     

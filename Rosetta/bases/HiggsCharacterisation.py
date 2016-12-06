@@ -34,9 +34,6 @@ class HiggsCharacterisation(basis.Basis):
     numbers = {'kHcc':100, 'kAcc':101}
     
     # All parameters independent
-    # dependent = ['cosa', 'Lambda']
-    
-    # independent = [c for c in FRBlock if c not in dependent ]
     independent = FRBlock
 
     required_masses = {25, 24, 1, 2, 3, 4, 5, 6, 11, 13, 15} 
@@ -55,6 +52,9 @@ class HiggsCharacterisation(basis.Basis):
         vev =  2.*MZ*sqrt(c2w/gw2)
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
         
+    def calculate_dependent(self):
+        self['kHdwR'] = 0.
+        
     @basis.translation('bsmc')        
     def to_bsmc(self, instance):
         
@@ -64,6 +64,7 @@ class HiggsCharacterisation(basis.Basis):
         H = self
         B = instance
         
+        print vev
         cosa, Lam = H['cosa'], H['Lambda']
         sina = sqrt(1.-cosa**2)
         
@@ -85,9 +86,9 @@ class HiggsCharacterisation(basis.Basis):
 
         B['tCza'] = -sina*gAza*H['kAza']*vev/sqrt(ee2*(gw2+gp2))
 
-        B['Cgg'] = -2.*cosa*gHgg*H['kHgg']/gs2
+        B['Cgg'] = -2.*cosa*gHgg*H['kHgg']*vev/gs2
 
-        B['tCgg'] = -2.*sina*gAgg*H['kAgg']/gs2
+        B['tCgg'] = -2.*sina*gAgg*H['kAgg']*vev/gs2
 
         B['Czz'] = -cosa*H['kHzz']/(gw2+gp2)*(vev/Lam)
 

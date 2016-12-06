@@ -13,8 +13,8 @@ allowed_flav = ('general', 'diagonal', 'universal')
 class DefaultCardInterface(RosettaInterface):
     
     interface = 'defaultcard'
-    description = ("Generate a parameter card for an implemented basis")
-    helpstr = ("Generate a parameter card for an implemented basis")
+    description = ("Generate an SLHA parameter card for an implemented basis")
+    helpstr = ("Generate an SLHA parameter card for an implemented basis")
     
     parser_args = {
         ('basis',):{

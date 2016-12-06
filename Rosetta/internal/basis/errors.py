@@ -11,3 +11,4 @@ class ParamCardReadError(RosettaError):
 class BasisNameError(RosettaError):
     '''Error reading basis name in parameter card'''
     pass
+

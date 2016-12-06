@@ -1,9 +1,14 @@
 import math
-from math import sqrt
+from math import sqrt, pi
+import re
+# from warnings import warn
 
 from . import basis
 from ..internal import PID
 from ..internal import matrix_mult, matrix_add, matrix_sub, matrix_eq
+from ..internal.errors import TranslationWarning
+from ..internal import session
+
 ################################################################################
 class BSMCharacterisation(basis.Basis):
     '''
@@ -122,8 +127,185 @@ class BSMCharacterisation(basis.Basis):
     independent = ( [c for v in blocks.values() for c in v] + 
                     [c for c in flavored.keys()] )
 
-    required_inputs = {1, 2, 4}
+    required_inputs = {1, 2, 3, 4}
+    required_masses = {23, 24, 25}
     # all other undefined behaviour inherited from Basis.Basis by default
+
+################################################################################
+    def calculate_inputs(self): # calculate a few required EW params from aEWM1, Gf, MZ
+        ee2 = 4.*math.pi/self.inputs['aEWM1'] # EM coupling squared
+        gs2 = 4.*math.pi*self.inputs['aS'] # strong coupling squared
+        Gf, MZ = self.inputs['Gf'], self.inputs['MZ']
+        s2w = (1.- sqrt(1. - ee2/(sqrt(2.)*Gf*MZ**2)))/2. # sin^2(theta_W)
+        c2w = (1.-s2w)
+        gw2 = ee2/s2w # SU(2) coupling squared
+        gp2 = gw2*s2w/c2w # Hypercharge coupling squared
+        vev =  2.*MZ*sqrt(c2w/gw2)
+        return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
+
+
+    @basis.translation('higgs')        
+    def to_higgs(self, instance):
+        msg = ('This translation maps an anomalous couplings description to a '
+        'dimension-6 EFT and is not one-to-one in general. Relations for '
+        'dependent parameters should be satisfied for a fully consistent '
+        'translation. Inconsistent relations will be overwritten by the '
+        'calculate_dependent() method of HiggsBasis class.')
+        session.warnings.warn(msg, TranslationWarning)
+        # trivial translation apart from dipole terms
+        B = self
+        B.fix_matrices()
+        H = instance
+        dipoles = ['Cdau','Cdzu']
+        for k, v in self.iteritems():
+            
+            is_dipole = re.match(r'Ct{0,1}dh{0,1}[a,z,g][u,d,e]\dx\d', k)
+            
+            if not is_dipole:
+                try:
+                    H[k] = v
+                except KeyError:
+                    print '    ' + k + ' not found in Higgs Basis definition.'
+        
+        # splitting dipole coefficients
+        ii = complex(0.,1.)
+        for f in ('u','d','e'):
+
+            glu, tglu = 'BCxdg'+f, 'BCxtdg'+f
+            pho, tpho = 'BCxda'+f, 'BCxtda'+f
+            zed, tzed = 'BCxdz'+f, 'BCxtdz'+f
+
+            for i,j in B[zed].keys():
+                if f in ('u','d'):
+                    H['HBxdg'+f][i,j] = (B[glu][i,j]-ii*B[tglu][i,j])/2.
+                    H['HBxdg'+f][j,i] = (B[glu][i,j]+ii*B[tglu][i,j])/2.
+
+                H['HBxda'+f][i,j] = (B[pho][i,j]-ii*B[tpho][i,j])/2.
+                H['HBxda'+f][j,i] = (B[pho][i,j]+ii*B[tpho][i,j])/2.
+
+                H['HBxdz'+f][i,j] = (B[zed][i,j]-ii*B[tzed][i,j])/2.
+                H['HBxdz'+f][j,i] = (B[zed][i,j]+ii*B[tzed][i,j])/2.
+        
+        
+        # Explicitly look for bad values of dependent coefficients in the HB
+        temp = H.__class__(dependent=True)
+        for coeff in H.independent:
+            temp[coeff] = H[coeff]
+        temp.mass = H.mass
+        temp.inputs = H.inputs
+        temp.ckm = H.ckm
+        temp.calculate_dependent()
+        
+        msg = ('dependent coefficient "{}" set to a value ({}) different from '
+               'that obtained ({}) with calculate_dependent()').format
+               
+        for coeff, a in self.iteritems():
+            is_dipole = re.match(r'Ct{0,1}dh{0,1}[a,z,g][u,d,e]\dx\d', coeff)
+            
+            if not is_dipole:
+                try:
+                    b = temp[coeff]
+                    if abs(a-b) > 1e-10:
+                        session.warnings.warn(msg(coeff,a,b), TranslationWarning)
+                        # sys.exit()
+                except KeyError:
+                    print coeff
+        return H
+    
+        
+    @basis.translation('hc')        
+    def to_hc(self, instance):
+
+        s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
+        MWsq = MZ**2*c2w
+        aS, aEM, Gf = self.inputs['aS'], self.inputs['aEWM1'], self.inputs['Gf']
+        B = self
+        H = instance
+        
+        # issue warning for non compatible parameter values
+        if B['dM']>1e-10:
+            msg = ('"dM" parameter should be zero (dCw=dCz) to correctly map '
+                   'from to BSMC to HC.')
+            warnings.warn(msg, TranslationWarning)
+        
+        H['cosa'], H['Lambda'] = 1./sqrt(2.), vev
+        Lam =  H['Lambda']
+        cosa = H['cosa']
+        sina = 1./sqrt(2.)
+        
+        # constants
+        C = sqrt( aEM*Gf*MZ**2/(8.*sqrt(2.)*pi) )
+        gHZZ, gHWW = 2.*MZ**2/vev, 2.*MWsq/vev
+        gHaa, gAaa = 47.*aEM/(18.*pi)/vev, 4.*aEM/(3.*pi)/vev
+        gHza, gAza = C*(94*c2w-13.)/(9.*pi)/vev, 2.*C*(8.*c2w-5.)/(3.*pi)/vev
+        gHgg, gAgg = -aS/(3.*pi)/vev, aS/(2.*pi)/vev
+
+        # Gauge        
+        H['kSM'] = (1. + B['dCz'])*vev*(gw2+gp2)/(2.*cosa*gHZZ)
+        # B['dCz'] = 2.*cosa*gHZZ*H['kSM']/(vev*(gw2+gp2))-1.
+        
+        H['kHaa'] = -B['Caa']*ee2/(cosa*gHaa)
+        # B['Caa'] = -cosa*gHaa*H['kHaa']/ee2
+
+        H['kAaa'] = -B['tCaa']*ee2/(sina*gAaa)
+        # B['tCaa'] = -sina*gAaa*H['kAaa']/ee2
+        
+        H['kHza'] = -B['Cza']*sqrt(ee2*(gw2+gp2))/(cosa*gHza*vev)
+        # B['Cza'] = -cosa*gHza*H['kHza']*vev/sqrt(ee2*(gw2+gp2))
+
+        H['kAza'] = -B['tCza']*sqrt(ee2*(gw2+gp2))/(sina*gAza*vev)
+        # B['tCza'] = -sina*gAza*H['kAza']*vev/sqrt(ee2*(gw2+gp2))
+
+        H['kHgg'] = -B['Cgg']*gs2/(2.*cosa*gHgg*vev)
+        # B['Cgg'] = -2.*cosa*gHgg*H['kHgg']/gs2
+
+        H['kAgg'] = -B['tCgg']*gs2/(2.*sina*gAgg*vev)
+        # B['tCgg'] = -2.*sina*gAgg*H['kAgg']/gs2
+
+        H['kHzz'] = -B['Czz']*(gw2+gp2)*Lam/(cosa*vev)
+        # B['Czz'] = -cosa*H['kHzz']/(gw2+gp2)*(vev/Lam)
+
+        H['kAzz'] = -B['tCzz']*(gw2+gp2)*Lam/(sina*vev)
+        # B['tCzz'] = -sina*H['kAzz']/(gw2+gp2)*(vev/Lam)
+
+        H['kHww'] = -B['Cww']*gw2*Lam/(cosa*vev)        
+        # B['Cww'] = -cosa*H['kHww']/gw2*(vev/Lam)
+
+        H['kAww'] = -B['tCww']*gw2*Lam/(sina*vev)        
+        # B['tCww'] = -sina*H['kAww']/gw2*(vev/Lam)
+
+        H['kHda'] = -B['Cabx']*sqrt(gw2*gp2)*Lam/(cosa*vev)
+        # B['Cabx'] = -cosa*H['kHda']/sqrt(gw2*gp2)*(vev/Lam)
+
+        H['kHdz'] = -B['Czbx']*gw2*Lam/(cosa*vev)
+        # B['Czbx'] = -cosa*H['kHdz']/gw2*(vev/Lam)
+
+        H['kHdwR'] = -B['Cwbx']*gw2*Lam/(cosa*vev)
+        # B['Cwbx'] = -cosa*H['kHdwR']/gw2*(vev/Lam)
+
+        # Yukawa
+        H['kHtt'] = (1. - B['BCxdYu'][3,3]*sqrt(1. - B['BCxSu'][3,3]**2))/cosa
+        H['kAtt'] = B['BCxdYu'][3,3]*B['BCxSu'][3,3]/sina
+        # B['BCxdYu'][3,3] = sqrt((cosa*H['kHtt']-1.)**2 + (H['kAtt']*sina)**2 )
+        # B['BCxSu'][3,3] = H['kAtt']*sina/B['BCxdYu'][3,3]
+        
+        H['kHcc'] = (1. - B['BCxdYu'][2,2]*sqrt(1. - B['BCxSu'][2,2]**2))/cosa
+        H['kAcc'] = B['BCxdYu'][2,2]*B['BCxSu'][2,2]/sina
+        # B['BCxdYu'][2,2] = sqrt((cosa*H['kHcc']-1.)**2 + (H['kAcc']*sina)**2 )
+        # B['BCxSu'][2,2] = H['kAcc']*sina/B['BCxdYu'][2,2]
+
+        H['kHbb'] = (1. - B['BCxdYd'][3,3]*sqrt(1. - B['BCxSd'][3,3]**2))/cosa
+        H['kAbb'] = B['BCxdYd'][3,3]*B['BCxSd'][3,3]/sina
+        # B['BCxdYd'][3,3] = sqrt((cosa*H['kHbb']-1.)**2 + (H['kAbb']*sina)**2 )
+        # B['BCxSd'][3,3] = H['kAbb']*sina/B['BCxdYd'][3,3]
+        
+        H['kHll'] = (1. - B['BCxdYe'][3,3]*sqrt(1. - B['BCxSe'][3,3]**2))/cosa
+        H['kAll'] = B['BCxdYe'][3,3]*B['BCxSe'][3,3]/sina
+        # B['BCxdYe'][3,3] = sqrt((cosa*H['kHll']-1.)**2 + (H['kAll']*sina)**2 )
+        # B['BCxSe'][3,3] = H['kAll']*sina/B['BCxdYe'][3,3]
+
+        return H
+
 ################################################################################
     def modify_inputs(self):
         '''
@@ -134,7 +316,7 @@ class BSMCharacterisation(basis.Basis):
         s2w = (1.- sqrt(1. - ee2/(sqrt(2.)*Gf*MZ**2)))/2. # sin^2(theta_W)
         c2w = (1.-s2w)
         MW = MZ*sqrt(c2w)
-
+        
         if 24 in self.mass:
             self.mass[24] = MW + self['dM']
         else:
