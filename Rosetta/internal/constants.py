@@ -18,7 +18,8 @@ particle_names = {1:'u', 2:'d', 3:'s', 4:'c', 5:'b', 6:'t',
                   
 # ID:name dictionary for SLHA inputs
 input_names = {1:'aEWM1', 2:'Gf', 3:'aS', 4:'MZ', 
-               5:'MB', 6:'MT', 7:'MTAU', 9:'MW', 25:'MH'}
+               5:'MB', 6:'MT', 7:'MTAU', 
+               9:'MW', 25:'MH', 10:'vF'}
                
 # ID:PID dictionary for SLHA inputs that are particle masses
 input_to_PID = {4:23, 5:5, 6:6, 7:15, 25:25, 9:24}
@@ -33,7 +34,8 @@ default_masses = {1:0.0048, 2:0.0023, 3:0.095, 4:1.42, 5:4.7, 6:173.,
 default_inputs = {1: 1.27916e+02, 2: 1.166379e-05, 3: 1.184e-01, 
                   4: default_masses[23], 5: default_masses[5], 
                   6: default_masses[6], 7: default_masses[15],
-                  25:default_masses[25], 9:default_masses[24]}
+                  25:default_masses[25], 9:default_masses[24],
+                  10:2.462200e+02 }
 
 # Z, W & top decay widths for default decay blocks
 GammaZ, GammaW, Gammat= 2.4952, 2.085, 1.4915

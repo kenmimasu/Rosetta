@@ -67,8 +67,9 @@ def sminputs(basis, required_inputs, message='Rosetta'):
                              default_inputs.get(k,0.)) for 
                              k in required_inputs]
                              
-            msg = ('Block "sminputs" not found. Assume default values for '
-                   'required inputs?\n    Required inputs: {}').format(input_list)
+            msg = ('Block "{}" not found. Assume default values for '
+                   'required inputs?\n    Required inputs: {}').format(
+                   basis.inputs_blockname, input_list)
             
             session.warnings.warn(msg, MissingBlockWarning)
 
@@ -76,7 +77,7 @@ def sminputs(basis, required_inputs, message='Rosetta'):
                              'for unspecified inputs? '\
                              '({})'.format(', '.join(repr_default)))
             if carry_on:
-                theblock = SLHA.NamedBlock(name='sminputs')
+                theblock = SLHA.NamedBlock(name=basis.inputs_blockname)
                 for m in required_inputs: 
                     theblock.new_entry(m, default_inputs[m], 
                                        name=input_names[m])
@@ -92,10 +93,11 @@ def sminputs(basis, required_inputs, message='Rosetta'):
                     if i in basis.inputs:
                         v2 = float(basis.inputs[i])
                         if v!=v2:
-                            msg = ('{} specified in block sminput[{}] ({:.5e}) '
+                            msg = ('{} specified in block {}[{}] ({:.5e}) '
                             'not consistent with value specified in block mass '
                             '[{}] ({:.5e}).\n    Rosetta will keep value from '
-                            'sminputs.').format(input_names[i], i, v2, k, float(v))
+                            'sminputs.').format(input_names[i],
+                             basis.inputs_blockname, i, v2, k, float(v))
                             
                             session.warnings.warn(msg, MassAndInputWarning)
                             basis.mass[k]=v2
@@ -190,11 +192,11 @@ def masses(basis, required_masses, message='Rosetta'):
                         v2 = float(basis.mass[i])
                         if v!=v2:
                             session.warnings.warn('M{} '.format(particle_names[i])
-                            + 'specified in block sminput[{}] '.format(k)
+                            + 'specified in block {}[{}] '.format(basis.inputs_blockname,k)
                             + '({:.5e}) not consistent with '.format(v)
                             + 'value specified in block mass '
                             + '[{}] ({:.5e}).\n'.format(i,float(v2))
-                            + '    Rosetta will keep value from sminputs.',
+                            + '    Rosetta will keep value from {}.'.format(basis.inputs_blockname),
                             MassAndInputWarning)
                             basis.mass[i]=v
                     else:
@@ -521,14 +523,15 @@ def modified_inputs(basis):
             v2 = float(basis.mass[i])
             if v!=v2:
                 session.warnings.warn('M{} '.format(particle_names[i])
-                + 'in block sminputs[{}] '.format(k)
+                + 'in block {}[{}] '.format(basis.inputs_blockname,k)
                 + '({:.5e}) not consistent with '.format(v)
                 + 'value specified in block mass'
                 + '[{}] ({:.5e}) '.format(i,float(v2))
                 + 'after modify_inputs().\n',
                 MassAndInputsWarning)
                 
-                keep_from_input = session.query(('Keep value from sminputs?'))
+                keep_from_input = session.query(('Keep value from {}?'.format(
+                                                    basis.inputs_blockname)))
                     
                 if keep_from_input:
                     session.verbose('Modified M{} '.format(particle_names[i]) +
@@ -536,7 +539,7 @@ def modified_inputs(basis):
                     basis.mass[i]=v
                 else:
                     session.verbose('Modified M{} '.format(particle_names[i]) +
-                                   'in block sminputs[{}]'.format(k))
+                                   'in block {}[{}]'.format(basis.inputs_blockname,k))
                     basis.inputs[k]=v2
                     
         else:

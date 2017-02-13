@@ -153,8 +153,8 @@ def get_other_blocks(basis, card, ignore):
     
     if card.has_block('mass'):
         basis.mass=basis.card.blocks['mass']
-    if card.has_block('sminputs'):
-        basis.inputs=basis.card.blocks['sminputs']
+    if card.has_block(basis.inputs_blockname):
+        basis.inputs=basis.card.blocks[basis.inputs_blockname]
         
     basis.ckm = card.matrices['vckm']
     

@@ -57,8 +57,8 @@ def read_param_card(basis, SLHAcard = None):
             else:
                 imname = 'I' + blk.get_name(k)[1:]
             basis.card.add_entry(other_part, k, 0., name=imname)
-            
-    basis.inputs = basis.card.blocks.get('sminputs', None)
+        
+    basis.inputs = basis.card.blocks.get(basis.inputs_blockname, None)
     basis.mass = basis.card.blocks.get('mass', None)
     
     basis.card.set_complex()
@@ -85,8 +85,8 @@ def write_param_card(card, filename, overwrite=False):
     sm_preamble = ('\n###################################\n'
                  + '## INFORMATION FOR SMINPUTS\n'
                  + '###################################\n')
-    if 'sminputs' in card.blocks:
-        card.blocks['sminputs'].preamble = sm_preamble
+    if basis.inputs_blockname in card.blocks:
+        card.blocks[basis.inputs_blockname].preamble = sm_preamble
 
     ckm_preamble = ('\n###################################\n'
                   + '## CKM INFORMATION\n'
@@ -111,7 +111,7 @@ def write_param_card(card, filename, overwrite=False):
         carry_on=True
     
     if carry_on:
-        special_blocks = ['loop','mass','sminputs','yukawa','vckm','basis']
+        special_blocks = ['loop','mass',basis.inputs_blockname,'yukawa','vckm','basis']
         coefforder = SLHA.sortblocks(card, ignore = special_blocks)
         card.write(filename, blockorder=special_blocks + coefforder,
                                      preamble=card_preamble)
@@ -166,10 +166,13 @@ def write_template_card(basis, filename, value=0.):
     SLHA_card.add_block(massblock)
                 
     sm_preamble = ('\n###################################\n'
-                 + '## INFORMATION FOR SMINPUTS\n'
-                 + '###################################\n')
+                 + '## INFORMATION FOR {}\n'
+                 + '###################################\n'.format(
+                     basis.inputs_blockname.upper()
+                 ))
                 
-    inputblock = SLHA.NamedBlock(name='sminputs', preamble=sm_preamble)
+    inputblock = SLHA.NamedBlock(name=basis.inputs_blockname, 
+                                 preamble=sm_preamble)
     for m in basis.required_inputs: 
         inputblock.new_entry(m, default_inputs[m], 
                              name='%s' % input_names[m])
@@ -186,7 +189,7 @@ def write_template_card(basis, filename, value=0.):
                 +'#'*22 + time + '#'*22 + '\n'
                 +'#'*80 +'\n')
     
-    special_blocks = ['mass','sminputs','vckm','basis']
+    special_blocks = ['mass',basis.inputs_blockname,'vckm','basis']
             
     theorder = SLHA.sortblocks(SLHA_card, ignore = special_blocks)
     SLHA_card.write(filename, blockorder=special_blocks + theorder, 

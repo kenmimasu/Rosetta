@@ -1,4 +1,4 @@
-# eHDECAY_dir /Users/Ken/Work/Packages/Higgs/eHDECAY
-eHDECAY_dir /PATH/TO/eHDECAY
-# Lilith_dir  /Users/Ken/Work/Packages/Higgs/Lilith/1.1.3
-Lilith_dir  /PATH/TO/Lilith
+eHDECAY_dir /Users/Ken/Work/Packages/Higgs/eHDECAY
+# eHDECAY_dir /PATH/TO/eHDECAY
+Lilith_dir  /Users/Ken/Work/Packages/Higgs/Lilith/1.1.3
+# Lilith_dir  /PATH/TO/Lilith

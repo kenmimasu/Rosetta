@@ -133,6 +133,7 @@ class Basis(MutableMapping):
     flavored = dict()
     required_inputs, required_masses = set(), set()
     translate = translate
+    inputs_blockname = 'sminputs'
     
     def __init__(self, param_card=None, flavor = 'general', dependent=True):
         '''

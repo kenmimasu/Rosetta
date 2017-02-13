@@ -18,7 +18,8 @@ class BSMCharacterisation(basis.Basis):
     conserving structures at dimension 6 excluding those not described in the 
     current incarnation of the Higgs basis. Most importantly, a FeynRules/UFO 
     implementation of the interactions in this model is associated with Rosetta 
-    and can be found at https://feynrules.irmp.ucl.ac.be/wiki/EFTmassbasis.
+    and can be found at 
+    https://feynrules.irmp.ucl.ac.be/wiki/BSMCharacterisation .
     '''
     
     name ='bsmc'
