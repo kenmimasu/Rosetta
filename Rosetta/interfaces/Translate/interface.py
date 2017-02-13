@@ -121,7 +121,7 @@ class TranslateInterface(RosettaInterface):
         else:
             new_param_card = args.output
             
-        if write_param_card(newbasis.card, new_param_card, 
+        if write_param_card(newbasis, new_param_card, 
                             overwrite=args.overwrite): 
             session.drawline()
             session.exit(0)

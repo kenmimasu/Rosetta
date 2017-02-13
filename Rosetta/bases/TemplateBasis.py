@@ -106,9 +106,9 @@ class TemplateBasis(basis.Basis):
 
 ################################################################################
 if __name__=='__main__':
+    pass
     # Testing area which can be executed when running `python TemplateBasis.py` 
-    instance = TemplateBasis(param_card='../Cards/param_card_TemplateBasis.dat')
-    instance.write_param_card('test_template.dat')
+    # instance = TemplateBasis(param_card='../Cards/param_card_TemplateBasis.dat')
     # inputs = instance.eHDECAY_inputs()
     # print eHDECAY(inputs)
     

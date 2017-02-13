@@ -1,6 +1,8 @@
 from .. import session
-import checkers as check
+from .. import SLHA
 from ..errors import TranslationPathError
+from ..constants import input_names
+import checkers as check
 
 def translate(basis, target=None, cache=True, avoid_cache = False, 
                       minimal=False): 
@@ -53,9 +55,6 @@ def translate(basis, target=None, cache=True, avoid_cache = False,
     # perform succesive translations, checking for  
     # required SM inputs/masses along the way
     current = basis
-    
-    # required_inputs = current.required_inputs
-    # required_masses = current.required_masses
 
     # ensure required inputs are present
     check.sminputs(current, current.required_inputs)
@@ -75,15 +74,17 @@ def translate(basis, target=None, cache=True, avoid_cache = False,
 
         instance = bases[trgt](dependent=True, flavor='general')
         
-        # update new basis instance with non-EFT blocks, decays
-        all_coeffs = (current.blocks.keys() + current.flavored.keys())
-        get_other_blocks(instance, current.card, all_coeffs)
         
-        message = 'translation ({} -> {})'.format(current.name, 
-                                                  instance.name)
+        message = 'translation ({} -> {})'.format(current.name, instance.name)
         session.verbose(message)
         
-        new = translate_function(current, instance)
+        new = translate_function(current, instance)        
+        
+        # update new basis instance with non-EFT blocks, decays
+        all_coeffs = (current.blocks.keys() + current.flavored.keys())
+        get_other_blocks(new, current,
+                         ignore = all_coeffs+[current.inputs_blockname] )
+                         # ignore = all_coeffs)
         
         if (minimal and new.name == target):
             current = new
@@ -92,11 +93,12 @@ def translate(basis, target=None, cache=True, avoid_cache = False,
         message = '{}'.format(instance.__class__)
         # checks & calculates dependent parameters
         session.verbose('    Checking required SM inputs '
-                        'for "{}"'.format(new.name))
-        # new.check_sminputs(new.required_inputs, message=message)
+                        'for "{}"'.format(new.name))        
+
         check.sminputs(new, new.required_inputs, message=message)
         session.verbose('    Checking for required masses '
                         'for "{}"'.format(new.name))
+
         check.masses(new, new.required_masses, message=message)
         session.verbose('    Checking EFT coefficients '
                         'for "{}"'.format(new.name))
@@ -128,9 +130,10 @@ def translate(basis, target=None, cache=True, avoid_cache = False,
         
     return current
 
-
-def get_other_blocks(basis, card, ignore):
+def get_other_blocks(basis, basis_in, ignore=[]):
     ignore = [x.lower() for x in ignore] 
+    
+    card = basis_in.card
     
     other_blocks, other_matrices = {}, {}
     for k, v in card.blocks.iteritems():
@@ -153,12 +156,44 @@ def get_other_blocks(basis, card, ignore):
     
     if card.has_block('mass'):
         basis.mass=basis.card.blocks['mass']
-    if card.has_block(basis.inputs_blockname):
-        basis.inputs=basis.card.blocks[basis.inputs_blockname]
         
+    if card.has_block(basis_in.inputs_blockname):
+        theblock = gen_input_block(basis_in, basis)
+        basis.card.add_block(theblock)
+        basis.inputs=theblock
+
     basis.ckm = card.matrices['vckm']
     
+def gen_input_block(basis_in, basis_out):
+    '''
+    Returns an SLHA.NamedBlock instance with the correct name input_blockname 
+    as declared in the basis_out class and populates it with the input 
+    parameters from required_inputs. For each parameter, this will succeed 
+    either if the parameter is present in basis_in.inputs or if a 
+    @derived_input decorated function with the corresponding name is declared 
+    in basis_in. Otherwise nothing is done.
+    '''
+    theblock = SLHA.NamedBlock(name=basis_out.inputs_blockname)
+    
+    # dictionary of derived inputs and function objects that return value of
+    # said input parameter
+    derived_inputs = {i._derived_input:i for i in 
+                      basis_in.__class__.__dict__.values() 
+                      if hasattr(i,'_derived_input')}
+                      
+    for k in basis_out.required_inputs:
+        name = input_names[k]
 
+        if name in derived_inputs:
+            val = derived_inputs[name](basis_in)
+        else:
+            val = basis_in.inputs.get(name, default = None)
+        
+        if val is not None:
+            theblock.new_entry(k, val, name=name)
+    
+    return theblock
+    
 def expand_matrices(basis):
     '''
     Special function to populate redundant elements of matrix blocks when 

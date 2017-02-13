@@ -66,9 +66,10 @@ def read_param_card(basis, SLHAcard = None):
     # Deletes redundant elements of hermitian matrices
     # basis.reduce_hermitian_matrices()
 
-def write_param_card(card, filename, overwrite=False):
+def write_param_card(basis, filename, overwrite=False):
     '''Write contents of card to filename'''
-
+    
+    card = basis.card
     dec_preamble = ('\n###################################\n'
                 + '## DECAY INFORMATION\n'
                 + '###################################\n')
@@ -111,10 +112,13 @@ def write_param_card(card, filename, overwrite=False):
         carry_on=True
     
     if carry_on:
-        special_blocks = ['loop','mass',basis.inputs_blockname,'yukawa','vckm','basis']
+        special_blocks = ['loop', 'mass', basis.inputs_blockname, 
+                          'yukawa', 'vckm', 'basis']
         coefforder = SLHA.sortblocks(card, ignore = special_blocks)
+        
         card.write(filename, blockorder=special_blocks + coefforder,
                                      preamble=card_preamble)
+                                     
         session.log('Wrote "{}".'.format(filename))
         session.log('')
         

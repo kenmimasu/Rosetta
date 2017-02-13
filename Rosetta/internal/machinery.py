@@ -68,12 +68,33 @@ for bname, module in modules.iteritems():
 if not bases: raise BasesError('No valid basis implementations found.')
 # Build dictionary of all basis classes and their implemented translation 
 # functions, this graph will be fed into djik()
-translations = {}
-for basis, instance in bases.iteritems():
-    functions = [i for i in instance.__dict__.values() 
-                 if hasattr(i,'_target')]
-    tmap = {f._target:f for f in functions if f._target in bases}
-    translations[basis] = tmap
+# translations = {}
+# for basis, bclass in bases.iteritems():
+#     to_functions = [i for i in bclass.__dict__.values()
+#                     if hasattr(i,'_target')]
+#     tmap = {f._target:f for f in functions if f._target in bases}
+#     translations[basis] = tmap
+
+translations = {b:{} for b in bases.keys()}
+for basis, bclass in bases.iteritems():
+    to_functions = [i for i in bclass.__dict__.values() 
+                    if hasattr(i,'_target')]
+                    
+    for f in to_functions:
+        if f._target in bases:
+            translations[basis][f._target] = f
+    
+    from_functions = [i for i in bclass.__dict__.values() 
+                    if hasattr(i,'_source')]
+                    
+    for f in from_functions:
+        if f._source in bases:
+            translations[f._source][basis] = f
+    # tmap = {f._target:f for f in functions if f._target in bases}
+    # translations[basis] = tmap
+    
+# print translations
+# include also 
 
 relationships = {k:djik(translations, k) for k in translations}
 

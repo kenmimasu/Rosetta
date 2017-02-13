@@ -70,7 +70,7 @@ def sminputs(basis, required_inputs, message='Rosetta'):
             msg = ('Block "{}" not found. Assume default values for '
                    'required inputs?\n    Required inputs: {}').format(
                    basis.inputs_blockname, input_list)
-            
+
             session.warnings.warn(msg, MissingBlockWarning)
 
             carry_on = session.query('    Continue with default values '\

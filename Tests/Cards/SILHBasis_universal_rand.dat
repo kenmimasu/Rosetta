@@ -1,7 +1,7 @@
 ################################################################################
 ######################## ROSETTA: SILH BASIS INPUT CARD ########################
 #### See Eur.Phys.J. C75 (2015) 12, 583 (arXiv:1508.05895) for more details ####
-###################### GENERATED WED OCT 19 15:43:07 2016 ######################
+###################### GENERATED MON FEB 13 18:09:19 2017 ######################
 ################################################################################
 
 BLOCK mass # 
@@ -58,133 +58,133 @@ BLOCK basis #
     1    silh # translated basis
 
 BLOCK SBx4F # 
-    1    +5.67119e-01 # sll1111
-    2    +9.56370e-02 # sll1133
-    3    +5.85168e-01 # sll1331
-    4    +7.48618e-01 # sll2332
-    5    -5.83421e-01 # sle1111
-    6    +7.76828e-01 # sle1122
-    7    +1.49073e-01 # sle2211
-    8    -9.22939e-01 # sle1133
-    9    +4.62996e-01 # sle3311
-    10   -2.68747e-02 # see1111
-    11   +5.52636e-01 # see1122
-    12   +2.49158e-01 # see1133
+    1    -3.09250e-01 # sll1111
+    2    -3.54254e-03 # sll1133
+    3    +5.72954e-01 # sll1331
+    4    +5.49032e-01 # sll2332
+    5    -5.05756e-01 # sle1111
+    6    -7.07879e-01 # sle1122
+    7    +3.53697e-01 # sle2211
+    8    -5.08104e-01 # sle1133
+    9    +2.24326e-01 # sle3311
+    10   +4.19516e-01 # see1111
+    11   -2.65840e-01 # see1122
+    12   -8.04922e-01 # see1133
 
 BLOCK SBxH4D2 # 
-    1    -1.84010e-01 # sH
-    2    -6.33014e-02 # sT
+    1    -7.78626e-01 # sH
+    2    +3.50451e-01 # sT
 
 BLOCK SBxH6 # 
-    1    -6.23905e-01 # s6
+    1    -5.97754e-01 # s6
 
 BLOCK SBxV2H2 # 
-    1    -2.12974e-01 # sg
-    2    +3.68988e-02 # sa
-    3    -3.81848e-01 # sW
-    4    -5.02309e-01 # sB
-    5    +2.59976e-01 # sHW
-    6    +6.11353e-02 # sHB
-    7    -5.22144e-01 # s2W
-    8    +8.39425e-01 # s2B
-    9    -7.71761e-04 # s2G
-    10   -1.01732e-01 # tsg
-    11   -3.14430e-01 # tsa
-    12   -4.49360e-01 # tsHW
-    13   +3.83818e-02 # tsHB
+    1    +4.77729e-01 # sg
+    2    +5.49713e-01 # sa
+    3    -4.27802e-01 # sW
+    4    -5.01490e-01 # sB
+    5    -7.35308e-01 # sHW
+    6    -6.25703e-01 # sHB
+    7    +3.88019e-01 # s2W
+    8    +9.38022e-01 # s2B
+    9    -2.46180e-01 # s2G
+    10   -1.26374e-01 # tsg
+    11   +8.28797e-01 # tsa
+    12   -5.52129e-01 # tsHW
+    13   +2.49798e-01 # tsHB
 
 BLOCK SBxV3D3 # 
-    1    -8.78717e-01 # s3W
-    2    +5.79715e-01 # s3G
-    3    +1.91158e-01 # ts3W
-    4    -3.80508e-01 # ts3G
+    1    +8.72779e-02 # s3W
+    2    -4.65635e-02 # s3G
+    3    +4.63594e-01 # ts3W
+    4    +7.59181e-01 # ts3G
 
 BLOCK SBxd
-    1   1    +6.76324e-02 # Rsd1x1
+    1   1    -9.91748e-01 # Rsd1x1
 
 BLOCK IMSBxd
-    1   1    +5.18841e-01 # Isd1x1
+    1   1    -3.30796e-01 # Isd1x1
 
 BLOCK SBxdB
-    1   1    -2.75594e-01 # RsdB1x1
+    1   1    +2.20274e-01 # RsdB1x1
 
 BLOCK IMSBxdB
-    1   1    +6.41451e-01 # IsdB1x1
+    1   1    -8.48259e-01 # IsdB1x1
 
 BLOCK SBxdG
-    1   1    +2.49529e-01 # RsdG1x1
+    1   1    +4.79359e-01 # RsdG1x1
 
 BLOCK IMSBxdG
-    1   1    +2.52919e-01 # IsdG1x1
+    1   1    -3.80382e-01 # IsdG1x1
 
 BLOCK SBxdW
-    1   1    +2.68475e-01 # RsdW1x1
+    1   1    -1.51155e-01 # RsdW1x1
 
 BLOCK IMSBxdW
-    1   1    -3.32627e-01 # IsdW1x1
+    1   1    -7.17747e-01 # IsdW1x1
 
 BLOCK SBxe
-    1   1    -6.85377e-01 # Rse1x1
+    1   1    -3.52834e-01 # Rse1x1
 
 BLOCK IMSBxe
-    1   1    +5.23610e-01 # Ise1x1
+    1   1    +1.79937e-01 # Ise1x1
 
 BLOCK SBxeB
-    1   1    -6.17387e-01 # RseB1x1
+    1   1    -2.31794e-01 # RseB1x1
 
 BLOCK IMSBxeB
-    1   1    +5.05408e-01 # IseB1x1
+    1   1    +1.44308e-01 # IseB1x1
 
 BLOCK SBxeW
-    1   1    +3.27639e-01 # RseW1x1
+    1   1    +9.02968e-01 # RseW1x1
 
 BLOCK IMSBxeW
-    1   1    +6.25323e-01 # IseW1x1
+    1   1    -4.23559e-01 # IseW1x1
 
 BLOCK SBxHd
-    1   1    -3.93646e-01 # RsHd1x1
+    1   1    +5.02288e-01 # RsHd1x1
 
 BLOCK SBxHe
-    1   1    +2.88766e-01 # RsHe1x1
+    1   1    +4.46271e-01 # RsHe1x1
 
 BLOCK SBxHpq
-    1   1    -1.26416e-02 # RsHpq1x1
+    1   1    -7.18573e-01 # RsHpq1x1
 
 BLOCK SBxHq
-    1   1    +2.17309e-01 # RsHq1x1
+    1   1    -7.20873e-02 # RsHq1x1
 
 BLOCK SBxHu
-    1   1    -7.54043e-01 # RsHu1x1
+    1   1    +9.25102e-01 # RsHu1x1
 
 BLOCK SBxHud
-    1   1    +9.93745e-01 # RsHud1x1
+    1   1    +9.63320e-01 # RsHud1x1
 
 BLOCK IMSBxHud
-    1   1    +9.59678e-01 # IsHud1x1
+    1   1    -3.45029e-01 # IsHud1x1
 
 BLOCK SBxu
-    1   1    -2.16713e-01 # Rsu1x1
+    1   1    -1.63360e-01 # Rsu1x1
 
 BLOCK IMSBxu
-    1   1    +8.37293e-01 # Isu1x1
+    1   1    +5.94493e-01 # Isu1x1
 
 BLOCK SBxuB
-    1   1    +5.37689e-01 # RsuB1x1
+    1   1    +5.20224e-01 # RsuB1x1
 
 BLOCK IMSBxuB
-    1   1    -1.89850e-01 # IsuB1x1
+    1   1    -7.14437e-01 # IsuB1x1
 
 BLOCK SBxuG
-    1   1    -9.04507e-01 # RsuG1x1
+    1   1    -9.81353e-01 # RsuG1x1
 
 BLOCK IMSBxuG
-    1   1    +7.49577e-01 # IsuG1x1
+    1   1    +4.19871e-01 # IsuG1x1
 
 BLOCK SBxuW
-    1   1    +2.62981e-01 # RsuW1x1
+    1   1    +6.80274e-01 # RsuW1x1
 
 BLOCK IMSBxuW
-    1   1    -7.98228e-01 # IsuW1x1
+    1   1    -2.86445e-01 # IsuW1x1
 
 #        PDG        Width
 DECAY    23         +2.49520e+00 # 

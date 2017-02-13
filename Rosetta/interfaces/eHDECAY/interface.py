@@ -78,7 +78,7 @@ class eHDECAYInterface(RosettaInterface):
                 basis_instance.card.decays[25] = decayblock
             session.drawline()
 
-            if write_param_card(basis_instance.card, args.output,
+            if write_param_card(basis_instance, args.output,
                                 overwrite=args.overwrite):
                 session.drawline()
                 session.exit(0)
