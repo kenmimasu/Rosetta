@@ -52,6 +52,17 @@ class HiggsPO(basis.Basis):
     @basis.derived_input
     def Gf(self):
         return 1./sqrt(2.)/self.inputs['vF']**2
+    
+    @basis.derived_input
+    def vF(instance):
+        '''
+        Attempt to derive the value of vF input from the Gf input parameter 
+        of a basis translating to HiggsPO.
+        '''
+        try:
+            return sqrt( 1./sqrt(2.)/instance.inputs['Gf'] )
+        except:
+            return None
         
     @basis.translation('bsmc')
     def to_bsmc(self, instance):
@@ -60,7 +71,7 @@ class HiggsPO(basis.Basis):
         # aS, aEM, Gf = self.inputs['aS'], self.inputs['aEWM1'], self.inputs['Gf']
         H = self
         B = instance
-
+        
         # Gauge-Higgs
         B['dCz'] = H['kZZ']-1.
         
@@ -107,21 +118,21 @@ class HiggsPO(basis.Basis):
         # complex phase parameters do not enter diagonals, dGLhwl is Hermitian.
         
         # Z-f-f coupling deviation
-        B['BCxdGLze'][1,1]=H['gZeL']/sqrt(gw2+gp2)-(s2w - 1./2.)
-        B['BCxdGLze'][2,2]=H['gZmuL']/sqrt(gw2+gp2)-(s2w - 1./2.)
-        B['BCxdGLze'][3,3]=H['gZtauL']/sqrt(gw2+gp2)-(s2w - 1./2.)
+        B['BCxdGLze'][1,1]=H['gZeL'] - (s2w - 1./2.)
+        B['BCxdGLze'][2,2]=H['gZmuL'] - (s2w - 1./2.)
+        B['BCxdGLze'][3,3]=H['gZtauL'] - (s2w - 1./2.)
         
-        B['BCxdGRze'][1,1]=H['gZeR']/sqrt(gw2+gp2) + s2w 
-        B['BCxdGRze'][2,2]=H['gZmuR']/sqrt(gw2+gp2) + s2w 
-        B['BCxdGRze'][3,3]=H['gZtauR']/sqrt(gw2+gp2) + s2w 
+        B['BCxdGRze'][1,1]=H['gZeR'] - s2w  
+        B['BCxdGRze'][2,2]=H['gZmuR'] - s2w 
+        B['BCxdGRze'][3,3]=H['gZtauR'] - s2w  
         
         for i in (1,2,3):
-            B['BCxdGLzv'][i,i]=H['gZv']/sqrt(gw2+gp2) + 1./2.
+            B['BCxdGLzv'][i,i]=H['gZv'] - 1./2.
         
         # W-f-f coupling deviation
-        B['BCxdGLwl'][1,1]=H['gWe']*sqrt(2./gw2)-1.
-        B['BCxdGLwl'][2,2]=H['gWmu']*sqrt(2./gw2)-1.
-        B['BCxdGLwl'][3,3]=H['gWtau']*sqrt(2./gw2)-1.
+        B['BCxdGLwl'][1,1]=H['gWe']-1.
+        B['BCxdGLwl'][2,2]=H['gWmu']-1.
+        B['BCxdGLwl'][3,3]=H['gWtau']-1.
         
         # NOTE: current UFO version does not contain any of the couplings
         # involving quarks analogous to the above.
@@ -129,19 +140,19 @@ class HiggsPO(basis.Basis):
         # Yukawa
         B['BCxdYd'][3,3] = sqrt( (H['kb']-1.)**2 + (H['lb'])**2 )
         
-        B['BCxSd'][3,3] = H['lb']/B['BCxdYd'][3,3]
+        B['BCxSd'][3,3] = 0. if B['BCxdYd'][3,3]==0. else H['lb']/B['BCxdYd'][3,3]
                 
         B['BCxdYu'][2,2] = sqrt( (H['kc']-1.)**2 + (H['lc'])**2 )
         
-        B['BCxSu'][2,2] = H['lc']/B['BCxdYu'][2,2]
+        B['BCxSu'][2,2] = 0. if B['BCxdYu'][2,2]==0. else H['lc']/B['BCxdYu'][2,2]
 
         B['BCxdYe'][3,3] = sqrt( (H['ktau']-1.)**2 + (H['ltau'])**2 )
         
-        B['BCxSe'][3,3] = H['ltau']/B['BCxdYe'][3,3]
+        B['BCxSe'][3,3] = 0. if B['BCxdYe'][3,3]==0. else H['ltau']/B['BCxdYe'][3,3]
         
         B['BCxdYe'][2,2] = sqrt( (H['kmu']-1.)**2 + (H['lmu'])**2 )
         
-        B['BCxSe'][2,2] = H['lmu']/B['BCxdYe'][3,3]
+        B['BCxSe'][2,2] = 0. if B['BCxdYe'][3,3]==0. else H['lmu']/B['BCxdYe'][3,3]
         
         return B
 
@@ -208,26 +219,27 @@ class HiggsPO(basis.Basis):
         
         
         # Z-f-f coupling
-        H['gZeL'] = sqrt(gw2+gp2)*(- 1./2. + s2w + B['BCxdGLze'][1,1].real)
         
-        H['gZmuL'] = sqrt(gw2+gp2)*(- 1./2. + s2w + B['BCxdGLze'][2,2].real)
+        H['gZeL'] = (- 1./2. + s2w + B['BCxdGLze'][1,1].real)
         
-        H['gZtauL'] =sqrt(gw2+gp2)*( - 1./2. + s2w + B['BCxdGLze'][3,3].real)
+        H['gZmuL'] = (- 1./2. + s2w + B['BCxdGLze'][2,2].real)
         
-        H['gZeR'] = sqrt(gw2+gp2)*(s2w + B['BCxdGRze'][1,1].real)
+        H['gZtauL'] =( - 1./2. + s2w + B['BCxdGLze'][3,3].real)
         
-        H['gZmuR'] = sqrt(gw2+gp2)*(s2w + B['BCxdGRze'][2,2].real)
+        H['gZeR'] = (s2w + B['BCxdGRze'][1,1].real)
         
-        H['gZtauR'] = sqrt(gw2+gp2)*(s2w + B['BCxdGRze'][3,3].real)
+        H['gZmuR'] = (s2w + B['BCxdGRze'][2,2].real)
         
-        H['gZv'] = sqrt(gw2+gp2)*(1./2. + B['BCxdGLze'][1,1].real)
+        H['gZtauR'] = (s2w + B['BCxdGRze'][3,3].real)
+        
+        H['gZv'] = (1./2. + B['BCxdGLze'][1,1].real)
         
         # W-f-f coupling
-        H['gWe'] = sqrt(gw2)/sqrt(2.)*(1./2. + B['BCxdGLwl'][1,1].real)
+        H['gWe'] = (1. + B['BCxdGLwl'][1,1].real)
         
-        H['gWmu'] = sqrt(gw2)/sqrt(2.)*(1./2. + B['BCxdGLwl'][2,2].real)
+        H['gWmu'] = (1. + B['BCxdGLwl'][2,2].real)
         
-        H['gWtau'] = sqrt(gw2)/sqrt(2.)*(1./2. + B['BCxdGLwl'][3,3].real)
+        H['gWtau'] = (1. + B['BCxdGLwl'][3,3].real)
         
         # Yukawa
         

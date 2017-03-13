@@ -74,7 +74,6 @@ def translate(basis, target=None, cache=True, avoid_cache = False,
 
         instance = bases[trgt](dependent=True, flavor='general')
         
-        
         message = 'translation ({} -> {})'.format(current.name, instance.name)
         session.verbose(message)
         
@@ -175,17 +174,25 @@ def gen_input_block(basis_in, basis_out):
     '''
     theblock = SLHA.NamedBlock(name=basis_out.inputs_blockname)
     
-    # dictionary of derived inputs and function objects that return value of
+    # dictionaries of derived inputs and function objects that return value of
     # said input parameter
-    derived_inputs = {i._derived_input:i for i in 
+    # input basis
+    derived_inputs_in = {i._derived_input:i for i in 
                       basis_in.__class__.__dict__.values() 
                       if hasattr(i,'_derived_input')}
                       
+    # target basis
+    derived_inputs_out = {i._derived_input:i for i in 
+                      basis_out.__class__.__dict__.values() 
+                      if hasattr(i,'_derived_input')}
+    
     for k in basis_out.required_inputs:
         name = input_names[k]
 
-        if name in derived_inputs:
-            val = derived_inputs[name](basis_in)
+        if name in derived_inputs_in:
+            val = derived_inputs_in[name](basis_in)
+        elif name in derived_inputs_out:
+            val = derived_inputs_out[name](basis_in)
         else:
             val = basis_in.inputs.get(name, default = None)
         

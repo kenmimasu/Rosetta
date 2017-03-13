@@ -1,7 +1,7 @@
 #!/bin/bash
 EXEC=../Rosetta/bin/rosetta
 
-for BASIS in HiggsBasis SILHBasis WarsawBasis HISZ TemplateBasis;
+for BASIS in HiggsBasis SILHBasis WarsawBasis HISZ TemplateBasis HiggsCharacterisation HiggsPO;
     do NAME=`echo ${BASIS/Basis/}  | tr "[:upper:]" "[:lower:]"`;
     for FLAV in general diagonal universal;
         do $EXEC defaultcard -w -o ../Rosetta/Cards/${BASIS}_${FLAV}.dat --flavor $FLAV $NAME;

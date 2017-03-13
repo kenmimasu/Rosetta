@@ -192,9 +192,9 @@ class BSMCharacterisation(basis.Basis):
         temp = H.__class__(dependent=True)
         for coeff in H.independent:
             temp[coeff] = H[coeff]
-        temp.mass = H.mass
-        temp.inputs = H.inputs
-        temp.ckm = H.ckm
+        temp.mass = B.mass
+        temp.inputs = B.inputs
+        temp.ckm = B.ckm
         temp.calculate_dependent()
         
         msg = ('dependent coefficient "{}" set to a value ({}) different from '
