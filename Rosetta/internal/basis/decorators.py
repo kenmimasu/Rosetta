@@ -1,4 +1,4 @@
-from ..errors import TranslationError
+from ..errors import TranslationError, DerivedInputWarning
 
 __doc__ = '''
 The translation decorator used to tag a translation function in a Rosetta basis 
@@ -64,8 +64,12 @@ def derived_input(func):
             return func(*args,**kwargs)
         except Exception as e:
             import traceback
-            raise TranslationError(traceback.format_exc())
-
+            from .. import session
+            msg = ('Derived input function ' + func.__name__ 
+                   + '\n' + traceback.format_exc())
+            session.warnings.warn(msg, DerivedInputWarning)
+            return None
+            
     labelled.__name__ = func.__name__
     labelled._derived_input = func.__name__
 

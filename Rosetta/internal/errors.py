@@ -45,4 +45,10 @@ class TranslationWarning(RosettaWarning):
     '''Warning class for basis translations.'''
     nmax_before_suppress = 5
     pass
+
+class DerivedInputWarning(RosettaWarning):
+    '''Warning class for basis translations.'''
+    nmax_before_suppress = 5
+    pass
+
 ################################################################################

@@ -56,13 +56,10 @@ class HiggsPO(basis.Basis):
     @basis.derived_input
     def vF(instance):
         '''
-        Attempt to derive the value of vF input from the Gf input parameter 
+        Derive the value of vF input from the Gf input parameter 
         of a basis translating to HiggsPO.
         '''
-        try:
-            return sqrt( 1./sqrt(2.)/instance.inputs['Gf'] )
-        except:
-            return None
+        return sqrt( 1./sqrt(2.)/instance.inputs['Gf'] )
         
     @basis.translation('bsmc')
     def to_bsmc(self, instance):

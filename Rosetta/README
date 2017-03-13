@@ -12,7 +12,7 @@
 
 ################################################################################
 
-Version 2.1, December 2016
+Version 2.1, March 2017
 
 ################################################################################
 0)  Description
@@ -89,6 +89,7 @@ note (LHCHXSWG-INT-2015-001).
 10.3) Higgs signal strengths
 10.4) Lilith interface
 10.5) EWPO interface
+10.6) Double Higgs production at the LHC
 ################################################################################
 1) Contact
 ################################################################################
@@ -113,6 +114,7 @@ Rosetta/                             # Top-level python package
 |   |-> __init__.py
 |   |-> BSMCharacterisation.py
 |   |-> HiggsBasis.py
+|   |-> HiggsPO.py
 |   |-> HISZ.py
 |   |-> SILHBasis.py
 |   |-> TemplateBasis.py
@@ -181,6 +183,10 @@ BSMCharacterisation.py               # General modified interaction Lagrangian
                     
 HiggsBasis.py                        # The Higgs Basis as defined in the HXSWG 
                                      # draft. 
+
+HiggsPO.py                           # Higgs PseudoObservable description   
+                                     # compatible with the HiggsPO UFO model.
+                                     # see http://www.physik.uzh.ch/data/HiggsPO
                     
 WarsawBasis.py                       # The Warsaw Basis as defined in 
                                      # arXiv:1008.4884 and the HXSWG draft.
@@ -225,13 +231,14 @@ will bring up the command line documentation:
  >> 
  >> Arguments:
  >>   INTERFACE
- >>     translate      Translate in SLHA input card from one basis to another
+ >>     translate      Translate an SLHA input card from one basis to another
+ >>     defaultcard    Generate an SLHA parameter card for an implemented basis
+ >>     dihiggs        Double Higgs production at the LHC
+ >>     ehdecay        Standalone eHDECAY interface
+ >>     ewpo           EWPO interface
  >>     lilith         Standalone Lilith interface
  >>     signalstrengths
  >>                    Standalone SignalStrengths interface
- >>     ewpo           EWPO interface
- >>     defaultcard    Generate a parameter card for an implemented basis
- >>     ehdecay        Standalone eHDECAY interface
 
 The desired interface the user would like to call is supplied as an argument to 
 the rosetta tool which will then invoke the corresponding sub-parser for 
@@ -243,7 +250,9 @@ The translate interface takes an SLHA-style param card (see sample
 cards provided in Cards/ directory) in a particular basis and outputs a new 
 card in the specified basis (default is BSM Characterisation). 
 
-Command line documentation:
+ >> bin/rosetta translate -h
+
+brings up the command line documentation:
 
  >> usage: rosetta translate [-h] [-o OUTPUT] [--ehdecay] [--dependent] [--target]
  >>                          [--flavor] [-w]
@@ -634,33 +643,50 @@ independent.
 The input card for this example containing the independent parameters would 
 look like:
 
-    block letters
-      1  0. # A
-      2  0. # B
-      3  0. # C
-      
-    block numbers
-      1  0. # one
-      2  0. # two
-      
-    block MYxMAT
-      1  1  0. # Rmat1x1
-      1  2  0. # Rmat1x2
-      1  3  0. # Rmat1x3
-      2  2  0. # Rmat2x2
-      2  3  0. # Rmat2x3
-      3  3  0. # Rmat3x3
-     
-    block IMMYxMAT
-      1  1  0. # Imat1x1
-      1  2  0. # Imat1x2
-      1  3  0. # Imat1x3
-      2  2  0. # Imat2x2
-      2  3  0. # Imat2x3
-      3  3  0. # Imat3x3
+    >> block letters
+    >>   1  0. # A
+    >>   2  0. # B
+    >>   3  0. # C
+    >>   
+    >> block numbers
+    >>   1  0. # one
+    >>   2  0. # two
+    >>   
+    >> block MYxMAT
+    >>   1  1  0. # Rmat1x1
+    >>   1  2  0. # Rmat1x2
+    >>   1  3  0. # Rmat1x3
+    >>   2  2  0. # Rmat2x2
+    >>   2  3  0. # Rmat2x3
+    >>   3  3  0. # Rmat3x3
+    >>  
+    >> block IMMYxMAT
+    >>   1  1  0. # Imat1x1
+    >>   1  2  0. # Imat1x2
+    >>   1  3  0. # Imat1x3
+    >>   2  2  0. # Imat2x2
+    >>   2  3  0. # Imat2x3
+    >>   3  3  0. # Imat3x3
 
 Only the non-redundant elements of a matrix should be defined in the input card 
 e.g. the upper triangle for the hermitian matrix 'MYxMAT'.
+
+A few optional data members are also possible:
+
+'inputs_blockname' can be assigned a string value if you want to give the SM 
+input block a different name from 'sminputs'
+
+If your SLHA blocks employ a non-trivial numbering convention, 'numbers' can be 
+set to a dictionary reflecting the non standard numberings of parameters in the 
+block.
+
+    >> numbers = {'A':11, 'B':12, 'C':13}
+
+Sticking to the previously demonstrated 'MyBasis' example, the parameters 'A',
+'B' and 'C' will now be numbered by 11, 12 and 13 respectively rather than the 
+default 1, 2 and 3.
+
+8.1) Translation functions
 
 Rosetta differentiates from general utility functions and translation 
 functions using the "translation" decorator. Any function designed to take you 
@@ -668,9 +694,14 @@ to another existing basis implementation should be decorated with the
 "translation" decorator with an argument corresponding to the name of the 
 target basis. This name should match the unique name of an existing basis 
 implementation also contained in the Rosetta root directory. Below would be 
-example of a translation function from our example to the Warsaw Basis.
+example of a translation function from our example to the Warsaw Basis. 
+Note that the basis module must be imported in order to access this decorator.
 
-    >> @Basis.translation('warsaw') # identifies as translator to warsaw 
+    >> from ..internal import basis
+    .
+    .
+    .
+    >> @basis.translation('warsaw') # identifies as translator to warsaw 
     >> def mytranslation(self, instance):
     >>     instance['cWW'] = 10.
     >>     instance['cpHl11'] = self['myparam']
@@ -681,12 +712,50 @@ second argument alongside the default "self" argument for a class method. In
 this way, Rosetta can universally and automatically detect and use intended 
 translation functions.
 
+8.2) Input parameters
+
+Another useful "derived_input" decorator is defined to implement the derivation 
+of other SM input parameters that are not required by a given basis class but 
+may be required by the target basis to which one wishes to translate. 
+Alternatively one can also account for the inverse case where an input 
+parameter of the implemented basis class can be derived from existing values of 
+a different set input parameters in the basis from which one wants to translate.
+One can define member functions of the basis class with names matching an 
+existing SLHA SM input parameter {'Gf', 'aEWM1', 'MZ', ...} in order to specify 
+the value it should take in a target basis as a function of the input 
+parameters of the basis class.
+
+    >> @basis.derived_input
+    >> def Gf(self):
+    >>     return 1./sqrt(2.)/self.inputs['vF']**2
+    >>
+    >> @basis.derived_input
+    >> def vF(instance):
+    >>     try:
+    >>         return sqrt( 1./sqrt(2.)/instance.inputs['Gf'] )
+    >>     except:
+    >>         return None
+    
+In the first case, the 'vF' input parameter (EW vev) is defined in the basis 
+class. Its value can be derived from the 'Gf' input parameter of the basis 
+class from which one wants to map. The latter case corresponds to the inverse 
+scenario where one is mapping from the basis class and can derive the value of 
+the Fermi constant to assign to the target basis instance.
+In both cases, Rosetta will attempt to use any such decorated function to 
+construct the SM input block for the target basis instance, catching any 
+exceptions raised by the functions and raising an associated 
+'DerivedInputWarning'. For every required input parameter in the target basis, 
+Rosetta will see if said input has been associate a derived_input function 
+first in the input basis class and second in the target basis class.
+
 Additional modifications to e.g. SM input parameters or particle masses should 
 be implemented in the modify_inputs() function.
 
     >> def modify_inputs(self):
     >>     self.mass[24]= 100.
-    
+
+8.3) Basis class conventions
+
 Any python module saved in the root directory of the Rosetta package is 
 assumed to be a basis implementation. Furthermore, the class name of the 
 basis implementation MUST be the same as the file name of the python 
@@ -967,6 +1036,53 @@ Command line documentation:
  >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
  >>               universal (default = general).
 
+################################################################################
+10.6) Double Higgs production at the LHC (work in progress)
+################################################################################
+
+interfaces/DiHiggs/            # Double Higgs interface Package
+|-> __init__.py
+|-> dihiggs.py                 # main function
+|-> errors.py                  # package specific errors
+|-> interface.py               # rosetta command line interface implementation
+|-> production_xs.py           # numerical evaluation of dihiggs production 
+                               # cross section and branching fractions
+|-> README                     # A copy of the contents of this section
+
+Generate predictions for dihiggs production cross sections and branching fractions 
+at the LHC for a general point in EFT parameter space. Restricted to total rates 
+based on a numerical formula (See the Les Houches 2015 
+contribution for more details) but will soon be upgraded to differential 
+distributions. 
+
+A translation path to the Higgs Basis must be available.
+
+Command line documentation:
+
+ >> usage: rosetta dihiggs [-h] [--params] [--sqrts] [--flavor FLAVOR]
+ >>                        [--channel CHANNEL [CHANNEL ...]]
+ >>                        PARAMCARD
+ >> 
+ >> Compute production cross section times branching fractions for double Higgs
+ >> production at the LHC
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD             Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help            show this help message and exit
+ >>   --params              Also print out values of effective Lagrangian
+ >>                         parameters
+ >>   --sqrts               Specify pp collider centre-of mass energy in TeV.
+ >>                         Allowed values are: 7, 8, 13, 14, 100 (default = 8).
+ >>   --flavor FLAVOR       Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general)
+ >>   --channel CHANNEL [CHANNEL ...]
+ >>                         Specify one or more decay channels. Allowed values
+ >>                         are: all, 2b2tau, 4Z, 2mu2Z, 2tau2W, 2mu2gamma,
+ >>                         4gamma, 2b2mu, 2W2Z, 2mu2W, 4W, 2mu2tau, 2b2Z,
+ >>                         2gamma2Z, 2b2W, 2gamma2W, 2b2gamma, 4tau, 2tau2gamma,
+ >>                         4b, 2tau2Z, 4mu (default = all)
 
 ################################################################################
 Rosetta: an operator basis translator for Standard Model effective field theory
