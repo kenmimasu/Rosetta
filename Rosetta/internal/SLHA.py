@@ -591,8 +591,8 @@ class Decay(MutableMapping):
             raise TypeError( self.__class__.__name__ +
                          ' only accepts floats or values castable via float()' )
         if fval > 1.:
-            raise TypeError("SLHA Decay object for PID = {}. ".format(self.PID)+
-                            "Branching ratio > 1 encountered : {}".format(fval))
+            raise BRGTOneError("SLHA Decay object for PID = {}. ".format(self.PID)+
+                               "Branching ratio > 1 encountered : {}".format(fval))
         return fval
     
     def __init__(self, PID, total, 
@@ -638,11 +638,9 @@ class Decay(MutableMapping):
     def __setitem__(self, key, value):
         self._data[self.__checkkey__(key)] = self.__checkval__(value)
         self._BRtot+=self.__checkval__(value)
-        if self._BRtot > 1.:
-            print '!!! ERROR !!!'
-            print self
-            raise ValueError("SLHA Decay object for PID = {}. ".format(self.PID)
-                            + "Sum of branching ratios > 1!")  
+        # if self._BRtot > 1.:
+        #     raise BRGTOneError("SLHA Decay object for PID = {}. ".format(self.PID)
+        #                         + "Sum of branching ratios > 1!") 
                                       
     def __getitem__(self, key):
         return self._data[self.__checkkey__(key)]
@@ -951,8 +949,7 @@ class Card(object):
             cblk = ctype(reblk, imblk)
             self.matrices[rekey] = cblk
                     
-class SLHAError(Exception): # Custom error name 
-    pass
+
 
 def sortblocks(card, ignore = []):
     normal_blocks = sorted([k for k in card.blocks.keys() 
@@ -1170,6 +1167,14 @@ class SLHAError(Exception):
 
 class SLHAIOError(SLHAError):
     '''IOError'''
+    pass
+
+class SLHADecayBlockError(SLHAError):
+    '''SLHA Decay Block Error'''
+    pass
+
+class BRGTOneError(SLHADecayBlockError):
+    '''SLHA Decay Block Error'''
     pass
     
 if __name__=='__main__':
