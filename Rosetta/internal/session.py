@@ -207,17 +207,20 @@ def showwarning(message, category, filename, lineno, line=None):
         warned[warning_name] += 1
     except KeyError:
         warned[warning_name] = 1
-    nmax = category.nmax_before_suppress
-    if (nmax is None) or warned[warning_name] < nmax:
-        log('')
-        log('    '+ warning_name +': '+str(message))
-        log('')
-    else:
-        if not settings.verbose:
-            once(('\n    More than {} {} logged, further warnings written to '
-                  'rosetta.supressed.log\n'.format(nmax, warning_name)))
+    try:
+        nmax = category.nmax_before_suppress
+        if (nmax is None) or warned[warning_name] < nmax:
+            log('')
+            log('    '+ warning_name +': '+str(message))
+            log('')
+        else:
+            if not settings.verbose:
+                once(('\n    More than {} {} logged, further warnings written to '
+                      'rosetta.supressed.log\n'.format(nmax, warning_name)))
+            verbose('    '+ warning_name +': '+str(message))
+    except AttributeError:
         verbose('    '+ warning_name +': '+str(message))
-    
+        
 warnings.showwarning = showwarning
 
 

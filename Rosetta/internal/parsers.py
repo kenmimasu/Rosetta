@@ -34,8 +34,14 @@ def set_subparsers(subparsers):
                                help = intr.helpstr, 
                                description = intr.description
                                )
-                                             
-        for args, kwargs in intr.parser_args.iteritems():
-            parsers[name].add_argument(*args, **kwargs)
+        if hasattr(intr, 'parser_args_order'):
+            for args in intr.parser_args_order:
+                parsers[name].add_argument(*args, **intr.parser_args[args])
+            for args, kwargs in intr.parser_args.iteritems():
+                if args not in intr.parser_args_order:
+                    parsers[name].add_argument(*args, **kwargs)
+        else:
+            for args, kwargs in intr.parser_args.iteritems():
+                parsers[name].add_argument(*args, **kwargs)
     
         parsers[name].set_defaults(interface = intr)

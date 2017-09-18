@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import numpy as np
 import os
 
@@ -12,7 +14,7 @@ from python.functions import AnalyticalReweighter
 #import AnalyticalReweighter
 
 import argparse
-parser = argparse.ArgumentParser(prog='TStest', description='Return the closest shape benchmark topoligy of a EFT point')
+parser = argparse.ArgumentParser(prog='TStest', description='Return the closest shape benchmark topology of a EFT point')
 
 # arguments to chose the (B)SM point in training and application
 parser.add_argument('--kl', type=float,    default=1.0, help='Benchmark to calculate the limit')

@@ -4,6 +4,7 @@ import os
 from ...internal import SLHA
 from ... import session, settings, implemented_bases
 from ..interface import RosettaInterface, allowed_flav
+from .production_xs import xsfb
 
 # Higgs decay channels
 h_channels = {'bb':(5,-5),'mumu':(13,-13), 'tautau':(15,-15), 
@@ -37,11 +38,17 @@ class DiHiggsInterface(RosettaInterface):
                    "for double Higgs production at the LHC")
 
     helpstr = ("Double Higgs production at the LHC")
-
+    
+    parser_args_order=[
+      ('--param_card',), ('--flavor',), ('--sqrts',), ('--channel',), 
+      ('--params',) ,('--kl',), ('--kt',), ('--c2',), ('--cg',), ('--c2g',)
+    ]
+    
     parser_args = {
-        ('param_card',):{
+        ('--param_card',):{
             'metavar':'PARAMCARD', 'type':str, 
-            'help':'Input parameter card.'
+            'help':'Input parameter card.',
+            'default':None
         },
         ('--sqrts',):{
             'type':int, 'choices':allowed_sqrts, 'default':8, 'metavar':'',
@@ -66,28 +73,64 @@ class DiHiggsInterface(RosettaInterface):
         ('--params',):{
             'action':'store_true',
             'help':('Also print out values of effective Lagrangian parameters')
+        },
+        ('--kl',):{
+            'type':float,
+            'help':'Value of kappa_lambda, Higgs self-coupling modifier',
+            'metavar':'KL',
+            'default':argparse.SUPPRESS,
+        },
+        ('--kt',):{
+            'type':float,
+            'help':'Value of kappa_top, Higgs-top coupling modifier',
+            'metavar':'KT',
+            'default':argparse.SUPPRESS,
+        },
+        ('--c2',):{
+            'type':float,
+            'help':'Value of c2, ggtt vertex',
+            'metavar':'C2',
+            'default':argparse.SUPPRESS,
+        },
+        ('--cg',):{
+            'type':float,
+            'metavar':'CG',
+            'help':'Value of cg, Hgg vertex',
+            'default':argparse.SUPPRESS,
+        },
+        ('--c2g',):{
+            'type':float,
+            'metavar':'C2G',
+            'help':'Value of c2g, HHgg vertex',
+            'default':argparse.SUPPRESS,
         }
-        # ('--ehdecay',):{
-        #     'action':'store_true',
-        #     'help':'Interface with eHDECAY for Higgs branching fractions.'
-        # }
-        # ('--no-ehdecay',):{
-        #     'action':'store_true',
-        #     'help':"Don't interface with eHDECAY for Higgs branching fractions."
-        # }
     }
 
     def __call__(self, args):
-        basis_instance = self.from_param_card(args.param_card,
+        from dihiggs import get_xs_and_br, get_dihiggs_params        
+        from AnalyticalReweighter import AnalyticalReweighter
+        from AnalyticalReweighter import reweighter_from_histogram_and_file
+        
+        # get effective lagrangian parameters from param_card
+        if args.param_card is not None: 
+            basis_instance = self.from_param_card(args.param_card,
                                               flavor=args.flavor)
         
-        BC_instance = basis_instance.translate(target='bsmc')  
-             
-        from dihiggs import get_xs_and_br, get_dihiggs_params
+            BC_instance = basis_instance.translate(target='bsmc')  
         
-        kl, kt, c2, cg, c2g = get_dihiggs_params(BC_instance)
+            kl, kt, c2, cg, c2g = get_dihiggs_params(BC_instance)
+                        
+        else:
+            # default values zero
+            kl, kt, c2, cg, c2g = 0., 0., 0., 0., 0.
         
-        xs, err, decays = get_xs_and_br(BC_instance, sqrts=args.sqrts)
+        # get effective lagrangian parameters from options 
+        # (will overwrite param_card ones)
+        if hasattr(args,'kl'):  kl = args.kl
+        if hasattr(args,'kt'):  kt  = args.kt 
+        if hasattr(args,'c2'):  c2  = args.c2 
+        if hasattr(args,'cg'):  cg  = args.cg 
+        if hasattr(args,'c2g'):  c2g = args.c2g
         
         
         session.drawline(text='dihiggs results', ignore_silent=True)
@@ -98,6 +141,8 @@ class DiHiggsInterface(RosettaInterface):
                             'c2 = {:.3e}, \ncg = {:.3e}, '
                             'c2g = {:.3e}\n').format(kl, kt, c2, cg, c2g))
         
+        xs, err =  xsfb(args.sqrts, kl, kt, c2, cg, c2g, error=True)
+        
         session.stdout('Cross section at {} TeV: {:.3e} fb'.format(args.sqrts, xs))
         session.stdout('')
         session.stdout('Uncertainties:')
@@ -106,26 +151,39 @@ class DiHiggsInterface(RosettaInterface):
         session.stdout('    alphaS +- {alphaS:.3e} , '.format(**err))
         session.stdout('    top mass +- {mtop:.3e} fb'.format(**err))
         session.stdout('')
-        session.stdout('Decay modes:')        
+        
+        ar = reweighter_from_histogram_and_file()
+        session.stdout('Calculating TS')
+        BM = ar.TS_test( kl, kt, c2, cg, c2g)
+        session.stdout('Closest benchmark is: {}'.format(BM))
         session.stdout('')
-        session.stdout('    channel       BR             xs x BR (fb)')
-        session.stdout('  -------------------------------------------')
-                
-        if 'all' in args.channel:
-            channels = hh_channels.keys()
-        else:
-            channels = args.channel
         
-        for ch in channels:
-            id1, id2 = hh_channels[ch]
+        if args.param_card is not None: 
+            from ..SignalStrengths.decay import decay
+            decays = decay(basis)
+            session.stdout('')        
+            session.stdout('Decay modes:')        
+            session.stdout('')
+            session.stdout('    channel       BR             xs x BR (fb)')
+            session.stdout('  -------------------------------------------')
+                    
+            if 'all' in args.channel:
+                channels = hh_channels.keys()
+            else:
+                channels = args.channel
             
-            BR = decays[id1]*decays[id2]
-            if id1!=id2: BR*=2.
-    
-            mustr = '    {:<10}    {:.3e}      {:.3e}'.format(ch, BR, xs*BR)
-        
-            session.stdout(mustr)
-        
+            for ch in channels:
+                id1, id2 = hh_channels[ch]
+                
+                BR = decays[id1]*decays[id2]
+                if id1!=id2: BR*=2.
+            
+                mustr = '    {:<10}    {:.3e}      {:.3e}'.format(ch, BR, xs*BR)
+            
+                session.stdout(mustr)
+        else:
+            session.stdout('No param card specified, decay modes not available.')
+            
         session.drawline()
         session.exit(0)
         

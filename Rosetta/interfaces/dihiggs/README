@@ -1,0 +1,57 @@
+################################################################################
+Rosetta: Double Higgs production at the LHC (work in progress)
+################################################################################
+
+interfaces/DiHiggs/            # Double Higgs interface Package
+|-> __init__.py
+|-> dihiggs.py                 # main functions
+|-> errors.py                  # package specific errors
+|-> interface.py               # rosetta command line interface implementation
+|-> production_xs.py           # numerical evaluation of dihiggs production 
+|                              # cross section and branching fractions
+|-> AnalyticalReweighter.py    # Benchmark/reweighting tool
+|-> README                     # A copy of the contents of this section
+
+Generate predictions for dihiggs production cross sections and branching fractions 
+at the LHC for a general point in EFT parameter space. Restricted to total rates 
+based on a numerical formula (See the Les Houches 2015 
+contribution for more details) but will soon be upgraded to differential 
+distributions. 
+The parameter space point can be specified by a parameter card in any Rosetta 
+basis or anomalous coupling values can be explicitly specified via optional 
+arguments. In the case of parameter card input, a translation path to the Higgs 
+Basis must be available.
+The module also find the closest benchmark point to the given point in the 5D 
+anomalous coupling space according to the test defined in formula 3.4 of 
+https://arxiv.org/pdf/1507.02245v4.pdf.
+
+Command line documentation:
+
+ >> usage: rosetta dihiggs [-h] [--param_card PARAMCARD] [--flavor FLAVOR]
+ >>                        [--sqrts] [--channel CHANNEL [CHANNEL ...]] [--params]
+ >>                        [--kl KL] [--kt KT] [--c2 C2] [--cg CG] [--c2g C2G]
+ >> 
+ >> Compute production cross section times branching fractions for double Higgs
+ >> production at the LHC
+ >> 
+ >> optional arguments:
+ >>   -h, --help            show this help message and exit
+ >>   --param_card PARAMCARD
+ >>                         Input parameter card.
+ >>   --flavor FLAVOR       Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general)
+ >>   --sqrts               Specify pp collider centre-of mass energy in TeV.
+ >>                         Allowed values are: 7, 8, 13, 14, 100 (default = 8).
+ >>   --channel CHANNEL [CHANNEL ...]
+ >>                         Specify one or more decay channels. Allowed values
+ >>                         are: all, 2b2tau, 4Z, 2mu2Z, 2tau2W, 2mu2gamma,
+ >>                         4gamma, 2b2mu, 2W2Z, 2mu2W, 4W, 2mu2tau, 2b2Z,
+ >>                         2gamma2Z, 2b2W, 2gamma2W, 2b2gamma, 4tau, 2tau2gamma,
+ >>                         4b, 2tau2Z, 4mu (default = all)
+ >>   --params              Also print out values of effective Lagrangian
+ >>                         parameters
+ >>   --kl KL               Value of kappa_lambda, Higgs self-coupling modifier
+ >>   --kt KT               Value of kappa_top, Higgs-top coupling modifier
+ >>   --c2 C2               Value of c2, ggtt vertex
+ >>   --cg CG               Value of cg, Hgg vertex
+ >>   --c2g C2G             Value of c2g, HHgg vertex
