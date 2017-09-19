@@ -2,8 +2,10 @@ from itertools import combinations_with_replacement as comb
 import argparse
 import os
 from ...internal import SLHA
+from ...internal.errors import TranslationError
 from ... import session, settings, implemented_bases
 from ..interface import RosettaInterface, allowed_flav
+from ..eHDECAY import eHDECAYImportError, eHDECAYInterfaceError
 from .production_xs import xsfb
 
 # Higgs decay channels
@@ -40,8 +42,9 @@ class DiHiggsInterface(RosettaInterface):
     helpstr = ("Double Higgs production at the LHC")
     
     parser_args_order=[
-      ('--param_card',), ('--flavor',), ('--sqrts',), ('--channel',), 
-      ('--params',) ,('--kl',), ('--kt',), ('--c2',), ('--cg',), ('--c2g',)
+      ('--param_card',), ('--flavor',), ('--sqrts',), 
+      ('--channel',), ('--ehdecay',), ('--params',),  
+      ('--kl',), ('--kt',), ('--c2',), ('--cg',), ('--c2g',)
     ]
     
     parser_args = {
@@ -62,6 +65,10 @@ class DiHiggsInterface(RosettaInterface):
             'metavar':'FLAVOR',
             'help':('Specify flavor structure. Allowed values are: '+
                     ', '.join(allowed_flav)+' (default = general)')
+        },
+        ('--ehdecay',):{
+            'action':'store_true',
+            'help':('use eHDECAY to compute Higgs branching fractions')
         },
         ('--channel',):{
             'type':str, 'default':['all'], 'choices':allowed_channels, 
@@ -121,6 +128,7 @@ class DiHiggsInterface(RosettaInterface):
             kl, kt, c2, cg, c2g = get_dihiggs_params(BC_instance)
                         
         else:
+            session.stdout('Parameter card not specified.')
             # default values zero
             kl, kt, c2, cg, c2g = 0., 0., 0., 0., 0.
         
@@ -158,9 +166,22 @@ class DiHiggsInterface(RosettaInterface):
         session.stdout('Closest benchmark is: {}'.format(BM))
         session.stdout('')
         
-        if args.param_card is not None: 
-            from ..SignalStrengths.decay import decay
-            decays = decay(basis)
+        if args.param_card is not None:
+            if args.ehdecay:
+                try:
+                    from ..eHDECAY.eHDECAY import run
+                    decays = run(basis_instance)
+                except (TranslationError, eHDECAYImportError, 
+                        eHDECAYInterfaceError) as e:
+                    session.stdout(e)
+                    session.stdout('Failed to obtain branching fractions from eHDECAY')
+                    
+                    from ..SignalStrengths.decay import decay
+                    decays = decay(BC_instance)
+            else:
+                from ..SignalStrengths.decay import decay
+                decays = decay(BC_instance)
+            
             session.stdout('')        
             session.stdout('Decay modes:')        
             session.stdout('')
@@ -174,7 +195,7 @@ class DiHiggsInterface(RosettaInterface):
             
             for ch in channels:
                 id1, id2 = hh_channels[ch]
-                
+                # print id1,id2,decays[id1],decays[id2],decays[id1]*decays[id2]
                 BR = decays[id1]*decays[id2]
                 if id1!=id2: BR*=2.
             

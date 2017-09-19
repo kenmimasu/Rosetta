@@ -12,7 +12,10 @@ from ...internal.constants import (particle_names, default_masses,
 from ...internal.basis import checkers as check
 from ...internal import session, SLHA
 
-from . import executable, eHDECAYInterfaceError, eHDECAYImportError
+from . import executable
+from .errors import (eHDECAYInterfaceError, eHDECAYImportError, 
+                     eHDECAYNegativeWidthError, eHDECAYBrGtOneWarning,
+                     eHDECAYBrNegativeWarning)
 ################################################################################
 # required info
 masses = {25,3,4,5,6,15,13,24,23} # H, c, b, t, tau, mu, Z, W masses
@@ -63,27 +66,32 @@ def create_SLHA_block(basis, electroweak=True):
     # for now a hacky global rescaling is implemented to deal with this.
     if sum_BRs > 1:
         if abs(sum_BRs - 1.) > 1e-2: # complain if its too wrong
-            raise RuntimeError('Sum of branching fractions > 1 by more than 1%')
-        else:
-            for channel, BR in BRs.iteritems():
-                if channel!='WTOT':
-                    BRs[channel] = BR/sum_BRs
+            msg = ('Sum of branching fractions = '
+                   '{} ; > 1 by more than 1%'.format(sum_BRs))
+            session.warnings.warn(msg, eHDECAYBrGtOneWarning)
+        for channel, BR in BRs.iteritems():
+            if channel!='WTOT':
+                BRs[channel] = BR/sum_BRs
 
     totalwidth = BRs.pop('WTOT')
-
+    totalwidth=-1.
     if totalwidth < 0.:
-        session.log('eHDECAY: Negative total Higgs width. Check your EFT inputs.')
+        # session.log('eHDECAY: Negative total Higgs width. Check your EFT inputs.')
+        raise eHDECAYNegativeWidthError('eHDECAY: Negative total Higgs width. '
+                                        'Check your EFT inputs.')
         return
 
     hdecays = {}
 
     # sometimes eHDECAY gives negative branching fractions.
     for channel, BR in BRs.iteritems():
-        # n1, n2 = particle_names[channel[0]], particle_names[channel[1]]
-        # comment = 'H -> {}{}'.format(n1,n2)
-        # if BR < 0.:
-        #     print ('eHDECAY: Negative branching fraction encountered ' +
-        #           'for {}. Rosetta will ignore it.'.format(comment))
+
+        if BR < 0.:
+            n1, n2 = particle_names[channel[0]], particle_names[channel[1]]
+            comment = 'H -> {}{}'.format(n1,n2)
+            msg = ('eHDECAY: Negative branching fraction '
+                  'encountered for {}.'.format(comment))
+            session.warnings.warn(msg, eHDECAYBrNegativeWarning)
         #     totalwidth -= BR # adjust total width
         #     continue
         # elif BR == 0.:

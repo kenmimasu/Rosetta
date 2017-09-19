@@ -35,6 +35,7 @@ class ReadSettingsError(RosettaError):
     def __init__( self ):
         super(RosettaSettingsError, self).__init__('Error reading config.txt.')
     pass
+    
 ################################################################################
 class RosettaWarning(Warning):
     '''Rosetta base warning class. Never raised.'''

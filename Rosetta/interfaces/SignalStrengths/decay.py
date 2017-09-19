@@ -2,7 +2,12 @@ from math import pi
 import os
 
 from ...internal.basis import checkers as check
+from ...internal.constants import particle_names
+from ...internal import session
 from loopfunctions import Af
+from .errors import (SignalStrengthsNegativeWidthError, 
+                     SignalStrengthsBrGtOneWarning, 
+                     SignalStrengthsBrNegativeWarning)
 
 from . import use_eHDECAY
 if use_eHDECAY:
@@ -36,6 +41,7 @@ def decay(basis, electroweak=True, SM_BRs=None, ratio=False):
     if SM_BRs is None:
         if use_eHDECAY:
             BRs = SM_BR(basis=basis, electroweak=electroweak)
+            session.verbose('SM branching fractions obtained with eHDECAY')
         else: 
             BRs = get_BR(basis.mass[25])
     else:
@@ -52,10 +58,31 @@ def decay(basis, electroweak=True, SM_BRs=None, ratio=False):
     
     if not ratio:
     # Compute new width, branching fractions & return
+        if rscl['WTOT'] < 0.:
+            raise SignalStrengthsNegativeWidthError('Negative total Higgs width. '
+                                                    'Check your EFT inputs.')    
         BRs['WTOT'] *= rscl['WTOT']
+        
+        sum_BRs = 0.
+        
         for k,fact in rscl.iteritems():
             PW = BRs[k]*SMwid*fact
             BRs[k] = PW/BRs['WTOT']
+            
+            sum_BRs+=BRs[k]
+            
+            if BRs[k] < 0.:
+                n1, n2 = particle_names[k[0]], particle_names[k[1]]
+                comment = 'H -> {}{}'.format(n1,n2)
+                msg = ('Negative branching fraction encountered '
+                       'for {}.'.format(comment))
+                session.warnings.warn(msg, SignalStrengthsBrNegativeWarning)
+        
+        if abs(sum_BRs - 1.) > 1e-2: # complain if its too wrong
+            msg = ('Sum of branching fractions = '
+                   '{} ; > 1 by more than 1%'.format(sum_BRs))
+            session.warnings.warn(msg, SignalStrengthsBrGtOneWarning)
+        
         return BRs
     # Return rescaling factors as they are
     else:

@@ -14,7 +14,7 @@ PID = {'u':{1:1 ,2:4, 3:6},'d':{1:2, 2:3, 3:5},
 # PID:name dictionary for particles
 particle_names = {1:'u', 2:'d', 3:'s', 4:'c', 5:'b', 6:'t', 
                   11:'e', 12:'ve', 13:'mu', 14:'vmu', 15:'ta', 16:'vta', 
-                  21:'a', 22:'g', 23:'Z', 24:'W', 25:'H'}
+                  21:'g', 22:'a', 23:'Z', 24:'W', 25:'H'}
                   
 # ID:name dictionary for SLHA inputs
 input_names = {1:'aEWM1', 2:'Gf', 3:'aS', 4:'MZ', 
