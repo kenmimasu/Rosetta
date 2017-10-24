@@ -2,3 +2,5 @@
 FeynRules/*
 *.log
 ehdecay.in
+# vi temp files
+*.swp
