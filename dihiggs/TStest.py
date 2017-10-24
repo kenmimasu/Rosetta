@@ -23,4 +23,5 @@ parser.add_argument('--c2g', type=float,    default=0.0, help='Benchmark to calc
 args = parser.parse_args()
 
 ar = reweighter_from_histogram_and_file()
-BM = ar.TS_test(args.kl, args.kt, args.c2, args.cg, args.c2g)
+BM = ar.TS_test(args.kl, args.kt, args.c2, args.cg, args.c2g, verbose=False)
+print("closest BM is # {:d}".format(BM))
