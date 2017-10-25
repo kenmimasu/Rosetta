@@ -4,7 +4,7 @@ import numpy as np
 #import array as array
 from array import array
 import math
-from scipy.special import factorial, gammaln
+from scipy.special import gammaln
 #from root_numpy import hist2array
 
 
@@ -86,14 +86,14 @@ class AnalyticalReweighter(object):
         normEv = 1200000000
         TS = np.zeros(13) 
         EvByBin = np.absolute(np.rint(normEv*self.parameter_point( kl, kt, c2, cg, c2g)))
-        logPoint = np.float64(np.log(np.float64(gammaln(EvByBin)))) 
+        logPoint = gammaln(EvByBin)
         # factorial gives overflow, so we use gammaln as approximation
         for bench in range(0,13) :
             EvByBinBM = np.absolute(normEv*self.parameter_point(self.klJHEP[bench], self.ktJHEP[bench], self.c2JHEP[bench],self.cgJHEP[bench], self.c2gJHEP[bench] ))
             #print (bench,self.Cnorm,EvByBin.sum(),EvByBinBM.sum())
-            logBM = np.log(np.float64(gammaln(EvByBinBM))) # last bins are giving negative = increase fit precision
+            logBM = gammaln(EvByBinBM) # last bins are giving negative = increase fit precision
             NSumInt = np.rint((EvByBin+EvByBinBM)/2)
-            logSum = np.float64(np.log(np.float64(gammaln(NSumInt))))
+            logSum = gammaln(NSumInt)
             test = np.float64(-2*(logPoint + logBM -2*logSum ))
             TS[bench] = test.sum()
         #print (np.absolute(TS))
