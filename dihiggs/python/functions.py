@@ -86,6 +86,10 @@ class AnalyticalReweighter(object):
 
 
     def compute_TS(self, kl_1, kt_1, c2_1, cg_1, c2g_1, kl_2, kt_2, c2_2, cg_2, c2g_2):
+        """
+        Compute the Test Statistics as defined in https://arxiv.org/pdf/1507.02245v4.pdf
+        for a pair of points in the 5D EFT parameter space
+        """
         normEv = 1200000000
         TS = np.zeros(1)
         EvByBin_1 = normEv * self.parameter_point(kl_1, kt_1, c2_1, cg_1, c2g_1)
@@ -101,19 +105,25 @@ class AnalyticalReweighter(object):
         return TS
 
 
-    def TS_test(self, kl, kt, c2, cg, c2g, verbose=True):
-        if verbose:
-            print ("Calculating TS")
-        TS = np.zeros(13) 
-        for bench in xrange(13):
-            TS[bench] = self.compute_TS(kl, kt, c2, cg, c2g, *self.JHEP_BM[bench])
+    def find_closest_points(self, kl, kt, c2, cg, c2g, tuple_list):
+        """
+        Loop over a list of points to find the closest match, with the TS as a metric
+        returns the list of indices within the list, and the list of distances
+        """
+        TS = np.zeros(len(tuple_list)) 
+        for point in xrange(len(tuple_list)):
+            TS[point] = self.compute_TS(kl, kt, c2, cg, c2g, *tuple_list[point])
         closestBM = np.argmax(TS)
         list_allmaxs = np.where(TS == TS.max())[0].tolist()
-        if len(list_allmaxs) > 1:
-            print('There are several maxima')
-        if verbose:
-            print ("Closest benchmark is: {} with TS {}".format(closestBM, TS[closestBM]))
-        return int(closestBM)
+        list_allTS = [TS[p] for p in list_allmaxs]
+        return list_allmaxs, list_allTS
+
+
+    def TS_test(self, kl, kt, c2, cg, c2g):
+        """
+        Loop over the list of benchmark points to find the closest match, with the TS as a metric
+        """
+        return self.find_closest_points(kl, kt, c2, cg, c2g, self.JHEP_BM)
 
 
     def find_bin(self, variables):  
