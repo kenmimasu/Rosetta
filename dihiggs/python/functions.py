@@ -88,28 +88,29 @@ class AnalyticalReweighter(object):
     def compute_TS(self, kl_1, kt_1, c2_1, cg_1, c2g_1, kl_2, kt_2, c2_2, cg_2, c2g_2):
         normEv = 1200000000
         TS = np.zeros(1)
-        EvByBin_1 = np.absolute(np.rint(normEv * self.parameter_point(kl_1, kt_1, c2_1, cg_1, c2g_1)))
-        logPoint_1 = gammaln(EvByBin_1)
-        EvByBin_2 = np.absolute(np.rint(normEv * self.parameter_point(kl_2, kt_2, c2_2, cg_2, c2g_2)))
+        EvByBin_1 = normEv * self.parameter_point(kl_1, kt_1, c2_1, cg_1, c2g_1)
+        EvByBin_1 = np.absolute(np.rint(EvByBin_1)) # restrict weights to positive integers
+        logPoint_1 = gammaln(EvByBin_1) # same as log of factorial
+        EvByBin_2 = normEv * self.parameter_point(kl_2, kt_2, c2_2, cg_2, c2g_2)
+        EvByBin_2 = np.absolute(np.rint(EvByBin_2))
         log_2 = gammaln(EvByBin_2) # last bins are giving negative = increase fit precision
-        NSumInt = np.rint((EvByBin_1 + EvByBin_2) / 2)
+        NSumInt = (EvByBin_1 + EvByBin_2) / 2
         logSum = gammaln(NSumInt)
-        test = np.float64(-2 * (logPoint_1 + log_2 - 2 * logSum ))
-        TS = test.sum()
+        test = np.float64(logPoint_1 + log_2 - 2 * logSum)
+        TS = -2 * test.sum()
         return TS
 
 
     def TS_test(self, kl, kt, c2, cg, c2g, verbose=True):
-        DEBUG = True
         if verbose:
             print ("Calculating TS")
         TS = np.zeros(13) 
         for bench in xrange(13):
             TS[bench] = self.compute_TS(kl, kt, c2, cg, c2g, *self.JHEP_BM[bench])
-        closestBM = np.argmin(TS)
-        if DEBUG:
-            print(np.where(TS == TS.min()))
-            print(TS)
+        closestBM = np.argmax(TS)
+        list_allmaxs = np.where(TS == TS.max())[0].tolist()
+        if len(list_allmaxs) > 1:
+            print('There are several maxima')
         if verbose:
             print ("Closest benchmark is: {} with TS {}".format(closestBM, TS[closestBM]))
         return int(closestBM)
