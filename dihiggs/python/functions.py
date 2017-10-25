@@ -90,7 +90,7 @@ class AnalyticalReweighter(object):
         TS = np.zeros(1)
         EvByBin_1 = np.absolute(np.rint(normEv * self.parameter_point(kl_1, kt_1, c2_1, cg_1, c2g_1)))
         logPoint_1 = gammaln(EvByBin_1)
-        EvByBin_2 = np.absolute(normEv * self.parameter_point(kl_2, kt_2, c2_2, cg_2, c2g_2))
+        EvByBin_2 = np.absolute(np.rint(normEv * self.parameter_point(kl_2, kt_2, c2_2, cg_2, c2g_2)))
         log_2 = gammaln(EvByBin_2) # last bins are giving negative = increase fit precision
         NSumInt = np.rint((EvByBin_1 + EvByBin_2) / 2)
         logSum = gammaln(NSumInt)
@@ -100,7 +100,7 @@ class AnalyticalReweighter(object):
 
 
     def TS_test(self, kl, kt, c2, cg, c2g, verbose=True):
-        DEBUG = False
+        DEBUG = True
         if verbose:
             print ("Calculating TS")
         TS = np.zeros(13) 
