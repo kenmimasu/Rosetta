@@ -22,6 +22,10 @@ class AnalyticalReweighter(object):
         self.c2JHEP=[0.0,  -1.0, 0.5, -1.5, -3.0,  0.0, 0.0, 0.0, 0.0,  1.0, -1.0, 0.0, 1.0]
         self.cgJHEP=[0.0,  0.0, -0.8,  0.0, 0.0,   0.8, 0.2, 0.2, -1.0, -0.6, 0.0, 1.0, 0.0]
         self.c2gJHEP=[0.0, 0.0, 0.6, -0.8, 0.0, -1.0, -0.2,-0.2,  1.0,  0.6, 0.0, -1.0, 0.0] 
+        # same thing, different format for easier argument passing
+        self.JHEP_BM = []
+        for i in xrange(len(self.klJHEP)):
+            self.JHEP_BM.append((self.klJHEP[i], self.ktJHEP[i], self.c2JHEP[i], self.cgJHEP[i], self.c2gJHEP[i],))
         print ("initialize")
         
         """ 
@@ -80,29 +84,37 @@ class AnalyticalReweighter(object):
             c2g (float): EFT parameter
         """
 
+
+    def compute_TS(self, kl_1, kt_1, c2_1, cg_1, c2g_1, kl_2, kt_2, c2_2, cg_2, c2g_2):
+        normEv = 1200000000
+        TS = np.zeros(1)
+        EvByBin_1 = np.absolute(np.rint(normEv * self.parameter_point(kl_1, kt_1, c2_1, cg_1, c2g_1)))
+        logPoint_1 = gammaln(EvByBin_1)
+        EvByBin_2 = np.absolute(normEv * self.parameter_point(kl_2, kt_2, c2_2, cg_2, c2g_2))
+        log_2 = gammaln(EvByBin_2) # last bins are giving negative = increase fit precision
+        NSumInt = np.rint((EvByBin_1 + EvByBin_2) / 2)
+        logSum = gammaln(NSumInt)
+        test = np.float64(-2 * (logPoint_1 + log_2 - 2 * logSum ))
+        TS = test.sum()
+        return TS
+
+
     def TS_test(self, kl, kt, c2, cg, c2g, verbose=True):
+        DEBUG = False
         if verbose:
             print ("Calculating TS")
-        normEv = 1200000000
         TS = np.zeros(13) 
-        EvByBin = np.absolute(np.rint(normEv*self.parameter_point( kl, kt, c2, cg, c2g)))
-        logPoint = gammaln(EvByBin)
-        # factorial gives overflow, so we use gammaln as approximation
-        for bench in range(0,13) :
-            EvByBinBM = np.absolute(normEv*self.parameter_point(self.klJHEP[bench], self.ktJHEP[bench], self.c2JHEP[bench],self.cgJHEP[bench], self.c2gJHEP[bench] ))
-            #print (bench,self.Cnorm,EvByBin.sum(),EvByBinBM.sum())
-            logBM = gammaln(EvByBinBM) # last bins are giving negative = increase fit precision
-            NSumInt = np.rint((EvByBin+EvByBinBM)/2)
-            logSum = gammaln(NSumInt)
-            test = np.float64(-2*(logPoint + logBM -2*logSum ))
-            TS[bench] = test.sum()
-        #print (np.absolute(TS))
-        minTS = np.argmin(TS)
+        for bench in xrange(13):
+            TS[bench] = self.compute_TS(kl, kt, c2, cg, c2g, *self.JHEP_BM[bench])
+        closestBM = np.argmin(TS)
+        if DEBUG:
+            print(np.where(TS == TS.min()))
+            print(TS)
         if verbose:
-            print ("Closest benchmark is:",minTS)
-        return int(minTS)    
+            print ("Closest benchmark is: {} with TS {}".format(closestBM, TS[closestBM]))
+        return int(closestBM)
 
-            
+
     def find_bin(self, variables):  
         bin_ids = np.empty_like(variables, dtype=np.int64)
         for i_v, bins_arr in enumerate(self.bins):
@@ -118,6 +130,7 @@ class AnalyticalReweighter(object):
             for each event obtained using np.digitize for each variable.
         """
 
+
     def weight(self, variables):
         bin_ids =  self.find_bin(variables)
         weights = self.bin_weights[[ bin_ids[:,i_v] for i_v in range(bin_ids.shape[1])]]
@@ -130,6 +143,7 @@ class AnalyticalReweighter(object):
             per event.
         """
         return weights
+
 
 def reweighter_from_histogram_and_file():
 
