@@ -94,13 +94,13 @@ class AnalyticalReweighter(object):
         TS = np.zeros(1)
         EvByBin_1 = normEv * self.parameter_point(kl_1, kt_1, c2_1, cg_1, c2g_1)
         EvByBin_1 = np.absolute(np.rint(EvByBin_1)) # restrict weights to positive integers
-        logPoint_1 = gammaln(EvByBin_1) # same as log of factorial
+        log_n1 = gammaln(EvByBin_1) # same as log of factorial
         EvByBin_2 = normEv * self.parameter_point(kl_2, kt_2, c2_2, cg_2, c2g_2)
         EvByBin_2 = np.absolute(np.rint(EvByBin_2))
-        log_2 = gammaln(EvByBin_2) # last bins are giving negative = increase fit precision
-        NSumInt = (EvByBin_1 + EvByBin_2) / 2
-        logSum = gammaln(NSumInt)
-        test = np.float64(logPoint_1 + log_2 - 2 * logSum)
+        log_n2 = gammaln(EvByBin_2) # last bins are giving negative = increase fit precision
+        EvByBin_3 = (EvByBin_1 + EvByBin_2) / 2
+        log_n3 = gammaln(EvByBin_3)
+        test = np.float64(log_n1 + log_n2 - 2 * log_n3)
         TS = -2 * test.sum()
         return TS
 

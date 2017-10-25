@@ -36,6 +36,6 @@ for ibm, bm in enumerate(ar.JHEP_BM):
         kl = ikl / 10.
         kt = 1.
         kl_scan.append((kl, kt, 0., 0., 0.))
-    BM, TS = ar.find_closest_point(bm_kl, bm_kt, bm_c2, bm_cg, bm_c2g, kl_scan)
+    BM, TS = ar.find_closest_points(bm_kl, bm_kt, bm_c2, bm_cg, bm_c2g, kl_scan)
     coordinates = [kl_scan[x] for x in BM]
     print("closest to BM # {} {} are points {} with TS {}".format(ibm, bm, coordinates, TS[0]))
