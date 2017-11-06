@@ -74,7 +74,6 @@ def create_SLHA_block(basis, electroweak=True):
                 BRs[channel] = BR/sum_BRs
 
     totalwidth = BRs.pop('WTOT')
-    totalwidth=-1.
     if totalwidth < 0.:
         # session.log('eHDECAY: Negative total Higgs width. Check your EFT inputs.')
         raise eHDECAYNegativeWidthError('eHDECAY: Negative total Higgs width. '

@@ -41,7 +41,8 @@ class eHDECAYInterface(RosettaInterface):
     }
     def __call__(self, args):
 
-        basis_instance = self.from_param_card(args.param_card)
+        basis_instance = self.from_param_card(args.param_card, 
+                                              flavor=args.flavor)
 
         basis_instance.modify_inputs()
         check.modified_inputs(basis_instance)
