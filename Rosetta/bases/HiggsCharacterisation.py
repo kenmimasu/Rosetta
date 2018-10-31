@@ -53,18 +53,17 @@ class HiggsCharacterisation(basis.Basis):
         return s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2
         
     def calculate_dependent(self):
-        self['kHdwR'] = 0.
+        self['kHdwI'] = 0.
         
     @basis.translation('bsmc')        
     def to_bsmc(self, instance):
         
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MWsq = MZ**2*c2w
-        aS, aEM, Gf = self.inputs['aS'], self.inputs['aEWM1'], self.inputs['Gf']
+        aS, aEM, Gf = self.inputs['aS'], 1./self.inputs['aEWM1'], self.inputs['Gf']
         H = self
         B = instance
         
-        print vev
         cosa, Lam = H['cosa'], H['Lambda']
         sina = sqrt(1.-cosa**2)
         
@@ -78,9 +77,9 @@ class HiggsCharacterisation(basis.Basis):
         # Gauge        
         B['dCz'] = 2.*cosa*gHZZ*H['kSM']/(vev*(gw2+gp2))-1.
 
-        B['Caa'] = -cosa*gHaa*H['kHaa']/ee2
+        B['Caa'] = -cosa*gHaa*H['kHaa']*vev/ee2
 
-        B['tCaa'] = -sina*gAaa*H['kAaa']/ee2
+        B['tCaa'] = -sina*gAaa*H['kAaa']*vev/ee2
         
         B['Cza'] = -cosa*gHza*H['kHza']*vev/sqrt(ee2*(gw2+gp2))
 
@@ -98,11 +97,11 @@ class HiggsCharacterisation(basis.Basis):
 
         B['tCww'] = -sina*H['kAww']/gw2*(vev/Lam)
 
-        B['Cabx'] = -cosa*H['kHda']/sqrt(gw2*gp2)*(vev/Lam)
+        B['Cabx'] = cosa*H['kHda']/sqrt(gw2*gp2)*(vev/Lam)
 
-        B['Czbx'] = -cosa*H['kHdz']/gw2*(vev/Lam)
+        B['Czbx'] = cosa*H['kHdz']/gw2*(vev/Lam)
 
-        B['Cwbx'] = -cosa*H['kHdwR']/gw2*(vev/Lam)
+        B['Cwbx'] = cosa*H['kHdwR']/gw2*(vev/Lam)
 
         # Yukawa
         B['BCxdYu'][3,3] = sqrt( (cosa*H['kHtt']-1.)**2 + (H['kAtt']*sina)**2 )

@@ -219,7 +219,7 @@ class BSMCharacterisation(basis.Basis):
 
         s2w, c2w, ee2, gw2, gp2, MZ, vev, gs2 = self.calculate_inputs() 
         MWsq = MZ**2*c2w
-        aS, aEM, Gf = self.inputs['aS'], self.inputs['aEWM1'], self.inputs['Gf']
+        aS, aEM, Gf = self.inputs['aS'], 1./self.inputs['aEWM1'], self.inputs['Gf']
         B = self
         H = instance
         
@@ -245,11 +245,11 @@ class BSMCharacterisation(basis.Basis):
         H['kSM'] = (1. + B['dCz'])*vev*(gw2+gp2)/(2.*cosa*gHZZ)
         # B['dCz'] = 2.*cosa*gHZZ*H['kSM']/(vev*(gw2+gp2))-1.
         
-        H['kHaa'] = -B['Caa']*ee2/(cosa*gHaa)
-        # B['Caa'] = -cosa*gHaa*H['kHaa']/ee2
+        H['kHaa'] = -B['Caa']*ee2/(cosa*gHaa*vev)
+        # B['Caa'] = -cosa*gHaa*H['kHaa']/ee2*vev
 
-        H['kAaa'] = -B['tCaa']*ee2/(sina*gAaa)
-        # B['tCaa'] = -sina*gAaa*H['kAaa']/ee2
+        H['kAaa'] = -B['tCaa']*ee2/(sina*gAaa*vev)
+        # B['tCaa'] = -sina*gAaa*H['kAaa']/ee2*vev
         
         H['kHza'] = -B['Cza']*sqrt(ee2*(gw2+gp2))/(cosa*gHza*vev)
         # B['Cza'] = -cosa*gHza*H['kHza']*vev/sqrt(ee2*(gw2+gp2))
@@ -275,14 +275,14 @@ class BSMCharacterisation(basis.Basis):
         H['kAww'] = -B['tCww']*gw2*Lam/(sina*vev)        
         # B['tCww'] = -sina*H['kAww']/gw2*(vev/Lam)
 
-        H['kHda'] = -B['Cabx']*sqrt(gw2*gp2)*Lam/(cosa*vev)
-        # B['Cabx'] = -cosa*H['kHda']/sqrt(gw2*gp2)*(vev/Lam)
+        H['kHda'] = B['Cabx']*sqrt(gw2*gp2)*Lam/(cosa*vev)
+        # B['Cabx'] = cosa*H['kHda']/sqrt(gw2*gp2)*(vev/Lam)
 
-        H['kHdz'] = -B['Czbx']*gw2*Lam/(cosa*vev)
-        # B['Czbx'] = -cosa*H['kHdz']/gw2*(vev/Lam)
+        H['kHdz'] = B['Czbx']*gw2*Lam/(cosa*vev)
+        # B['Czbx'] = cosa*H['kHdz']/gw2*(vev/Lam)
 
-        H['kHdwR'] = -B['Cwbx']*gw2*Lam/(cosa*vev)
-        # B['Cwbx'] = -cosa*H['kHdwR']/gw2*(vev/Lam)
+        H['kHdwR'] = B['Cwbx']*gw2*Lam/(cosa*vev)
+        # B['Cwbx'] = cosa*H['kHdwR']/gw2*(vev/Lam)
 
         # Yukawa
         H['kHtt'] = (1. - B['BCxdYu'][3,3]*sqrt(1. - B['BCxSu'][3,3]**2))/cosa
