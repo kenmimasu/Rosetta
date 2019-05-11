@@ -1023,23 +1023,44 @@ def read(card, set_cplx=True):
                 
                 elements = []
                 
+                # find first correctly formatted datum and infer matrix
+                # structure (number of keys)
+                for datum in block_data:
+                    info = re.match(r'\s*((?:\d+\s+)+)\s*(\S+).*',  datum)
+                    
+                    if not info: continue
+                    
+                    key = info.group(1)
+                    
+                    nkeys = len(key.split())
+                    
+                    break
+                    
+                
                 for datum in block_data:
                     counter +=1                    
                     is_comment = re.match(r'\s*#.*',datum)
                 
                     if (not datum.strip() or is_comment): continue
-                    
-                    info = re.match(r'\s*((?:\d+\s+)+)\s*(\S+).*',
+                                        
+                    info = re.match(r'\s*((?:\d+\s+){{{}}})\s*(\S+)(.*)'.format(nkeys),
                                     datum)
                     if not info:
-                        print datum
+                        # print datum
                         print ('Ignored datum in block '+
                                 '{},'.format(theblock.name) +
                                 ' (line {} of {})'.format(counter, card))
                         continue
                     
-                    key, value = info.group(1), info.group(2)
+                    key, value, tail = info.group(1), info.group(2), info.group(3).strip()
                     
+                    if tail and not(tail.startswith('#')):
+                        # print datum
+                        print ('Ignored datum with inconsistent formatting in block '+
+                                '{},'.format(theblock.name) +
+                                ' (line {} of {})'.format(counter, card))
+                        continue
+
                     try:
                         key = int(key)
                     except ValueError:
