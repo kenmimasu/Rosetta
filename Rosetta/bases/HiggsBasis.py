@@ -653,12 +653,12 @@ class HiggsBasis(basis.Basis):
                 Z['HZx'+f][i,j] = complex(re, im)
         
         # Provide the right W mass for input...
-        MW = MZ*sqrt(c2w)
-        Z.mass[24]= MW
+        MW = MZ*sqrt(c2w)        
+        H.mass[24]= MW
         try:
-            Z.inputs.new_entry(9, MW, name='MW')
+            H.inputs.new_entry(9, MW, name='MW')
         except KeyError:
-            Z.inputs[9] = MW
+            H.inputs[9] = MW
         
         return Z
 
