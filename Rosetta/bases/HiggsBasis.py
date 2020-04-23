@@ -122,9 +122,9 @@ class HiggsBasis(basis.Basis):
         'HBxdhwd': {'kind':'general', 'domain':'complex', 'cname':'dhwd'},
         'HBxdhwl': {'kind':'general', 'domain':'complex', 'cname':'dhwl'},
         # couplings of two Higgs bosons to fermions 
-        'HBxY2u': {'kind':'general', 'domain':'complex', 'cname':'Y2u'},
-        'HBxY2d': {'kind':'general', 'domain':'complex', 'cname':'Y2d'},
-        'HBxY2e': {'kind':'general', 'domain':'complex', 'cname':'Y2e'}
+        'HBxY2u': {'kind':'general', 'domain':'complex', 'cname':'dYu2'},
+        'HBxY2d': {'kind':'general', 'domain':'complex', 'cname':'dYd2'},
+        'HBxY2e': {'kind':'general', 'domain':'complex', 'cname':'dYe2'}
     }
     
     # independent coefficients
@@ -267,7 +267,7 @@ class HiggsBasis(basis.Basis):
         for f in ('u','d','e'):
             yuk = 'HBxdY' + f
             sin = 'HBxS' + f
-            yuk2 = 'HBxY2' + f
+            yuk2 = 'HBxY2' + f 
             for i,j in A[yuk].keys():
                 Yij = A[yuk][i,j]
                 sinij = A[sin][i,j]

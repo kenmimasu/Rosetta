@@ -1091,12 +1091,19 @@ def read(card, set_cplx=True):
                     decay_details = re.match(r'\s*decay\s+(.+)',ll,
                                              re.IGNORECASE).group(1)
                 except AttributeError:
-                    err = ('Invalid decay format encountered' + 
+                    err = ('Invalid decay format encountered ' + 
                           'in line {} of {}.'.format(counter, card) )
-                    raise SHLAReadError(err)
+                    raise SLHAReadError(err)
                     
-                info = re.match(r'\s*(\d+)\s+(\S+)\s+.*', decay_details)
-                PID, total = info.group(1), info.group(2)
+                info = re.match(r'\s*(\d+)\s+(\S+)\s*.*', decay_details)
+                
+                try:
+                    PID, total = info.group(1), info.group(2)
+                except AttributeError:
+                    err = ('Invalid decay format encountered ' + 
+                          'in line {} of {}.'.format(counter, card) )
+                    print '"'+ll+'"'
+                    raise SLHAReadError(err)
                 
                 comment = get_comment(decay_details)
                     
@@ -1187,6 +1194,10 @@ class SLHAError(Exception):
     pass
 
 class SLHAIOError(SLHAError):
+    '''IOError'''
+    pass
+
+class SLHAReadError(SLHAError):
     '''IOError'''
     pass
 

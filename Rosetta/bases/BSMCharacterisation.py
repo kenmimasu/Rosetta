@@ -120,9 +120,9 @@ class BSMCharacterisation(basis.Basis):
         'BCxtdhzd': {'kind':'hermitian', 'domain':'complex', 'cname':'tdhzd'},
         'BCxtdhze': {'kind':'hermitian', 'domain':'complex', 'cname':'tdhze'},
         # couplings of two Higgs bosons to fermions
-        'BCxY2u': {'kind':'general', 'domain':'complex', 'cname':'Y2u'},
-        'BCxY2d': {'kind':'general', 'domain':'complex', 'cname':'Y2d'},
-        'BCxY2e': {'kind':'general', 'domain':'complex', 'cname':'Y2e'}
+        'BCxY2u': {'kind':'general', 'domain':'complex', 'cname':'dYu2'},
+        'BCxY2d': {'kind':'general', 'domain':'complex', 'cname':'dYd2'},
+        'BCxY2e': {'kind':'general', 'domain':'complex', 'cname':'dYe2'}
     }
     # All parameters independent
     independent = ( [c for v in blocks.values() for c in v] + 
