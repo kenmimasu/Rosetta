@@ -132,11 +132,11 @@ class HISZ(basis.Basis):
         
         # Provide the right Z mass for input...
         MZ = MW/sqrt(c2w)
-        M.mass[23]= MZ
+        H.mass[23]= MZ
         try:
-            M.inputs.new_entry(4, MZ, name='MZ')
+            H.inputs.new_entry(4, MZ, name='MZ')
         except KeyError:
-            M.inputs[4] = MZ
+            H.inputs[4] = MZ
         return M
 
         
