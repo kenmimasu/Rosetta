@@ -1,0 +1,972 @@
+# Rosetta
+
+**An operator basis translator for Standard Model effective field theory**
+
+Version 2.1, March 2017
+
+
+## Description
+
+Rosetta is a modular and flexible package for effective field theory (EFT) basis translation and communication with event generation tools. The primary framework which Rosetta has been designed to translate into is the phenomenological effective Lagrangian in the mass eigenbasis named **BSM Characterisation** or **bsmc** for short. The motivation for this choice lies in the availability of an implementation within the FeynRules framework to be downloaded from:
+
+<http://feynrules.irmp.ucl.ac.be/wiki/BSMCharacterisation>
+
+This ensures the link with event generators and high-energy physics programs.
+
+The most basic functionality of Rosetta is to map a chosen set of input parameters (the Wilson coefficients in a specific basis choice) onto the bsmc coefficients such that the output can be employed within tools relying on the BSM Characterisation Lagrangian description. As long as the input format respects the SLHA conventions sketched in Section 4, the user may define their own map to the bsmc coefficients (or to any other basis implementation) and proceed with event generation using the accompanying FeynRules implementation. Alternatively, the user may want to simply translate between two existing basis implementations for other reasons, such as the availability of a particular high energy physics program taking the parameters of a given basis as input. The eHDECAY interface of Rosetta is an example of this.
+
+One of the key features of Rosetta is the possibility to easily define one’s own input basis and directly use it in the context of many programs via the translation functionality of Rosetta. The strength of this approach is that it is much simpler than developing from scratch new modules for existing tools in the context of a new basis.
+
+The tool consists of a Python package containing implementations of various EFT bases and a command line tool `rosetta` from which one can call a number of interfaces described below. The main interface, `translate`, performs the task of mapping a given basis to a target output basis. The core of the package is based on the contents of the LHC Higgs Cross Section Working Group (HXSWG) note (LHCHXSWG-INT-2015-001).
+
+### References
+
+- "Rosetta: an operator basis translator for Standard Model effective field theory"
+ Eur.Phys.J. C75 (2015) no.12, 583 
+ arXiv:1508.05895
+ Adam Falkowski, Benjamin Fuks, Kentarou Mawatari, Ken Mimasu, Veronica Sanz, 
+ Francesco Riva 
+ 
+- "Basis-independent constraints on Standard Model Effective Field Theories with 
+  Rosetta"
+ arXiv:1605.02684
+ Contribution 18 in "Les Houches 2015: Physics at TeV colliders - new physics 
+ working group report" (p.158)
+ Jeremy Bernon, Alexandra Carvalho, Adam Falkowski, Bemjamin Fuks, 
+ Florian Goertz, Kentarou Mawatari, Ken Mimasu and Tevong You
+
+
+## Contents
+
+1. [Contact](#contact)
+2. [Installation](#installation)
+3. [Package contents](#package-contents)
+4. [Usage & translate interface](#usage--translate-interface)
+5. [Input cards](#input-cards)
+6. [The SLHA package](#the-slha-package)
+7. [The basis class](#the-basis-class)
+8. [Implementing your own basis](#implementing-your-own-basis)
+9. [Flavor option](#flavor-option)
+10. [Other Interfaces](#other-interfaces)
+    - [DefaultCard interface](#defaultcard-interface)
+    - [eHDECAY interface](#ehdecay-interface)
+    - [Higgs signal strengths](#higgs-signal-strengths)
+    - [Lilith interface](#lilith-interface)
+    - [EWPO interface](#ewpo-interface)
+    - [Double Higgs production at the LHC](#double-higgs-production-at-the-lhc)
+
+---
+
+### Contact
+
+Feel free to contact the authors with requests for features, bugs, etc. through <k.mimasu@sussex.ac.uk>.
+
+---
+
+### Installation
+
+Run pip install (optionally with `-e` to make the installation directly editable)
+```python
+pip install -e .[test]
+```
+Requires python 3.9 or higher.
+
+---
+
+### Package contents
+
+The package structure is as follows:
+```
+src/rosetta/
+├── Cards/           # Sample SLHA-style parameter cards for different bases and flavor options
+├── bases/           # Operator basis implementations (e.g. HiggsBasis.py, WarsawBasis.py, SILHBasis.py, etc.)
+├── interfaces/      # Interfaces to external tools and Rosetta features (e.g. eHDECAY, Lilith, EWPO, SignalStrengths, Translate)
+├── internal/        # Core logic, base classes, matrix utilities, SLHA parsing, error handling
+│   └── basis/       # Base class and utilities for basis implementations
+├── cli.py           # Main command line interface
+├── config.txt       # Configuration variables
+├── __init__.py      # Package initialization
+```
+
+**Existing basis implementations:**
+
+- `BSMCharacterisation.py`: General modified interaction Lagrangian up to dimension 6
+- `HiggsBasis.py`: The Higgs Basis as defined in the HXSWG draft
+- `HiggsPO.py`: Higgs PseudoObservable description compatible with the HiggsPO UFO model ([link](http://www.physik.uzh.ch/data/HiggsPO))
+- `WarsawBasis.py`: The Warsaw Basis as defined in [arXiv:1008.4884](https://arxiv.org/abs/1008.4884) and the HXSWG draft
+- `SILHBasis.py`: The SILH Basis as defined in, e.g., [arXiv:1303.3876](https://arxiv.org/abs/1303.3876) and the HXSWG draft
+- `HISZ.py`: The Hagiwara-Ishihara-Szalapski-Zeppenfeld Basis for gauge-Higgs interactions ([Phys.Rev. D48 (1993) 2182-2203](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.48.2182)) and the HXSWG draft
+- `TemplateBasis.py`: Template for a user-defined Basis class implemented in the Rosetta package
+
+*Note: `_diagonal` and `_universal` versions of the cards are also included, reflecting the simplified input formats one can use when employing the `--flavor` option of `translate`.*
+
+
+### Usage & translate interface
+
+The rosetta command line executable manages the desired functionality of the 
+tool based on the implemented interfaces included in the "interfaces" directory.
+Entering in the terminal:
+
+```sh
+rosetta -h
+```
+
+will bring up the command line documentation:
+
+```
+usage: rosetta [-h] [-s] [-v] [--force] INTERFACE ...
+
+Main Rosetta command-line executable.
+
+Global options:
+  -h, --help         show this help message and exit
+  -s, --silent       Suppress all warnings and take default answers to all questions
+  -v, --verbose      Activate verbose setting for program output
+  --force            Take default answers to all questions
+
+Arguments:
+  INTERFACE
+    translate        Translate an SLHA input card from one basis to another
+    defaultcard      Generate an SLHA parameter card for an implemented basis
+    dihiggs          Double Higgs production at the LHC
+    ehdecay          Standalone eHDECAY interface
+    ewpo             EWPO interface
+    lilith           Standalone Lilith interface
+    signalstrengths  Standalone SignalStrengths interface
+```
+
+The desired interface the user would like to call is supplied as an argument to 
+the rosetta tool which will then invoke the corresponding sub-parser for 
+options and arguments specific to that interface. Rosetta has a few global 
+options to control the level of standard output and forcing default answers to 
+user prompts.
+
+The translate interface takes an SLHA-style param card (see sample 
+cards provided in Cards/ directory) in a particular basis and outputs a new 
+card in the specified basis (default is BSM Characterisation). 
+
+```sh
+rosetta translate -h
+```
+
+brings up the command line documentation:
+
+```
+usage: rosetta translate [-h] [-o OUTPUT] [-w] [--target ] [--flavor ] [--dependent] [--ehdecay] PARAMCARD
+
+Read in an SLHA format parameter card in a particular basis and write a new card in another implemented
+basis.
+
+positional arguments:
+  PARAMCARD            Input parameter card.
+
+options:
+  -h, --help           show this help message and exit
+  -o, --output OUTPUT  Output file name. Default: [PARAMCARD]_new
+  -w, --overwrite      Overwrite any pre-existing output file.
+  --target             Basis into which to translate. Allowed values are: bsmc, higgs, hc, higgspo, hisz,
+                       silh, template, warsaw (default = bsmc)
+  --flavor             Specify flavor structure. Allowed values are: general, diagonal, universal (default =
+                       general).
+  --dependent          Also write out dependent parameters to output card
+  --ehdecay            Interface with eHDECAY for Higgs branching fractions.
+```
+
+Rosetta will read the SLHA card, look for the 1st element of block "basis", and 
+see if any implemented basis classes have this unique identifier. If so, Rosetta 
+will fill an instance of this class with the values of the parameters specified 
+in the parameter card and perform certain consistency checks, making sure all 
+required parameters are defined etc. 
+
+Any dependent parameters are then calculated and the translation is performed 
+between the input basis and the target basis (bsmc by default), provided the 
+right translation path exists. An SLHA style parameter card will then written 
+out in the new basis. 
+
+Rosetta can optionally interface with eHDECAY provided a translation path 
+between the input basis and the SILH basis exists. The results of eHDECAY 
+are also written to the SLHA card in the form of a decay block for the Higgs. 
+See section 8 for more details.
+
+Example basic usage:
+
+To translate from the SILH basis to the BSMC Lagrangian, one could take 
+Cards/SILHBasis.dat as a template input card and run:
+
+```sh
+rosetta translate -o my_out.dat my_input.dat
+```
+
+To translate to the Warsaw basis instead, one should use the -t option and 
+specify 'warsaw' as the target basis:
+
+```sh
+rosetta translate -o my_out_warsaw.dat --target warsaw my_input.dat
+```
+
+Example usage with the flavor option (See also section 8):
+
+The flavor option '--flavor' currently accepts the arguments 'general', 
+'diagonal' and 'universal'. It tells Rosetta to assume a particular flavor 
+structure in the input file. When a translation to a basis which is NOT the 
+bsmc is specified via the '--target' option, the output file block structure 
+also reflects this choice on the flavor structure. 
+
+- 'general' : The default setting corresponding to the full flavor structure.
+- 'diagonal' : Keep only the diagonal terms in the flavor matrices i.e. the 
+               (1,1), (2,2) & (3,3) entries.
+- 'universal' :  Coefficients are all flavor diagonal and universal.
+
+As an example, taking Cards/WarsawBasis_diagonal.dat as a template input, the 
+command:
+
+```sh
+rosetta translate my_input_diagonal.dat --flavor diagonal -o my_out_diag.dat
+```
+
+Will generate a BSMC param card with only the diagonal flavor 
+components non-zero. On the other hand,
+
+```sh
+rosetta translate my_input_diagonal.dat --target silh -flavor diagonal -o my_out_diag_silh.dat
+```
+
+Will generate a SILH basis parameter card respecting the original flavor 
+structure, i.e. that of Cards/SILHBasis_diagonal.dat.
+
+In general, one should ensure that the block structure of the input card 
+respects the flavor option specified, otherwise, Rosetta will crash.
+
+Example usage with the eHDECAY option:
+
+```sh
+rosetta translate my_input.dat --target silh --ehdecay -o my_out_ehdecay_silh.dat 
+```
+
+This command will generate the same output as the basic usage example with the 
+addition of an SLHA decay block for the Higgs with the results of the eHDECAY 
+run. It will also save the eHDECAY input file fed to the program as 'ehdecay.in'.
+
+### Input cards
+Rosetta is designed to read input cards in a format similar to the SUSY Les 
+Houches Accord (SLHA) detailed in http://arxiv.org/abs/hep-ph/0311123. 
+Sample cards can be found in the Cards/ directory. 
+
+The SHLA reader looks for block structures in a case insensitive way i.e.
+
+>> BLOCK MYBLOCK
+
+Specifically it will search for blocks MASS, SMINPUTS and BASIS. The basis into 
+which the card is read is taken from the 0 entry in the BASIS block. This name 
+should match a basis declared in implemented.py (see next section).
+Block elements should be named by placing a comment alongside each 
+entry. The parameter name will be taken as the first non-whitespace characters 
+following the '#' character.
+
+The main difference between the input format of Rosetta and SLHA is that names 
+of parameters are required for new physics parameter blocks. Parameters can 
+then be referenced by name or number in the corresponding block or, 
+alternatively, by name only from the SHLA.Card instance stored in as self.card 
+in the basis instance.
+
+>>BLOCK MYBLOCK
+>>  0 3.14159E+00 # pi
+>>  1 1.97327E-01 # hbarc_GeVfm
+>>  Block sminputs 
+>>      1   1.325070e+02       #    aEWM1  (white space doesn't matter)
+ETC.
+
+The block structure of the new physics couplings is basis dependent and should 
+be declared in the `blocks` data member of the basis class. This should be a 
+python dictionary with block names as keys and lists of parameter names as 
+values. The ordering of the list determines the entry number of each parameter.
+For example,
+
+>> blocks = {'ONE':['A','B','C'], 'TWO':['D','E','F']}
+
+will generate the following block structure:
+
+>> block one
+>>     0 0.0 # A
+>>     1 0.0 # B
+>>     2 0.0 # C
+>>
+>> block two
+>>     0 0.0 # D
+>>     1 0.0 # E
+>>     2 0.0 # F
+
+The reader reads all lines until the next occurrence of 'BLOCK' or 'DECAY', 
+ignoring leading and trailing white space and all lines beginning with a '#' as 
+well as lines that do not match the expected pattern detailed above. For blocks 
+BLOCKIN and SMINPUTS, the reader stores special SLHA.Block instances as 
+self.mass and self.inputs data member of the basis instace.
+
+>> block mass 
+>>     5 4.700000e+00 # MB 
+>>     6 1.730000e+02 # MT 
+>>    15 1.730000e+02 # MTAU
+>>    23 9.118800e+01 # MZ 
+>>    25 1.250000e+02 # MH 
+
+Block basis should have one element corresponding to the "name" attribute of an 
+existing basis implementation.
+
+>> block BASIS
+>> 0 MyBasis # name of basis
+
+Rosetta will also accept BLOCK structures in matrix format with multiple 
+counters e.g.
+
+>> block MAT
+>>   1  1   1.0e-01 # MAT1x1
+>>   1  2   1.0e-01 # MAT1x2
+>>   2  1   1.0e-01 # MAT2x1
+>>   2  2   1.0e-01 # MAT2x2
+
+These will then be indexable also by name or by index [i,j,...]. The naming 
+convention for the individual elements adopted is to suffix the block name with 
+the indices separated by an 'x' character as shown above. Complex parameters 
+should also have a blocks containing their imaginary parts prefixed by 'IM'. 
+The naming convention then adopted there is to prefix the real parts with 'R' 
+and the imaginary parts with 'I'. The name of complex parameter as a whole will 
+be prefixed with 'C'. If our previous example matrix were complex, the two 
+following blocks would be defined
+
+>> block MAT
+>>   1  1   1.0e-01 # RMAT1x1
+>>   1  2   1.0e-01 # RMAT1x2
+>>   2  1   1.0e-01 # RMAT2x1
+>>   2  2   1.0e-01 # RMAT2x2
+>>
+>> block IMMAT
+>>   1  1   1.0e-01 # IMAT1x1
+>>   1  2   1.0e-01 # IMAT1x2
+>>   2  1   1.0e-01 # IMAT2x1
+>>   2  2   1.0e-01 # IMAT2x2
+
+### The SLHA package
+Rosetta contains a basic SLHA card reader/writer that can parse and store the 
+contents of an SLHA formatted input card. Individual blocks and decays are 
+stored as SLHA.Block and SLHA.Decay instances that can be indexed and iterated 
+over in the same way as python dictionaries, in a case-insensitive way.
+ 
+    SLHA.Block is essentially a named OrderedDict storing index:value pairs 
+    corresponding to the elements of an SLHA block. SLHA.Block has a "name" 
+    attribute and forces keys to be of type `int` or to be castable via int().
+    
+    SLHA.Matrix is essentially a named OrderedDict storing index:value pairs 
+    corresponding to the elements of an SLHA block with multiple counters. 
+    SLHA.Matrix has a "name" attribute and forces keys to be tuples .
+
+    SLHA.Decay is an OrderedDict with a "PID" attribute for the particle whose 
+    decay information it contains as well as a "total" attribute to store the 
+    total width of the particle. Each entry key is a tuple if PIDs corresponding 
+    to the decay products and the associated value is the branching fraction of 
+    that particular channel. 
+    
+    SLHA.NamedBlock is a subclass of SHLA.Block with the additional feature that
+    each block entry is associated to a name in accordance with the way Rosetta 
+    can read the input card. Each value can then be accessed either by key or 
+    by value.
+    
+    SLHA.NamedMatrix, analogously to NamedBlock, adds the naming feature to 
+    matrix objects.
+    
+    SLHA.Card is the object storing the various SLHA blocks and decays. Indexing 
+    such an object with an integer will look for a Decay object associated to 
+    that PID, while indexing with a string will look for a parameter with that 
+    name in one of its NamedBlock instances. SLHA.Card objects possess two 
+    OrderedDicts, "blocks" and "decays" storing the individual 
+    SLHA.(Named)Block and SLHA.Decay instances. 
+
+Each SLHA object can print itself out in the usual SLHA format, while the 
+SLHA.Card object has a write() function to write itself to a file. There also 
+exist complex versions of the Block, Matrix, NamedBlock, and NamedMatrix 
+objects named CBlock, CMatrix, CNamedBlock, and CNamedMatrix which can store 
+complex values and have two of their corresponding real containers storing 
+their real and imaginary parts in _re and _im attributes. 
+
+
+### The basis class
+Each implemented basis in Rosetta is a python class inheriting from the `Basis` 
+class in `src/rosetta/internal/basis/basis.py`. They are designed to be instantiated 
+either empty or with an SLHA format parameter card specified by the param_card 
+option. The contents of the card are stored as an SLHA.Card object and the 
+special blocks "mass" and "sminputs" are stored as SLHA.NamedBlock instances in 
+self.mass and self.input respectively. Some of the key data members are:
+
+self.name   - Unique basis identifier. This will be compared to the 0th element 
+              of the block basis in the SLHA parameter card to ensure that 
+              right basis class is being instantiated for a given input card.
+              
+self.card    - SLHA.Card instance containing SLHA.NamedBlock and SLHA.Decay 
+              instances corresponding to those specified in the parameter card. 
+              Object names taken to be the first non-whitespace characters 
+              after a "#" character in a block or parameter definition are also 
+              stored.
+              
+self.mass    - SLHA.NamedBlock instance for the "mass" block
+            
+self.inputs  - SLHA.NamedBlock instance for the "sminputs" block
+
+self.required_inputs
+            - A set of SLHA input IDs denoting those required to be defined in  
+              the SLHA input card in order to perform implemented translations. 
+              
+self.required_masses
+            - A set of PDG particle IDs denoting particles whose mass is 
+              required to be defined in the SLHA input card in order to perform 
+              implemented translations. 
+              
+self.independent
+            - A list of coefficients deemed to be input parameters to the basis 
+              implementation. 
+              
+self.blocks (optional but strongly recommended)
+            - A dictionary of name:coefficients pairs where name is the SLHA 
+              block name desired and coefficients is a list of coefficient 
+              names associated to that block.
+
+self.flavored 
+            - A dictionary with keys corresponding to the names of data blocks 
+              possessing flavor flavor structure. These will be assumed to be 
+              3 by 3 matrices and will be acted upon by the -f or --flavor 
+              option of the translate script. The values of the dictionaries 
+              should, in turn also be dictionaries detailing the desired 
+              properties of said matrix. The keys 'domain', 'kind' and 'cname' 
+              are accepted.
+
+The options of a matrix listed in the 'flavored' attribute can be as follows:
+    'domain': 'real' or 'complex'
+    'kind': 'symmetric', 'antisymmetric', 'hermitian', 'general'
+    'cname': the name given to each element of the matrix in between the prefix 
+             and suffixes described by the convention in section 4. If not set, 
+             this will default to the block name. 
+
+self.blocks, self.flavored, self.required_inputs and self.required_masses 
+should be defined in accordance with block structure of the input SLHA 
+parameter card, Blocks "sminput" and "mass" respectively (the Z and Higgs 
+masses are also stored in self.inputs). Specifically, the block (matrix) names 
+specified as keys in self.blocks (self.flavored) should match block names in 
+the SLHA card as well as the names and indices of their elements (taken to be 
+the order in which the appear in the list associated to the block in 
+self.blocks or the naming conventions described above for elements of 
+self.flavored). The blocks "mass" and "sminputs" of the SLHA card should 
+minimally contain the entries specified in required_masses and required_inputs 
+respectively. A number of checks related to these definitions are performed by 
+check_param_data(), check_mass() and check_sminputs() on the data read in from 
+the parameter card. These can be found in the basis/checkers.py module.
+
+Basis and any of its subclasses are designed to work similarly to a 
+dictionary in that parameter values can be referenced by name (duplicate 
+names in different blocks are not handled properly so try to avoid them). 
+A value can be referenced in various ways, see below example where the 
+parameter named 'D' is stored as entry 3 in the block 'letters' written in 
+'mycard.dat':
+    
+    >> instance = MyBasis(param_card='mycard.dat')
+    >> instance['A'] = 0.5 # set value according to name in SLHA card
+    >> instance.card['A'] = 0.5 # equivalent to the above
+    >> instance.card.blocks['letters']['A'] = 0.5 # from block by name 
+    >> instance.card.blocks['letters'][3] = 0.5 # from block by entry 
+
+A number of other container methods are defined for easy of manipulation:
+
+    >> print len(instance) # number of EFT coefficients
+    >> for i in instance: # iterator methods also defined
+    >>     print i
+    >> for k, v in instance.items(): # name, value pairs
+    >>     print k, v
+
+Matrix parameters can be indexed as follows (all methods are equivalent):
+
+    >> instance['mat'][1,2] = 0.5 # set (1,2) element of 
+    >> instance.card['mat'][1,2] = 0.5 # equivalent to the above
+    >> instance.card.matrices['mat'][1,2] = 0.5 #  equivalent
+    >> instance['mat1x2']= 0.5 # from instance by name
+    >> instance['mat']['mat1x2']= 0.5 # from matrix by name
+    >> instance.matrices['mat']['mat1x2']= 0.5 # equivalent
+    
+Complex matrix parameters have the additional functionality of setting 
+individual real or imaginary parts by name or accessing the 
+complex value by name.
+
+    >> instance['cmat'][1,2] = complex(0.5, 0.5) # set (1,2) element 
+    >> instance['Ccmat1x2']= complex(0.5, 0.5) # complex value by name
+    >> instance['Rcmat1x2']= 0.5 # real part by name
+    >> instance['Icmat1x2']= 0.5 # imaginary part by name
+
+basis/io.write_param_card() writes the contents of the self.newcard into a new 
+SLHA formatted file. Another useful method basis/io.write_template_card() 
+generates and empty parameter card according to the block definitions and 
+required inputs of a given basis class.
+
+### Implementing your own basis
+
+Implementing ones own basis involves creating a file inside the bases/ directory 
+of Rosetta, alongside HiggsBasis.py etc., containing a subclass of Basis. The 
+only required data member to be defined is self.name. However, users will 
+mostly likely want to define self.independent, self.required_inputs and 
+self.required_masses as well as structure their basis into blocks using 
+self.blocks (Rosetta will create one block named "newcoup" if self.blocks is 
+not defined) and self.flavored. An example is shown below where the required 
+data members are defined outside the class constrcutor so as to intrinsically 
+belong to all instances of the class. This code would be saved in 
+Rosetta/MyBasis.py. It is essential that the file name match the class name.
+
+    >> from internal import Basis
+    >>
+    >> class MyBasis(Basis.Basis):
+    >>    name = 'mybasis'
+    >>    independent = {'A', 'B', 'C', 'one', 'two', 'MYxMAT'}
+    >>    required_inputs = {1, 2, 4}   # a_{EW}^{-1}, Gf and MZ required
+    >>    required_masses = {24, 25, 6} # Z, Higgs and top masses required
+    >>    blocks = {'letters':['A', 'B', 'C', 'D']
+    >>              'numbers':['one', 'two', 'three']} # Expected block structure
+    >>    flavored = {'MYxMAT':{'kind':'hermitian',
+    >>                           'domain':'complex',
+    >>                           'cname':'mat'}} # Hermitian flavor matrix
+    >> 
+
+The list self.independent stores the basis parameters which should be read 
+in from the SLHA card. Any other parameters declared in self.blocks are assumed 
+to be set by the user in the calculate_dependent() method. The user can define 
+calculate_dependent() to set any dependent parameters (those listed in in 
+self.blocks but not in self.independent) and any number of additional 
+functions, usually to translate the coefficients into a given basis which sets 
+the SLHA.Card object, self.newcard. Alternatively, if it is more simple, 
+the dependent attribute can be defined to explicitly tag coefficients as not 
+independent.
+
+The input card for this example containing the independent parameters would 
+look like:
+
+    >> block letters
+    >>   1  0. # A
+    >>   2  0. # B
+    >>   3  0. # C
+    >>   
+    >> block numbers
+    >>   1  0. # one
+    >>   2  0. # two
+    >>   
+    >> block MYxMAT
+    >>   1  1  0. # Rmat1x1
+    >>   1  2  0. # Rmat1x2
+    >>   1  3  0. # Rmat1x3
+    >>   2  2  0. # Rmat2x2
+    >>   2  3  0. # Rmat2x3
+    >>   3  3  0. # Rmat3x3
+    >>  
+    >> block IMMYxMAT
+    >>   1  1  0. # Imat1x1
+    >>   1  2  0. # Imat1x2
+    >>   1  3  0. # Imat1x3
+    >>   2  2  0. # Imat2x2
+    >>   2  3  0. # Imat2x3
+    >>   3  3  0. # Imat3x3
+
+Only the non-redundant elements of a matrix should be defined in the input card 
+e.g. the upper triangle for the hermitian matrix 'MYxMAT'.
+
+A few optional data members are also possible:
+
+'inputs_blockname' can be assigned a string value if you want to give the SM 
+input block a different name from 'sminputs'
+
+If your SLHA blocks employ a non-trivial numbering convention, 'numbers' can be 
+set to a dictionary reflecting the non standard numberings of parameters in the 
+block.
+
+    >> numbers = {'A':11, 'B':12, 'C':13}
+
+Sticking to the previously demonstrated 'MyBasis' example, the parameters 'A',
+'B' and 'C' will now be numbered by 11, 12 and 13 respectively rather than the 
+default 1, 2 and 3.
+
+#### Translation functions
+
+Rosetta differentiates from general utility functions and translation 
+functions using the "translation" decorator. Any function designed to take you 
+to another existing basis implementation should be decorated with the 
+"translation" decorator with an argument corresponding to the name of the 
+target basis. This name should match the unique name of an existing basis 
+implementation also contained in the Rosetta root directory. Below would be 
+example of a translation function from our example to the Warsaw Basis. 
+Note that the basis module must be imported in order to access this decorator.
+
+    >> from ..internal import basis
+    .
+    .
+    .
+    >> @basis.translation('warsaw') # identifies as translator to warsaw 
+    >> def mytranslation(self, instance):
+    >>     instance['cWW'] = 10.
+    >>     instance['cpHl11'] = self['myparam']
+    >>     return instance
+
+The translating function must ONLY take an instance of the target class as its 
+second argument alongside the default "self" argument for a class method. In 
+this way, Rosetta can universally and automatically detect and use intended 
+translation functions.
+
+#### Input parameters
+
+Another useful "derived_input" decorator is defined to implement the derivation 
+of other SM input parameters that are not required by a given basis class but 
+may be required by the target basis to which one wishes to translate. 
+Alternatively one can also account for the inverse case where an input 
+parameter of the implemented basis class can be derived from existing values of 
+a different set input parameters in the basis from which one wants to translate.
+One can define member functions of the basis class with names matching an 
+existing SLHA SM input parameter {'Gf', 'aEWM1', 'MZ', ...} in order to specify 
+the value it should take in a target basis as a function of the input 
+parameters of the basis class.
+
+    >> @basis.derived_input
+    >> def Gf(self):
+    >>     return 1./sqrt(2.)/self.inputs['vF']**2
+    >>
+    >> @basis.derived_input
+    >> def vF(instance):
+    >>     try:
+    >>         return sqrt( 1./sqrt(2.)/instance.inputs['Gf'] )
+    >>     except:
+    >>         return None
+    
+In the first case, the 'vF' input parameter (EW vev) is defined in the basis 
+class. Its value can be derived from the 'Gf' input parameter of the basis 
+class from which one wants to map. The latter case corresponds to the inverse 
+scenario where one is mapping from the basis class and can derive the value of 
+the Fermi constant to assign to the target basis instance.
+In both cases, Rosetta will attempt to use any such decorated function to 
+construct the SM input block for the target basis instance, catching any 
+exceptions raised by the functions and raising an associated 
+'DerivedInputWarning'. For every required input parameter in the target basis, 
+Rosetta will see if said input has been associate a derived_input function 
+first in the input basis class and second in the target basis class.
+
+Additional modifications to e.g. SM input parameters or particle masses should 
+be implemented in the modify_inputs() function.
+
+    >> def modify_inputs(self):
+    >>     self.mass[24]= 100.
+
+#### Basis class conventions
+
+Any python module saved in the root directory of the Rosetta package is 
+assumed to be a basis implementation. Furthermore, the class name of the 
+basis implementation MUST be the same as the file name of the python 
+module. In our example above, the class `MyBasis` would have to be saved in 
+a file named MyBasis.py. This is to help Rosetta automatically identify the 
+possible translation paths between bases. Any such class can then be used 
+by the command line script "translate". For example, Rosetta should be able 
+to figure out all possible multi-step translations.
+
+The user is referred to Rosetta/TemplateBasis.py for a toy working example of a 
+user defined basis.
+
+### Flavor option
+The  --flavor option of Rosetta's translate tool allows users to specify 
+special structure for parameters with flavor indices. These correspond to 
+those decared in the flavored attribute of a class implementation and have 3 by 
+3 flavor indices. Choosing a particular value for the flavor option amounts to 
+modifying the intended input and output blocks of a given translation. The 
+allowed options are 'general' 'diagonal' and 'universal'. 'general' is the 
+default setting while 'diagonal' only retains the diagonal elements of said 
+flavor matrices. 'universal' assumes no flavor structure whatsoever and set 
+all flavor matrices to be universal and diagonal. 
+In every reduced flavor case, the number of input and output parameters 
+decreases. The input card for the 'diagonal' option should only define the 
+(1,1) (2,2) and (3,3) elements of each block while that of the 'universal' 
+assumption should only define the (1,1) element. The output file will also 
+reflect this except in the case where the target is the BSMC Lagrangian since 
+it is important for this format to correctly interface with the FeynRules model 
+implementation where SLHA blocks with matrix structures should declare all 
+elements. 
+
+### Other interfaces
+
+#### DefaultCard interface
+
+interfaces/DefaultCard/        # DefaultCard interface Package
+|-> __init__.py
+|-> interface.py               # rosetta command line interface implementation
+|-> README                     # A copy of the contents of this section
+
+DefaultCard provides a simple utility to generate a default SLHA input card for 
+an existing basis implementation in rosetta.
+
+Command line documentation:
+
+ >> usage: rosetta defaultcard [-h] [--value VALUE] [-o OUTPUT] [--flavor FLAVOR]
+ >>                            [-w]
+ >>                            BASIS
+ >> 
+ >> Generate a parameter card for an implemented basis
+ >> 
+ >> positional arguments:
+ >>   BASIS                 Basis class for which to generate the parameter card.
+ >>                         Allowed values are: higgs, bsmc, template, silh, hisz,
+ >>                         warsaw (default = bsmc)
+ >> 
+ >> optional arguments:
+ >>   -h, --help            show this help message and exit
+ >>   --value VALUE         Set value of all parameters to VALUE. The value
+ >>                         "random" will set random coefficients between -1. and
+ >>                         1.
+ >>   -o OUTPUT, --output OUTPUT
+ >>                         Output file name. Default:
+ >>                         [BASIS]_[FLAVOR]_default.dat
+ >>   --flavor FLAVOR       Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general)
+ >>   -w, --overwrite       Overwrite any pre-existing output file
+
+#### eHDECAY interface
+
+interfaces/eHDECAY/            # eHDECAY interface Package
+|-> __init__.py
+|-> eHDECAY.py                 # Main implementation
+|-> errors.py                  # package specific errors
+|-> interface.py               # rosetta command line interface implementation
+|-> README                     # A copy of the contents of this section
+
+A useful program based on HDECAY (arXiv:hep-ph/9704448) for calculating the 
+Higgs total width was developed in 2014 and is described in arXiv:1403.3381. 
+The program takes as input a number of parameters in the SILH basis to calculate
+the width and branching ratios to SM particles optionally including Electroweak 
+corrections. 
+
+In order to have this working correctly the user must modify 
+Rosetta/config.txt, putting the absolute path to the base directory of a local 
+eHDECAY installation. There must exist a possible translation path between the 
+input basis and the SILH basis. The internal/eHDECAY.py module then performs 
+this translation, rescales the relevant parameters of the Rosetta SILH basis 
+implementation to match the conventions of arXiv:1403.3381 and executes a run 
+of eHDECAY. The results are stored and a copy of the input file "ehdecay.in" is 
+saved locally. The results are then written to and SLHA decay block in the 
+output card. The relevant input parameters are:
+
+    SM inputs: # ALL masses must be nonzero for eHDECAY to give a finite result
+    'MC', 'MB', 'MT', 'MMU', 'MTAU, # SM fermion masses
+    'MH', 'MZ', 'MW', 'aEWM1' 'Gf', # EW input masses, (alpha_EW)^-1, G_Fermi
+    'aSMZ'                          # alpha_S(MZ)
+
+    SILH coefficients:
+    'CHbar' , 'CTbar' , 'Ctaubar', 'Cmubar', 'Ctbar',
+    'Cbbar' , 'Ccbar' , 'Csbar'  , 'CWbar' , 'CBbar',
+    'CHWbar', 'CHBbar', 'Cgambar', 'Cgbar'
+
+    eHDECAY option:
+    'IELW' # Electroweak corrections switch (1:on, 0:off)
+
+eHDECAY can potentially give negative branching fractions and even a negative 
+total Higgs width for unreasonable choices of EFT parameters. A negative total 
+width is currently not allowed while negative branching fractions are not 
+handled and will be omitted from the parameter card.
+
+The interface has a standalone version that simply prints the SLHA decay block 
+for the Higgs or can be invoked as an option in the translate interface
+
+Command line documentation:
+
+ >> usage: rosetta ehdecay [-h] [-o OUTPUT] [--dependent] [--EW] [--flavor] [-w]
+ >>                        PARAMCARD
+ >> 
+ >> Run the eHDECAY interface to obtain the Higgs branching fractions
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD             Input parameter card
+ >> 
+ >> optional arguments:
+ >>   -h, --help            show this help message and exit
+ >>   -o OUTPUT, --output OUTPUT
+ >>                         Write out a new SLHA card containing the decay block
+ >>   --dependent           Also write out dependent parameters to output card
+ >>   --EW                  switch on electroweak corrections in eHDECAY
+ >>   --flavor              Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general)
+ >>   -w, --overwrite       Overwrite any pre-existing output file
+
+
+#### Higgs Signal Strengths
+
+interfaces/SignalStrengths/   # SignalStrengths interface Package
+|-> __init__.py
+|-> BR/                       # Folder storing tabulated SM Higgs branching 
+|   |                         # fractions and total widths provided by the 
+|   |                         # LHCHXSWG.
+|   |-> ff.dat
+|   |-> VV.dat
+|       
+
+|-> decay.py                  # Calculation of higgs decay partial width 
+|                             # rescaling factors, optionally using Rosetta's 
+|                             # eHDECAY interface.
+|                             
+|-> errors.py                 # Package-specific errors.
+|-> interface.py              # rosetta command line interface implementation
+|-> loopfunctions.py          # Fermion and gauge boson triangle loop functions.
+|-> production.py             # Calculation of higgs production rescaling 
+|                             # factors.
+|                             
+|-> README                    # A copy of the contents of this section
+
+Rosetta provides an interface through which to calculate the SM Higgs signal 
+strengths given an input of EFT parameters in a given basis. The 'mu' factors 
+are calculated for each production and decay channel by rescaling the 
+production cross sections partial widths, and total width of the Higgs. The 
+approach implemented is summarised in arXiv:1505.00046, where analytical or 
+numerical formulae each of the rescaling factors are provided. 
+
+A translation path to the BSM Characterisation basis must be present.
+
+This package has a standalone version that prints out a list of signal 
+strengths and is also used internally by the Lilith interace.
+
+Command line documentation:
+
+ >> usage: rosetta signalstrengths [-h] [--squares] [--sqrts] [--flavor] PARAMCARD
+ >> 
+ >> Run the SignalStrengths interface to obtain the mu's for all of the Higgs
+ >> production and decay channels.
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --squares   Retain quadratic order in EFT coefficients (NOT IMPLEMENTED)
+ >>   --sqrts     Specify pp collider centre-of mass energy in TeV. Allowed values
+ >>               are: 7, 8, 13 (default = 8).
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+              universal (default = general).
+
+
+#### Lilith interface
+
+interfaces/Lilith/             # Lilith interface Package
+|-> __init__.py
+|-> errors.py                  # package specific errors
+|-> interface.py               # rosetta command line interface implementation
+|-> Lilith.py                  # Main implementation
+|-> README                     # A copy of the contents of this section
+
+A useful program for computing the combined likelihood using the latest Higgs 
+signal strength data is described in arXiv:1502.04138. Using the 
+SignalStrengths interface, Rosetta constructs the Higgs signal strengths and 
+feeds them to Lilith to obtain the chi-squared goodness of fit measure to the 
+Higgs data as calculated by a local installation of Lilith. 
+
+In order to have this working correctly the user must modify 
+Rosetta/config.txt, putting the absolute path to the base directory of a local 
+Lilith installation. The function calculate_likelihood(basis) performs the task 
+described above where basis is a Rosetta basis instance.
+
+A translation path to the BSMCharacterisation "basis" must be present.
+
+Command line documentation:
+
+ >> usage: rosetta lilith [-h] [--squares] [--flavor] PARAMCARD
+ >> 
+ >> Run the Lilith interface to obtain the likelihood value with respect to the
+ >> latest Higgs signal strength data for a particular point in EFT parameter
+ >> space
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --squares   Retain quadratic order in EFT coefficients in the
+ >>               SignalStrengths interface (NOT IMPLEMENTED)
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+ >>               universal (default = general)
+ 
+#### EWPO interface
+
+interfaces/EWPO/               # EWPO interface Package
+|-> __init__.py
+|-> chisq.py                   # delta chi-squared and p-value functions
+|-> errors.py                  # package specific errors
+|-> interface.py               # rosetta command line interface implementation
+|-> likelihood/                # Numerical data for likelihood
+|   |-> c0.dat
+|   |-> c0_MFV.dat
+|   |-> sigmainv2.dat
+|   |-> sigmainv2_MFV.dat
+|-> README                     # A copy of the contents of this section
+
+An implementation of a global likelihood using low energy and electroweak 
+precision observables. Using a numerical implementation of a pre-calculated 
+delta chi-squared distribution (described in the Les Houches proceedings 
+contribution) in a set of Higgs Basis parameters, the interface evaluates the 
+likelihood of a given point in EFT parameter space. 
+
+A translation path to the Higgs Basis must be available.
+
+The option of flavor universality is available and reduces the number of 
+degrees of freedom from 36 to 23.
+
+Command line documentation:
+
+ >> usage: rosetta ewpo [-h] [--flavor] PARAMCARD
+ >> 
+ >> Run the EWPO interface to obtain the compatibility of a parameter point with a
+ >> fit to electroweak precision observables
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD   Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help  show this help message and exit
+ >>   --flavor    Specify flavor structure. Allowed values are: general, diagonal,
+ >>               universal (default = general).
+
+
+#### Double Higgs production at the LHC (work in progress)
+
+interfaces/DiHiggs/            # Double Higgs interface Package
+|-> __init__.py
+|-> dihiggs.py                 # main function
+|-> errors.py                  # package specific errors
+|-> interface.py               # rosetta command line interface implementation
+|-> production_xs.py           # numerical evaluation of dihiggs production 
+                               # cross section and branching fractions
+|-> README                     # A copy of the contents of this section
+
+Generate predictions for dihiggs production cross sections and branching fractions 
+at the LHC for a general point in EFT parameter space. Restricted to total rates 
+based on a numerical formula (See the Les Houches 2015 
+contribution for more details) but will soon be upgraded to differential 
+distributions. 
+
+A translation path to the Higgs Basis must be available.
+
+Command line documentation:
+
+ >> usage: rosetta dihiggs [-h] [--params] [--sqrts] [--flavor FLAVOR]
+ >>                        [--channel CHANNEL [CHANNEL ...]]
+ >>                        PARAMCARD
+ >> 
+ >> Compute production cross section times branching fractions for double Higgs
+ >> production at the LHC
+ >> 
+ >> positional arguments:
+ >>   PARAMCARD             Input parameter card.
+ >> 
+ >> optional arguments:
+ >>   -h, --help            show this help message and exit
+ >>   --params              Also print out values of effective Lagrangian
+ >>                         parameters
+ >>   --sqrts               Specify pp collider centre-of mass energy in TeV.
+ >>                         Allowed values are: 7, 8, 13, 14, 100 (default = 8).
+ >>   --flavor FLAVOR       Specify flavor structure. Allowed values are: general,
+ >>                         diagonal, universal (default = general)
+ >>   --channel CHANNEL [CHANNEL ...]
+ >>                         Specify one or more decay channels. Allowed values
+ >>                         are: all, 2b2tau, 4Z, 2mu2Z, 2tau2W, 2mu2gamma,
+ >>                         4gamma, 2b2mu, 2W2Z, 2mu2W, 4W, 2mu2tau, 2b2Z,
+ >>                         2gamma2Z, 2b2W, 2gamma2W, 2b2gamma, 4tau, 2tau2gamma,
+ >>                         4b, 2tau2Z, 4mu (default = all)

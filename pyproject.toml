@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rosetta"
+authors = [
+  { name = "Ken Mimasu", email = "ken.mimasu@soton.ac.uk" },
+]
+description = "Rosetta: an operator basis translator for Standard Model effective field theory"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering",
+]
+dynamic = ["version"]
+# TODO: scipy/numpy are dependencies of the EWPO interface, refactor to make optional
+dependencies = ["scipy"]
+
+[project.scripts]
+rosetta = "rosetta.cli:main"
+
+[project.optional-dependencies]
+test = [
+  "pytest >=6",
+]
+
+[project.urls]
+Homepage = "http://rosetta.hepforge.org"
+"Bug Tracker" = "https://github.com/kenmimasu/Rosetta/issues"
+Changelog = "https://github.com/kenmimasu/Rosetta/releases"
+
+
+[tool.hatch]
+version.source = "vcs"
+build.hooks.vcs.version-file = "src/rosetta/_version.py"
+
+[tool.hatch.envs.default]
+features = ["test"]
+scripts.test = "pytest {args}"
+

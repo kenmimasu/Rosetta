@@ -4,3 +4,4 @@ FeynRules/*
 ehdecay.in
 # vi temp files
 *.swp
+src/rosetta/_version.py
